@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth, UserRole } from '@/context/AuthContext';
 import {
@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -29,7 +30,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const isMobile = useIsMobile();
+  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
+  
+  // Update sidebar state when screen size changes
+  useEffect(() => {
+    setSidebarOpen(!isMobile);
+  }, [isMobile]);
 
   const navigation = [
     {
@@ -84,6 +91,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
     item => user && item.requiresRole.includes(user.role)
   );
 
+  const sidebarClasses = cn(
+    "fixed inset-y-0 left-0 z-20 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out md:translate-x-0",
+    sidebarOpen ? "translate-x-0" : "-translate-x-full"
+  );
+
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Mobile sidebar toggle */}
@@ -98,18 +110,18 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       </div>
 
       {/* Sidebar */}
-      <div 
-        className={cn(
-          "fixed inset-y-0 left-0 z-20 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out md:translate-x-0",
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        )}
-      >
+      <div className={sidebarClasses}>
         {/* Sidebar header */}
-        <div className="flex items-center justify-center h-16 p-4 border-b">
+        <div className="flex items-center justify-between h-16 p-4 border-b">
           <div className="flex items-center space-x-2">
-            <Shield className="h-6 w-6 text-primary" />
-            <span className="text-lg font-semibold text-primary">Ghana Immigration</span>
+            <Shield className="h-6 w-6 text-ghana-green" />
+            <span className="text-lg font-semibold text-gray-800">Ghana Immigration</span>
           </div>
+          {isMobile && (
+            <Button variant="ghost" size="icon" onClick={toggleSidebar}>
+              <X size={20} />
+            </Button>
+          )}
         </div>
 
         {/* Navigation */}
@@ -120,7 +132,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
               className={cn(
                 "flex items-center px-4 py-2.5 text-sm font-medium rounded-md",
                 location.pathname === '/dashboard' 
-                  ? "bg-primary text-white" 
+                  ? "bg-ghana-green text-white" 
                   : "text-gray-700 hover:bg-gray-100"
               )}
             >
@@ -135,7 +147,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                 className={cn(
                   "flex items-center px-4 py-2.5 text-sm font-medium rounded-md",
                   location.pathname.startsWith(item.href)
-                    ? "bg-primary text-white"
+                    ? "bg-ghana-green text-white"
                     : "text-gray-700 hover:bg-gray-100"
                 )}
               >
@@ -161,20 +173,25 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
 
       {/* Main content */}
       <div className={cn(
-        "flex-1 flex flex-col overflow-hidden",
+        "flex-1 flex flex-col overflow-hidden transition-all duration-300",
         sidebarOpen ? "md:ml-64" : ""
       )}>
         {/* Header */}
         <header className="bg-white border-b shadow-sm">
           <div className="flex items-center justify-between px-4 h-16">
             {/* Search */}
-            <div className="flex items-center px-2">
-              <Search className="h-5 w-5 text-gray-400" />
-              <input
+            <div className="hidden md:flex items-center px-2 relative flex-1 max-w-xs">
+              <Search className="absolute left-2.5 h-4 w-4 text-gray-400" />
+              <Input
                 type="text"
                 placeholder="Search..."
-                className="ml-2 bg-transparent border-0 outline-none placeholder-gray-400 text-sm"
+                className="pl-8 h-9 md:w-[180px] lg:w-[300px]"
               />
+            </div>
+
+            {/* Mobile title */}
+            <div className="md:hidden flex-1 text-center font-medium">
+              Ghana Immigration
             </div>
 
             {/* User dropdown */}
@@ -183,7 +200,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="flex items-center space-x-2">
                     <Avatar className="h-8 w-8">
-                      <AvatarFallback className="bg-primary text-primary-foreground text-sm">
+                      <AvatarFallback className="bg-ghana-green text-white text-sm">
                         {user ? getInitials(user.name) : ''}
                       </AvatarFallback>
                     </Avatar>

@@ -22,6 +22,7 @@ import Applicants from "./pages/Applicants";
 import ApplicantForm from "./pages/ApplicantForm";
 import IDCardPreviewPage from "./pages/IDCardPreviewPage";
 import IDCards from "./pages/IDCards";
+import Users from "./pages/Users";
 
 const queryClient = new QueryClient();
 
@@ -84,6 +85,15 @@ const App = () => (
               <ProtectedRoute>
                 <DashboardLayout>
                   <IDCardPreviewPage />
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
+
+            {/* User Management Route */}
+            <Route path="/users" element={
+              <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
+                <DashboardLayout>
+                  <Users />
                 </DashboardLayout>
               </ProtectedRoute>
             } />
