@@ -16,11 +16,21 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/table';
-import { Search, User, Shield, Plus, Edit, Trash } from 'lucide-react';
+import { Search, User, Shield, Plus, Edit, Trash, RotateCcw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useAuth, UserRole, generatePassword } from '@/context/AuthContext';
 import { toast } from "sonner";
 import { useIsMobile } from '@/hooks/use-mobile';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle 
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 // Mock users for the users management page
 const mockUsersList = [
@@ -58,10 +68,143 @@ const mockUsersList = [
   }
 ];
 
+interface EditUserDialogProps {
+  user: any;
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (user: any) => void;
+}
+
+const EditUserDialog: React.FC<EditUserDialogProps> = ({ user, isOpen, onClose, onSave }) => {
+  const [editedUser, setEditedUser] = useState({...user});
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setEditedUser(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleRoleChange = (value: string) => {
+    setEditedUser(prev => ({ ...prev, role: value as UserRole }));
+  };
+
+  const handleStatusChange = (value: string) => {
+    setEditedUser(prev => ({ ...prev, status: value }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave(editedUser);
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Edit User</DialogTitle>
+          <DialogDescription>
+            Make changes to the user account. Click save when you're done.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit}>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="name">Full Name</Label>
+              <Input
+                id="name"
+                name="name"
+                value={editedUser.name}
+                onChange={handleChange}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                name="username"
+                value={editedUser.username}
+                onChange={handleChange}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label>Role</Label>
+              <RadioGroup value={editedUser.role} onValueChange={handleRoleChange}>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value={UserRole.ADMIN} id="admin" />
+                  <Label htmlFor="admin">Administrator</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value={UserRole.DATA_ENTRY} id="data-entry" />
+                  <Label htmlFor="data-entry">Data Entry</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value={UserRole.VIEWER} id="viewer" />
+                  <Label htmlFor="viewer">Viewer</Label>
+                </div>
+              </RadioGroup>
+            </div>
+            <div className="grid gap-2">
+              <Label>Status</Label>
+              <RadioGroup value={editedUser.status} onValueChange={handleStatusChange}>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="active" id="active" />
+                  <Label htmlFor="active">Active</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="inactive" id="inactive" />
+                  <Label htmlFor="inactive">Inactive</Label>
+                </div>
+              </RadioGroup>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+            <Button type="submit">Save changes</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+interface DeleteConfirmDialogProps {
+  username: string;
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+}
+
+const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = ({ username, isOpen, onClose, onConfirm }) => {
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Delete User</DialogTitle>
+          <DialogDescription>
+            Are you sure you want to delete user "{username}"? This action cannot be undone.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="button" variant="destructive" onClick={onConfirm}>
+            Delete
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 const Users: React.FC = () => {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const isMobile = useIsMobile();
+  const [users, setUsers] = useState(mockUsersList);
+  const [editingUser, setEditingUser] = useState<any>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [deleteUser, setDeleteUser] = useState<{id: string, username: string} | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   
   // Only admin users should be able to manage other users
   if (user?.role !== UserRole.ADMIN) {
@@ -77,7 +220,7 @@ const Users: React.FC = () => {
   }
   
   // Filter users based on search term
-  const filteredUsers = mockUsersList.filter(user => 
+  const filteredUsers = users.filter(user => 
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.role.toLowerCase().includes(searchTerm.toLowerCase())
@@ -90,10 +233,33 @@ const Users: React.FC = () => {
     // In a real application, you would save this to the backend
   };
   
-  // Delete user (mock functionality)
-  const handleDeleteUser = (userId: string, username: string) => {
-    toast.success(`User ${username} has been deleted`);
-    // In a real application, you would delete the user from the backend
+  // Open edit dialog
+  const handleEdit = (user: any) => {
+    setEditingUser(user);
+    setIsEditDialogOpen(true);
+  };
+  
+  // Save edited user
+  const handleSaveUser = (updatedUser: any) => {
+    setUsers(prev => prev.map(user => user.id === updatedUser.id ? updatedUser : user));
+    setIsEditDialogOpen(false);
+    toast.success(`User ${updatedUser.username} has been updated`);
+  };
+  
+  // Open delete confirmation dialog
+  const handleDeleteClick = (userId: string, username: string) => {
+    setDeleteUser({ id: userId, username });
+    setIsDeleteDialogOpen(true);
+  };
+  
+  // Confirm and delete user
+  const handleDeleteConfirm = () => {
+    if (deleteUser) {
+      setUsers(prev => prev.filter(user => user.id !== deleteUser.id));
+      toast.success(`User ${deleteUser.username} has been deleted`);
+      setIsDeleteDialogOpen(false);
+      setDeleteUser(null);
+    }
   };
 
   return (
@@ -159,23 +325,27 @@ const Users: React.FC = () => {
                         </div>
                       </div>
                       
-                      <div className="flex justify-between mt-4 pt-2 border-t">
+                      <div className="flex flex-wrap justify-between mt-4 pt-2 border-t gap-2">
                         <Button 
                           variant="outline" 
                           size="sm" 
                           onClick={() => handleGeneratePassword(user.id, user.username)}
                         >
-                          Reset Password
+                          <RotateCcw className="h-3 w-3 mr-1" /> Reset Password
                         </Button>
                         <div className="space-x-2">
-                          <Button variant="outline" size="icon">
+                          <Button 
+                            variant="outline" 
+                            size="icon"
+                            onClick={() => handleEdit(user)}
+                          >
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button 
                             variant="outline" 
                             size="icon" 
                             className="text-red-500"
-                            onClick={() => handleDeleteUser(user.id, user.username)}
+                            onClick={() => handleDeleteClick(user.id, user.username)}
                           >
                             <Trash className="h-4 w-4" />
                           </Button>
@@ -197,7 +367,7 @@ const Users: React.FC = () => {
                     <TableHead>Role</TableHead>
                     <TableHead>Last Login</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead className="w-[200px]">Actions</TableHead>
+                    <TableHead className="w-[220px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -227,22 +397,27 @@ const Users: React.FC = () => {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 flex-wrap">
                             <Button 
                               variant="outline" 
                               size="sm"
                               onClick={() => handleGeneratePassword(user.id, user.username)}
+                              className="flex items-center"
                             >
-                              Reset
+                              <RotateCcw className="h-3 w-3 mr-1" /> Reset
                             </Button>
-                            <Button variant="outline" size="icon">
+                            <Button 
+                              variant="outline" 
+                              size="icon"
+                              onClick={() => handleEdit(user)}
+                            >
                               <Edit className="h-4 w-4" />
                             </Button>
                             <Button 
                               variant="outline" 
                               size="icon" 
                               className="text-red-500"
-                              onClick={() => handleDeleteUser(user.id, user.username)}
+                              onClick={() => handleDeleteClick(user.id, user.username)}
                             >
                               <Trash className="h-4 w-4" />
                             </Button>
@@ -257,6 +432,26 @@ const Users: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Edit User Dialog */}
+      {editingUser && (
+        <EditUserDialog
+          user={editingUser}
+          isOpen={isEditDialogOpen}
+          onClose={() => setIsEditDialogOpen(false)}
+          onSave={handleSaveUser}
+        />
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {deleteUser && (
+        <DeleteConfirmDialog
+          username={deleteUser.username}
+          isOpen={isDeleteDialogOpen}
+          onClose={() => setIsDeleteDialogOpen(false)}
+          onConfirm={handleDeleteConfirm}
+        />
+      )}
     </div>
   );
 };
