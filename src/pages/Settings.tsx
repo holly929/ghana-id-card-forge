@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Card, 
   CardContent, 
@@ -17,12 +17,24 @@ import {
   TabsList, 
   TabsTrigger 
 } from '@/components/ui/tabs';
-import { Settings as SettingsIcon, Shield } from 'lucide-react';
+import { Settings as SettingsIcon, Shield, Upload, Image } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 const Settings: React.FC = () => {
   const { user } = useAuth();
   const isMobile = useIsMobile();
+  
+  // State for system logo
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  
+  // Load logo from localStorage on mount
+  useEffect(() => {
+    const savedLogo = localStorage.getItem('systemLogo');
+    if (savedLogo) {
+      setLogoPreview(savedLogo);
+    }
+  }, []);
   
   // Only admin users should be able to access settings
   if (user?.role !== UserRole.ADMIN) {
@@ -38,7 +50,13 @@ const Settings: React.FC = () => {
   }
 
   const handleSaveGeneral = () => {
-    toast.success("General settings saved successfully");
+    // Save logo to localStorage if available
+    if (logoFile && logoPreview) {
+      localStorage.setItem('systemLogo', logoPreview);
+      toast.success("Logo updated and settings saved successfully");
+    } else {
+      toast.success("General settings saved successfully");
+    }
   };
   
   const handleSaveNotifications = () => {
@@ -47,6 +65,20 @@ const Settings: React.FC = () => {
   
   const handleResetSystem = () => {
     toast.success("System reset initiated");
+  };
+  
+  // Handle logo upload
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setLogoFile(file);
+      
+      const reader = new FileReader();
+      reader.onload = () => {
+        setLogoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   return (
@@ -82,6 +114,39 @@ const Settings: React.FC = () => {
               <div className="space-y-2">
                 <Label htmlFor="timezone">Default Timezone</Label>
                 <Input id="timezone" defaultValue="Africa/Accra" />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>System Logo</Label>
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 border rounded-md flex items-center justify-center overflow-hidden bg-white">
+                    {logoPreview ? (
+                      <img 
+                        src={logoPreview} 
+                        alt="System Logo" 
+                        className="max-w-full max-h-full object-contain" 
+                      />
+                    ) : (
+                      <Image className="h-8 w-8 text-gray-300" />
+                    )}
+                  </div>
+                  <label className="cursor-pointer">
+                    <Button variant="outline" type="button">
+                      <Upload className="mr-2 h-4 w-4" />
+                      Upload Logo
+                    </Button>
+                    <Input 
+                      type="file" 
+                      id="logo-upload" 
+                      accept="image/*" 
+                      className="hidden" 
+                      onChange={handleLogoUpload} 
+                    />
+                  </label>
+                </div>
+                <p className="text-xs text-gray-500">
+                  Upload a logo to be displayed on ID cards and system interfaces
+                </p>
               </div>
               
               <Button onClick={handleSaveGeneral} className="mt-4">Save Settings</Button>

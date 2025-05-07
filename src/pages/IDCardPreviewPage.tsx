@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -76,8 +76,8 @@ const IDCardPreviewPage: React.FC = () => {
       <div className="flex flex-col items-center justify-center p-8">
         <h1 className="text-2xl font-bold mb-4">Applicant Not Found</h1>
         <p className="mb-6">The applicant you're looking for could not be found.</p>
-        <Button onClick={() => navigate('/applicants')}>
-          Return to Applicants
+        <Button onClick={() => navigate('/id-cards')}>
+          Return to ID Cards
         </Button>
       </div>
     );
@@ -89,7 +89,7 @@ const IDCardPreviewPage: React.FC = () => {
         <Button 
           variant="ghost" 
           size="icon"
-          onClick={() => navigate('/applicants')}
+          onClick={() => navigate('/id-cards')}
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
@@ -102,16 +102,7 @@ const IDCardPreviewPage: React.FC = () => {
       </div>
       
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>ID Card Preview</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <IDCardPreview applicant={applicant} />
-          </CardContent>
-        </Card>
-        
-        <Card>
+        <Card className="xl:order-2">
           <CardHeader>
             <CardTitle>Applicant Information</CardTitle>
           </CardHeader>
@@ -161,6 +152,15 @@ const IDCardPreviewPage: React.FC = () => {
                 </div>
               </div>
             </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="xl:order-1">
+          <CardHeader>
+            <CardTitle>ID Card Preview</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <IDCardPreview applicant={applicant} />
           </CardContent>
         </Card>
       </div>
