@@ -21,6 +21,7 @@ import Dashboard from "./pages/Dashboard";
 import Applicants from "./pages/Applicants";
 import ApplicantForm from "./pages/ApplicantForm";
 import IDCardPreviewPage from "./pages/IDCardPreviewPage";
+import IDCards from "./pages/IDCards";
 
 const queryClient = new QueryClient();
 
@@ -71,6 +72,14 @@ const App = () => (
             } />
             
             {/* ID Card Routes */}
+            <Route path="/id-cards" element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <IDCards />
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
+            
             <Route path="/id-cards/:id/preview" element={
               <ProtectedRoute>
                 <DashboardLayout>

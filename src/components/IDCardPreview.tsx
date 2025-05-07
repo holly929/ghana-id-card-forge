@@ -52,14 +52,14 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
         </Button>
       </div>
       
-      {/* ID Card Front */}
-      <Card className="w-[350px] h-[220px] p-4 mb-6 bg-gradient-to-r from-ghana-green via-white to-white overflow-hidden relative">
+      {/* ID Card Front - Updated with more green color */}
+      <Card className="w-[350px] h-[220px] p-4 mb-6 bg-gradient-to-r from-ghana-green to-ghana-green/70 text-white overflow-hidden relative">
         {/* Security pattern */}
         <div className="absolute inset-0 opacity-5">
           {Array.from({ length: 20 }).map((_, i) => (
             <div 
               key={i} 
-              className="absolute text-ghana-green text-xs"
+              className="absolute text-white text-xs"
               style={{ 
                 left: `${Math.random() * 100}%`, 
                 top: `${Math.random() * 100}%`,
@@ -75,11 +75,11 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
           {/* Left side - Photo and logo */}
           <div className="w-1/3 flex flex-col justify-between items-center">
             <div className="flex items-center justify-center">
-              <Shield className="h-6 w-6 text-ghana-green" />
+              <Shield className="h-6 w-6 text-white" />
             </div>
             
-            <div className="w-24 h-28 bg-gray-200 border border-gray-300 flex items-center justify-center">
-              <span className="text-xs text-gray-400">Photo</span>
+            <div className="w-24 h-28 bg-white/20 border border-white/30 flex items-center justify-center">
+              <span className="text-xs text-white/70">Photo</span>
             </div>
             
             <div className="mt-2 flex flex-col items-center">
@@ -94,38 +94,38 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
           {/* Right side - Card details */}
           <div className="w-2/3 pl-2">
             <div className="text-center mb-2">
-              <h3 className="text-sm font-bold text-ghana-green">REPUBLIC OF GHANA</h3>
+              <h3 className="text-sm font-bold text-white">REPUBLIC OF GHANA</h3>
               <h4 className="text-xs font-bold">NON-CITIZEN IDENTITY CARD</h4>
             </div>
             
             <div className="space-y-1 text-xs">
               <div className="grid grid-cols-3 gap-1">
-                <span className="font-semibold text-ghana-black">Name:</span>
+                <span className="font-semibold text-white">Name:</span>
                 <span className="col-span-2">{applicant.fullName}</span>
               </div>
               
               <div className="grid grid-cols-3 gap-1">
-                <span className="font-semibold text-ghana-black">Nationality:</span>
+                <span className="font-semibold text-white">Nationality:</span>
                 <span className="col-span-2">{applicant.nationality}</span>
               </div>
               
               <div className="grid grid-cols-3 gap-1">
-                <span className="font-semibold text-ghana-black">Date of Birth:</span>
+                <span className="font-semibold text-white">Date of Birth:</span>
                 <span className="col-span-2">{formatDate(applicant.dateOfBirth)}</span>
               </div>
               
               <div className="grid grid-cols-3 gap-1">
-                <span className="font-semibold text-ghana-black">ID No:</span>
+                <span className="font-semibold text-white">ID No:</span>
                 <span className="col-span-2">{generateCardNumber()}</span>
               </div>
               
               <div className="grid grid-cols-3 gap-1">
-                <span className="font-semibold text-ghana-black">Passport No:</span>
+                <span className="font-semibold text-white">Passport No:</span>
                 <span className="col-span-2">{applicant.passportNumber}</span>
               </div>
               
               <div className="grid grid-cols-3 gap-1">
-                <span className="font-semibold text-ghana-black">Expiry Date:</span>
+                <span className="font-semibold text-white">Expiry Date:</span>
                 <span className="col-span-2">{formatDate(getExpiryDate())}</span>
               </div>
             </div>
@@ -140,14 +140,14 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
         </div>
       </Card>
       
-      {/* ID Card Back */}
-      <Card className="w-[350px] h-[220px] p-4 bg-gradient-to-r from-ghana-green via-white to-white overflow-hidden relative">
+      {/* ID Card Back - Updated with more green color */}
+      <Card className="w-[350px] h-[220px] p-4 bg-gradient-to-r from-ghana-green to-ghana-green/70 text-white overflow-hidden relative">
         {/* Security pattern */}
         <div className="absolute inset-0 opacity-5">
           {Array.from({ length: 20 }).map((_, i) => (
             <div 
               key={i} 
-              className="absolute text-ghana-green text-xs"
+              className="absolute text-white text-xs"
               style={{ 
                 left: `${Math.random() * 100}%`, 
                 top: `${Math.random() * 100}%`,
@@ -161,32 +161,32 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
         
         <div className="relative z-10 flex flex-col h-full">
           <div className="text-center mb-4">
-            <h3 className="text-sm font-bold text-ghana-green">GHANA IMMIGRATION SERVICE</h3>
+            <h3 className="text-sm font-bold text-white">GHANA IMMIGRATION SERVICE</h3>
             <p className="text-xs">This card remains the property of the Ghana Immigration Service</p>
           </div>
           
           <div className="space-y-1 text-xs">
             <div className="grid grid-cols-3 gap-1">
-              <span className="font-semibold text-ghana-black">Occupation:</span>
+              <span className="font-semibold text-white">Occupation:</span>
               <span className="col-span-2">{applicant.occupation || 'Not specified'}</span>
             </div>
             
             <div className="grid grid-cols-3 gap-1">
-              <span className="font-semibold text-ghana-black">Date of Issue:</span>
+              <span className="font-semibold text-white">Date of Issue:</span>
               <span className="col-span-2">{formatDate(new Date().toISOString().split('T')[0])}</span>
             </div>
           </div>
           
-          <div className="mt-4 border-t pt-2">
+          <div className="mt-4 border-t border-white/20 pt-2">
             <p className="text-xs text-center">If found, please return to the nearest Ghana Immigration Service office</p>
           </div>
           
           <div className="mt-auto flex justify-between items-end">
-            <div className="w-1/3 border-t border-gray-400 pt-1 text-center">
+            <div className="w-1/3 border-t border-white/40 pt-1 text-center">
               <p className="text-xs">Holder's Signature</p>
             </div>
             
-            <div className="w-1/3 border-t border-gray-400 pt-1 text-center">
+            <div className="w-1/3 border-t border-white/40 pt-1 text-center">
               <p className="text-xs">Issuing Officer</p>
             </div>
           </div>
