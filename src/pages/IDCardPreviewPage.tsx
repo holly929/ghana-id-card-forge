@@ -1,0 +1,171 @@
+
+import React from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowLeft } from 'lucide-react';
+import IDCardPreview from '@/components/IDCardPreview';
+
+// Mock data for applicants
+const mockApplicants = [
+  {
+    id: '1',
+    fullName: 'Ahmed Mohammed',
+    nationality: 'Egyptian',
+    passportNumber: 'A12345678',
+    dateOfBirth: '1985-03-15',
+    visaType: 'Work',
+    status: 'approved',
+    dateCreated: '2023-07-10',
+    occupation: 'Engineer',
+  },
+  {
+    id: '2',
+    fullName: 'Maria Sanchez',
+    nationality: 'Mexican',
+    passportNumber: 'B87654321',
+    dateOfBirth: '1990-11-22',
+    visaType: 'Student',
+    status: 'pending',
+    dateCreated: '2023-08-05',
+    occupation: 'Student',
+  },
+  {
+    id: '3',
+    fullName: 'John Smith',
+    nationality: 'American',
+    passportNumber: 'C45678912',
+    dateOfBirth: '1978-06-30',
+    visaType: 'Tourist',
+    status: 'rejected',
+    dateCreated: '2023-08-15',
+    occupation: 'Consultant',
+  },
+  {
+    id: '4',
+    fullName: 'Li Wei',
+    nationality: 'Chinese',
+    passportNumber: 'D98765432',
+    dateOfBirth: '1992-09-18',
+    visaType: 'Business',
+    status: 'approved',
+    dateCreated: '2023-08-20',
+    occupation: 'Business Owner',
+  },
+  {
+    id: '5',
+    fullName: 'Amit Patel',
+    nationality: 'Indian',
+    passportNumber: 'E12378945',
+    dateOfBirth: '1983-12-10',
+    visaType: 'Work',
+    status: 'pending',
+    dateCreated: '2023-08-25',
+    occupation: 'Software Developer',
+  },
+];
+
+const IDCardPreviewPage: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  
+  const applicant = mockApplicants.find(a => a.id === id);
+  
+  if (!applicant) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8">
+        <h1 className="text-2xl font-bold mb-4">Applicant Not Found</h1>
+        <p className="mb-6">The applicant you're looking for could not be found.</p>
+        <Button onClick={() => navigate('/applicants')}>
+          Return to Applicants
+        </Button>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-2">
+        <Button 
+          variant="ghost" 
+          size="icon"
+          onClick={() => navigate('/applicants')}
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-800">ID Card Preview</h1>
+          <p className="text-gray-600">
+            Preview the ID card for {applicant.fullName}
+          </p>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>ID Card Preview</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <IDCardPreview applicant={applicant} />
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Applicant Information</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Full Name</h3>
+                  <p>{applicant.fullName}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Nationality</h3>
+                  <p>{applicant.nationality}</p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Date of Birth</h3>
+                  <p>{new Date(applicant.dateOfBirth).toLocaleDateString()}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Passport Number</h3>
+                  <p>{applicant.passportNumber}</p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Visa Type</h3>
+                  <p>{applicant.visaType}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Occupation</h3>
+                  <p>{applicant.occupation}</p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Status</h3>
+                  <p className="capitalize">{applicant.status}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Date Created</h3>
+                  <p>{new Date(applicant.dateCreated).toLocaleDateString()}</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+export default IDCardPreviewPage;

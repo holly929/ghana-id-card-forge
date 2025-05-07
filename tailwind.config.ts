@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -24,8 +25,14 @@ export default {
 				ring: 'hsl(var(--ring))',
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
+				ghana: {
+					red: '#EF3340',
+					yellow: '#FFDA44',
+					green: '#009739',
+					black: '#000000',
+				},
 				primary: {
-					DEFAULT: 'hsl(var(--primary))',
+					DEFAULT: '#0F4C81',
 					foreground: 'hsl(var(--primary-foreground))'
 				},
 				secondary: {
