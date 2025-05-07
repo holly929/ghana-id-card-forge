@@ -17,7 +17,7 @@ import {
   TabsList, 
   TabsTrigger 
 } from '@/components/ui/tabs';
-import { Settings, Shield } from 'lucide-react';
+import { Settings as SettingsIcon, Shield } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 const Settings: React.FC = () => {
