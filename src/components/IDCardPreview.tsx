@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Shield, Printer, Download, Upload, Camera, Edit, Save } from 'lucide-react';
+import { Shield, Printer, Download, Upload, Camera, Edit, Save, View } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from "sonner";
@@ -18,10 +19,11 @@ interface IDCardPreviewProps {
     id: string;
     fullName: string;
     nationality: string;
-    passportNumber: string;
+    passportNumber?: string;
     dateOfBirth: string;
     visaType: string;
     occupation?: string;
+    photo?: string | null;
   };
 }
 
@@ -82,11 +84,17 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
       setFooter(savedFooter);
     }
     
-    const savedPhoto = localStorage.getItem(`applicantPhoto_${applicant.id}`);
-    if (savedPhoto) {
-      setPhoto(savedPhoto);
+    // Load applicant photo if available
+    if (applicant && applicant.photo) {
+      setPhoto(applicant.photo);
+    } else {
+      // Try loading from localStorage as a fallback
+      const savedPhoto = localStorage.getItem(`applicantPhoto_${applicant.id}`);
+      if (savedPhoto) {
+        setPhoto(savedPhoto);
+      }
     }
-  }, [applicant.id]);
+  }, [applicant]);
   
   // Save settings to localStorage
   const saveSettings = () => {
@@ -153,18 +161,42 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = () => {
-        const result = reader.result as string;
-        setPhoto(result);
-        // Save photo for this specific applicant
-        localStorage.setItem(`applicantPhoto_${applicant.id}`, result);
-        toast.success("Photo uploaded successfully");
+      reader.onload = (event) => {
+        const result = event.target?.result as string;
+        if (result) {
+          setPhoto(result);
+          // Save photo for this specific applicant
+          localStorage.setItem(`applicantPhoto_${applicant.id}`, result);
+          // Update the applicant data in localStorage too
+          updateApplicantPhotoInStorage(applicant.id, result);
+          toast.success("Photo uploaded successfully");
+        }
       };
       reader.readAsDataURL(file);
     }
   };
   
-  // Handle printing
+  // Update applicant photo in the localStorage applicants array
+  const updateApplicantPhotoInStorage = (id: string, photoData: string) => {
+    try {
+      const storedApplicants = localStorage.getItem('applicants');
+      if (storedApplicants) {
+        const applicants = JSON.parse(storedApplicants);
+        const updatedApplicants = applicants.map((app: any) => {
+          if (app.id === id) {
+            return { ...app, photo: photoData };
+          }
+          return app;
+        });
+        localStorage.setItem('applicants', JSON.stringify(updatedApplicants));
+        console.log("Updated applicant photo in storage");
+      }
+    } catch (error) {
+      console.error("Error updating applicant photo in storage:", error);
+    }
+  };
+  
+  // Handle printing with different formats
   const handlePrint = () => {
     // Create a new window for printing
     const printWindow = window.open('', '_blank', 'width=800,height=600');
@@ -218,6 +250,26 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
                 position: relative;
                 overflow: hidden;
               }
+              .logo-container {
+                text-align: center;
+                margin-bottom: 10px;
+              }
+              .logo-image {
+                max-height: 40px;
+                max-width: 100px;
+              }
+              .photo-container {
+                width: 80px;
+                height: 100px;
+                border: 2px solid white;
+                overflow: hidden;
+                margin: 5px auto;
+              }
+              .photo-image {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+              }
               .color-band {
                 position: absolute;
                 bottom: 0;
@@ -252,10 +304,35 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
           <div class="card-container">
             <h2 style="text-align:center;margin-bottom:20px;">${applicant.fullName} - ID Card</h2>
             <div class="card-front">
-              <!-- Front card content would go here -->
-              <div style="text-align:center">
-                <h3>${cardLabels.title}</h3>
-                <p>${cardLabels.subtitle}</p>
+              <!-- Front card content with photo and logo -->
+              <div style="display: flex; height: 100%;">
+                <div style="width: 33%; display: flex; flex-direction: column; align-items: center; justify-content: space-between;">
+                  <div class="logo-container">
+                    ${logo ? `<img src="${logo}" alt="Logo" class="logo-image" />` : ''}
+                  </div>
+                  <div class="photo-container">
+                    ${photo ? `<img src="${photo}" alt="Applicant" class="photo-image" />` : ''}
+                  </div>
+                  <div style="margin-top: 5px; text-align: center;">
+                    <div style="background: #fcd116; color: black; padding: 3px 8px; border-radius: 2px; font-weight: bold; font-size: 10px;">
+                      ${applicant.visaType.toUpperCase()}
+                    </div>
+                  </div>
+                </div>
+                <div style="width: 67%; padding-left: 10px;">
+                  <div style="text-align: center; margin-bottom: 10px;">
+                    <div style="font-weight: bold; font-size: 12px;">${cardLabels.title}</div>
+                    <div style="font-size: 10px;">${cardLabels.subtitle}</div>
+                  </div>
+                  <div style="font-size: 10px;">
+                    <div><strong>${cardLabels.name}</strong> ${applicant.fullName}</div>
+                    <div><strong>${cardLabels.nationality}</strong> ${applicant.nationality}</div>
+                    <div><strong>${cardLabels.dateOfBirth}</strong> ${formatDate(applicant.dateOfBirth)}</div>
+                    <div><strong>${cardLabels.idNo}</strong> ${generateCardNumber()}</div>
+                    <div><strong>${cardLabels.passportNo}</strong> ${applicant.passportNumber || 'Not provided'}</div>
+                    <div><strong>${cardLabels.expiryDate}</strong> ${formatDate(getExpiryDate())}</div>
+                  </div>
+                </div>
               </div>
               <div class="color-band">
                 <div class="red-band"></div>
@@ -265,7 +342,26 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
             </div>
             <div class="page-break"></div>
             <div class="card-back">
-              <!-- Back card content would go here -->
+              <!-- Back card content -->
+              <div style="text-align: center; margin-bottom: 10px;">
+                <div style="font-weight: bold; font-size: 12px;">${cardLabels.title}</div>
+                <div style="font-size: 9px;">This card remains the property of the Ghana Immigration Service</div>
+              </div>
+              <div style="font-size: 10px; margin-bottom: 10px;">
+                <div><strong>${cardLabels.occupation}</strong> ${applicant.occupation || 'Not specified'}</div>
+                <div><strong>${cardLabels.issueDate}</strong> ${formatDate(new Date().toISOString().split('T')[0])}</div>
+              </div>
+              <div style="border-top: 1px solid rgba(255,255,255,0.3); padding-top: 5px; margin-top: 10px;">
+                <div style="text-align: center; font-size: 9px;">${footer}</div>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-top: auto; position: absolute; bottom: 25px; left: 10px; right: 10px;">
+                <div style="width: 80px; border-top: 1px solid rgba(255,255,255,0.5); text-align: center; font-size: 8px; padding-top: 2px;">
+                  ${cardLabels.holderSignature}
+                </div>
+                <div style="width: 80px; border-top: 1px solid rgba(255,255,255,0.5); text-align: center; font-size: 8px; padding-top: 2px;">
+                  ${cardLabels.issuingOfficer}
+                </div>
+              </div>
               <div class="color-band">
                 <div class="red-band"></div>
                 <div class="yellow-band"></div>
@@ -311,7 +407,7 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
               </SelectContent>
             </Select>
           </div>
-          <Button variant="outline" className={`${isMobile ? 'w-full' : ''}`}>
+          <Button variant="outline" className={`${isMobile ? 'w-full' : ''}`} onClick={handlePrint}>
             <Download className="mr-2 h-4 w-4" />
             Download PDF
           </Button>
@@ -557,7 +653,7 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
                 
                 <div className="grid grid-cols-3 gap-1">
                   <span className="font-semibold text-white">{cardLabels.passportNo}</span>
-                  <span className="col-span-2">{applicant.passportNumber}</span>
+                  <span className="col-span-2">{applicant.passportNumber || 'Not provided'}</span>
                 </div>
                 
                 <div className="grid grid-cols-3 gap-1">

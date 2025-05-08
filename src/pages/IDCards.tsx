@@ -19,15 +19,22 @@ import {
 } from '@/components/ui/table';
 import { 
   Search, 
-  CreditCard,
   Eye,
-  Printer
+  Printer,
+  View
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from "sonner";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
 
-// Reusing the same mock data from Applicants page
+// Default mock data
 const mockApplicants = [
   {
     id: '1',
@@ -83,13 +90,35 @@ const mockApplicants = [
 
 const IDCards: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [printFormat, setPrintFormat] = useState('standard');
   const isMobile = useIsMobile();
+  const [applicants, setApplicants] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  // Load applicants from localStorage
+  useEffect(() => {
+    setLoading(true);
+    const storedApplicants = localStorage.getItem('applicants');
+    if (storedApplicants) {
+      try {
+        const parsedApplicants = JSON.parse(storedApplicants);
+        setApplicants(parsedApplicants);
+      } catch (error) {
+        console.error('Error parsing applicants data:', error);
+        setApplicants(mockApplicants);
+        toast.error('Failed to load applicants data');
+      }
+    } else {
+      setApplicants(mockApplicants);
+    }
+    setLoading(false);
+  }, []);
   
   // Filter applicants based on search term
-  const filteredApplicants = mockApplicants.filter(applicant => 
+  const filteredApplicants = applicants.filter(applicant => 
     applicant.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     applicant.nationality.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    applicant.passportNumber.toLowerCase().includes(searchTerm.toLowerCase())
+    (applicant.passportNumber && applicant.passportNumber.toLowerCase().includes(searchTerm.toLowerCase()))
   );
   
   // Only show approved applicants for ID cards
@@ -97,8 +126,28 @@ const IDCards: React.FC = () => {
     applicant.status === 'approved'
   );
 
-  // Handle printing
+  // Handle printing with different formats
   const handlePrint = (applicant: any) => {
+    // Get logo if available
+    const logo = localStorage.getItem('systemLogo');
+    // Get photo if available
+    const photo = localStorage.getItem(`applicantPhoto_${applicant.id}`) || applicant.photo;
+    
+    // Get scale based on the print format
+    let scale = 1;
+    switch(printFormat) {
+      case 'small':
+        scale = 0.7;
+        break;
+      case 'large':
+        scale = 1.5;
+        break;
+      case 'standard':
+      default:
+        scale = 1;
+        break;
+    }
+    
     // Create a new window for printing
     const printWindow = window.open('', '_blank', 'width=800,height=600');
     if (!printWindow) {
@@ -121,7 +170,9 @@ const IDCards: React.FC = () => {
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                margin-bottom: 20px;
+                transform: scale(${scale});
+                transform-origin: top center;
+                margin-bottom: ${scale > 1 ? '100px' : '20px'};
               }
               .card {
                 width: 350px;
@@ -133,6 +184,26 @@ const IDCards: React.FC = () => {
                 margin-bottom: 20px;
                 position: relative;
                 overflow: hidden;
+              }
+              .logo-container {
+                text-align: center;
+                margin-bottom: 10px;
+              }
+              .logo-image {
+                max-height: 40px;
+                max-width: 100px;
+              }
+              .photo-container {
+                width: 80px;
+                height: 100px;
+                border: 2px solid white;
+                overflow: hidden;
+                margin: 5px auto;
+              }
+              .photo-image {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
               }
               .color-band {
                 position: absolute;
@@ -168,10 +239,35 @@ const IDCards: React.FC = () => {
           <div class="card-container">
             <h2 style="text-align:center;margin-bottom:20px;">${applicant.fullName} - ID Card</h2>
             <div class="card">
-              <!-- Simplified card content for printing -->
-              <div style="text-align:center">
-                <h3>REPUBLIC OF GHANA</h3>
-                <p>NON-CITIZEN IDENTITY CARD</p>
+              <!-- Card content with photo and logo -->
+              <div style="display: flex; height: 100%;">
+                <div style="width: 33%; display: flex; flex-direction: column; align-items: center; justify-content: space-between;">
+                  <div class="logo-container">
+                    ${logo ? `<img src="${logo}" alt="Logo" class="logo-image" />` : ''}
+                  </div>
+                  <div class="photo-container">
+                    ${photo ? `<img src="${photo}" alt="Applicant" class="photo-image" />` : ''}
+                  </div>
+                  <div style="margin-top: 5px; text-align: center;">
+                    <div style="background: #fcd116; color: black; padding: 3px 8px; border-radius: 2px; font-weight: bold; font-size: 10px;">
+                      ${applicant.visaType.toUpperCase()}
+                    </div>
+                  </div>
+                </div>
+                <div style="width: 67%; padding-left: 10px;">
+                  <div style="text-align: center; margin-bottom: 10px;">
+                    <div style="font-weight: bold; font-size: 12px;">REPUBLIC OF GHANA</div>
+                    <div style="font-size: 10px;">NON-CITIZEN IDENTITY CARD</div>
+                  </div>
+                  <div style="font-size: 10px;">
+                    <div><strong>Name:</strong> ${applicant.fullName}</div>
+                    <div><strong>Nationality:</strong> ${applicant.nationality}</div>
+                    <div><strong>Date of Birth:</strong> ${new Date(applicant.dateOfBirth).toLocaleDateString()}</div>
+                    <div><strong>ID No:</strong> GIS-${Math.floor(1000000 + Math.random() * 9000000)}</div>
+                    <div><strong>Passport No:</strong> ${applicant.passportNumber || 'Not provided'}</div>
+                    <div><strong>Expiry Date:</strong> ${new Date(new Date().setFullYear(new Date().getFullYear() + 2)).toLocaleDateString()}</div>
+                  </div>
+                </div>
               </div>
               <div class="color-band">
                 <div class="red-band"></div>
@@ -191,8 +287,19 @@ const IDCards: React.FC = () => {
     `);
     
     printWindow.document.close();
-    toast.success(`Printing ID card for ${applicant.fullName}`);
+    toast.success(`Printing ID card for ${applicant.fullName} in ${printFormat} format`);
   };
+  
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-center">
+          <h2 className="text-xl font-medium mb-2">Loading applicant data...</h2>
+          <p>Please wait</p>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="space-y-6">
@@ -208,8 +315,8 @@ const IDCards: React.FC = () => {
           <CardTitle>ID Cards</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="mb-4">
-            <div className="relative">
+          <div className="mb-4 flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-grow">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
               <Input
                 placeholder="Search by name, nationality, or passport number..."
@@ -217,6 +324,21 @@ const IDCards: React.FC = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
+            </div>
+            <div className="sm:w-[150px]">
+              <Select
+                value={printFormat}
+                onValueChange={setPrintFormat}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Print Format" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="small">Small</SelectItem>
+                  <SelectItem value="standard">Standard</SelectItem>
+                  <SelectItem value="large">Large</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
           
@@ -235,7 +357,7 @@ const IDCards: React.FC = () => {
                         <div>
                           <h3 className="font-medium">{applicant.fullName}</h3>
                           <p className="text-sm text-gray-500">{applicant.nationality}</p>
-                          <p className="text-sm">Passport: {applicant.passportNumber}</p>
+                          <p className="text-sm">Passport: {applicant.passportNumber || 'Not provided'}</p>
                           <p className="text-sm">Visa: {applicant.visaType}</p>
                         </div>
                         
@@ -258,7 +380,7 @@ const IDCards: React.FC = () => {
                           onClick={() => handlePrint(applicant)}
                         >
                           <Printer className="h-4 w-4 mr-1" />
-                          Print
+                          Print {printFormat}
                         </Button>
                       </div>
                     </CardContent>
@@ -292,7 +414,7 @@ const IDCards: React.FC = () => {
                       <TableRow key={applicant.id}>
                         <TableCell className="font-medium">{applicant.fullName}</TableCell>
                         <TableCell>{applicant.nationality}</TableCell>
-                        <TableCell>{applicant.passportNumber}</TableCell>
+                        <TableCell>{applicant.passportNumber || "Not provided"}</TableCell>
                         <TableCell>{applicant.visaType}</TableCell>
                         <TableCell>
                           <Badge className="bg-ghana-green text-white hover:bg-ghana-green/80">

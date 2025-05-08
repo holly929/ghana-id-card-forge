@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Card, 
@@ -16,7 +17,7 @@ import {
   TabsList, 
   TabsTrigger 
 } from '@/components/ui/tabs';
-import { Settings as SettingsIcon, Shield, Upload, Image, Database, UserPlus } from 'lucide-react';
+import { Settings as SettingsIcon, Shield, Upload, Download, Database, UserPlus, View } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { 
   Dialog,
@@ -93,11 +94,22 @@ const Settings: React.FC = () => {
     },
   });
   
-  // Load logo from localStorage on mount
+  // Load logo from localStorage on mount and other settings
   useEffect(() => {
+    // Load system logo
     const savedLogo = localStorage.getItem('systemLogo');
     if (savedLogo) {
       setLogoPreview(savedLogo);
+    }
+    
+    // Load saved users
+    const savedUsers = localStorage.getItem('systemUsers');
+    if (savedUsers) {
+      try {
+        setUsers(JSON.parse(savedUsers));
+      } catch (e) {
+        console.error("Error loading users:", e);
+      }
     }
     
     // Load saved backups
@@ -138,7 +150,7 @@ const Settings: React.FC = () => {
 
   const handleSaveGeneral = () => {
     // Save logo to localStorage if available
-    if (logoFile && logoPreview) {
+    if (logoPreview) {
       localStorage.setItem('systemLogo', logoPreview);
       toast.success("Logo updated and settings saved successfully");
     } else {
@@ -161,8 +173,14 @@ const Settings: React.FC = () => {
       setLogoFile(file);
       
       const reader = new FileReader();
-      reader.onload = () => {
-        setLogoPreview(reader.result as string);
+      reader.onload = (event) => {
+        const result = event.target?.result as string;
+        if (result) {
+          setLogoPreview(result);
+          // Save immediately for instant feedback
+          localStorage.setItem('systemLogo', result);
+          toast.success("Logo uploaded successfully");
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -171,7 +189,7 @@ const Settings: React.FC = () => {
   // Handle adding a new user
   const onSubmitAddUser = (data: z.infer<typeof userFormSchema>) => {
     const newUser = {
-      id: `${users.length + 1}`,
+      id: `${Date.now()}`, // Using timestamp as unique ID
       username: data.username,
       email: data.email,
       role: data.role
@@ -217,18 +235,25 @@ const Settings: React.FC = () => {
       cardFooter: localStorage.getItem('cardFooter'),
       systemLogo: localStorage.getItem('systemLogo'),
       systemUsers: localStorage.getItem('systemUsers'),
+      applicants: localStorage.getItem('applicants'),
       // Add any other data you want to backup
     };
     
     // Store backup data
-    localStorage.setItem(`backup-${backupId}`, JSON.stringify(backupData));
+    localStorage.setItem(backupId, JSON.stringify(backupData));
+    
+    // Calculate approximate size
+    const backupSize = JSON.stringify(backupData).length / 1024; // Size in KB
+    const formattedSize = backupSize > 1024 ? 
+      `${(backupSize / 1024).toFixed(2)} MB` : 
+      `${backupSize.toFixed(2)} KB`;
     
     // Update backup list
     const newBackup = {
       id: backupId,
       name: backupName,
       date: timestamp.toISOString(),
-      size: '0.2 MB' // Just a sample size
+      size: formattedSize
     };
     
     const updatedBackups = [...backups, newBackup];
@@ -241,7 +266,7 @@ const Settings: React.FC = () => {
   
   // Restore from a backup
   const restoreFromBackup = (backupId: string) => {
-    const backupData = localStorage.getItem(`backup-${backupId}`);
+    const backupData = localStorage.getItem(backupId);
     if (backupData) {
       try {
         const parsedData = JSON.parse(backupData);
@@ -249,12 +274,20 @@ const Settings: React.FC = () => {
         // Restore each item
         if (parsedData.cardLabels) localStorage.setItem('cardLabels', parsedData.cardLabels);
         if (parsedData.cardFooter) localStorage.setItem('cardFooter', parsedData.cardFooter);
-        if (parsedData.systemLogo) localStorage.setItem('systemLogo', parsedData.systemLogo);
-        if (parsedData.systemUsers) localStorage.setItem('systemUsers', parsedData.systemUsers);
-        
-        // Update logo preview if needed
         if (parsedData.systemLogo) {
+          localStorage.setItem('systemLogo', parsedData.systemLogo);
           setLogoPreview(parsedData.systemLogo);
+        }
+        if (parsedData.systemUsers) {
+          localStorage.setItem('systemUsers', parsedData.systemUsers);
+          try {
+            setUsers(JSON.parse(parsedData.systemUsers));
+          } catch (e) {
+            console.error("Error parsing users from backup:", e);
+          }
+        }
+        if (parsedData.applicants) {
+          localStorage.setItem('applicants', parsedData.applicants);
         }
         
         toast.success("System restored successfully from backup");
@@ -265,6 +298,19 @@ const Settings: React.FC = () => {
     } else {
       toast.error("Backup not found");
     }
+  };
+
+  // Delete a backup
+  const deleteBackup = (backupId: string) => {
+    // Remove from localStorage
+    localStorage.removeItem(backupId);
+    
+    // Update backups list
+    const updatedBackups = backups.filter(backup => backup.id !== backupId);
+    setBackups(updatedBackups);
+    localStorage.setItem('systemBackups', JSON.stringify(updatedBackups));
+    
+    toast.success("Backup deleted successfully");
   };
 
   return (
@@ -313,7 +359,7 @@ const Settings: React.FC = () => {
                         className="max-w-full max-h-full object-contain" 
                       />
                     ) : (
-                      <Image className="h-8 w-8 text-gray-300" />
+                      <View className="h-8 w-8 text-gray-300" />
                     )}
                   </div>
                   <label className="cursor-pointer">
@@ -329,6 +375,19 @@ const Settings: React.FC = () => {
                       onChange={handleLogoUpload} 
                     />
                   </label>
+                  {logoPreview && (
+                    <Button 
+                      variant="outline" 
+                      type="button"
+                      onClick={() => {
+                        setLogoPreview(null);
+                        localStorage.removeItem('systemLogo');
+                        toast.success("Logo removed");
+                      }}
+                    >
+                      Remove
+                    </Button>
+                  )}
                 </div>
                 <p className="text-xs text-gray-500">
                   Upload a logo to be displayed on ID cards and system interfaces
@@ -428,30 +487,36 @@ const Settings: React.FC = () => {
               </Dialog>
             </CardHeader>
             <CardContent>
-              <div className="rounded-md border">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b bg-muted/50">
-                      <th className="p-2 text-left font-medium">Username</th>
-                      <th className="p-2 text-left font-medium">Email</th>
-                      <th className="p-2 text-left font-medium">Role</th>
-                      <th className="p-2 text-right font-medium">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {users.map((user) => (
-                      <tr key={user.id} className="border-b">
-                        <td className="p-2">{user.username}</td>
-                        <td className="p-2">{user.email}</td>
-                        <td className="p-2 capitalize">{user.role}</td>
-                        <td className="p-2 text-right">
-                          <Button variant="ghost" size="sm">Edit</Button>
-                        </td>
+              {users.length === 0 ? (
+                <div className="text-center p-6 text-gray-500">
+                  No users found. Add your first user using the button above.
+                </div>
+              ) : (
+                <div className="rounded-md border">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b bg-muted/50">
+                        <th className="p-2 text-left font-medium">Username</th>
+                        <th className="p-2 text-left font-medium">Email</th>
+                        <th className="p-2 text-left font-medium">Role</th>
+                        <th className="p-2 text-right font-medium">Actions</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {users.map((user) => (
+                        <tr key={user.id} className="border-b">
+                          <td className="p-2">{user.username}</td>
+                          <td className="p-2">{user.email}</td>
+                          <td className="p-2 capitalize">{user.role}</td>
+                          <td className="p-2 text-right">
+                            <Button variant="ghost" size="sm">Edit</Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -539,13 +604,23 @@ const Settings: React.FC = () => {
                             <td className="p-2">{new Date(backup.date).toLocaleString()}</td>
                             <td className="p-2">{backup.size}</td>
                             <td className="p-2 text-right">
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => restoreFromBackup(backup.id)}
-                              >
-                                Restore
-                              </Button>
+                              <div className="flex gap-2 justify-end">
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => restoreFromBackup(backup.id)}
+                                >
+                                  Restore
+                                </Button>
+                                <Button 
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-red-500 hover:text-red-700"
+                                  onClick={() => deleteBackup(backup.id)}
+                                >
+                                  Delete
+                                </Button>
+                              </div>
                             </td>
                           </tr>
                         ))

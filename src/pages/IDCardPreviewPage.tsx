@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, View } from 'lucide-react';
 import IDCardPreview from '@/components/IDCardPreview';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from 'sonner';
@@ -79,21 +79,27 @@ const IDCardPreviewPage: React.FC = () => {
   
   const [applicants, setApplicants] = useState<any[]>([]);
   const [applicant, setApplicant] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   
   // Load applicants from localStorage
   useEffect(() => {
+    setLoading(true);
     const storedApplicants = localStorage.getItem('applicants');
     if (storedApplicants) {
       try {
-        setApplicants(JSON.parse(storedApplicants));
+        const parsedApplicants = JSON.parse(storedApplicants);
+        console.log('Loaded applicants from storage:', parsedApplicants);
+        setApplicants(parsedApplicants);
       } catch (error) {
         console.error('Error parsing applicants data:', error);
         setApplicants(defaultApplicants);
         toast.error('Failed to load applicant data');
       }
     } else {
+      console.log('No stored applicants found, using default data');
       setApplicants(defaultApplicants);
     }
+    setLoading(false);
   }, []);
   
   // Find applicant by ID after applicants are loaded
@@ -101,20 +107,34 @@ const IDCardPreviewPage: React.FC = () => {
     if (applicants.length > 0 && id) {
       const found = applicants.find(a => a.id === id);
       if (found) {
+        console.log('Found applicant:', found);
+        
+        // Load saved photo from localStorage if not already in the applicant data
+        if (!found.photo) {
+          const savedPhoto = localStorage.getItem(`applicantPhoto_${id}`);
+          if (savedPhoto) {
+            found.photo = savedPhoto;
+          }
+        }
+        
         setApplicant(found);
+      } else {
+        console.log('Applicant not found with ID:', id);
+        toast.error(`Applicant with ID ${id} not found`);
       }
     }
   }, [applicants, id]);
   
-  // Load saved photo from localStorage if available
-  useEffect(() => {
-    if (applicant) {
-      const savedPhoto = localStorage.getItem(`applicantPhoto_${applicant.id}`);
-      if (savedPhoto) {
-        setApplicant(prev => prev ? {...prev, photo: savedPhoto} : prev);
-      }
-    }
-  }, [applicant?.id]);
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-center">
+          <h2 className="text-xl font-medium mb-2">Loading applicant data...</h2>
+          <p>Please wait</p>
+        </div>
+      </div>
+    );
+  }
   
   if (!applicant) {
     return (
@@ -182,7 +202,7 @@ const IDCardPreviewPage: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Occupation</h3>
-                  <p>{applicant.occupation}</p>
+                  <p>{applicant.occupation || "Not provided"}</p>
                 </div>
               </div>
               
@@ -196,6 +216,19 @@ const IDCardPreviewPage: React.FC = () => {
                   <p>{new Date(applicant.dateCreated).toLocaleDateString()}</p>
                 </div>
               </div>
+              
+              {applicant.photo && (
+                <div className="mt-4">
+                  <h3 className="text-sm font-medium text-gray-500 mb-2">Photo</h3>
+                  <div className="w-32 h-40 border overflow-hidden">
+                    <img 
+                      src={applicant.photo} 
+                      alt="Applicant" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
