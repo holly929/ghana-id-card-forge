@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Card, 
@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { toast } from "sonner";
 
 // Reusing the same mock data from Applicants page
 const mockApplicants = [
@@ -95,6 +96,103 @@ const IDCards: React.FC = () => {
   const approvedApplicants = filteredApplicants.filter(applicant => 
     applicant.status === 'approved'
   );
+
+  // Handle printing
+  const handlePrint = (applicant: any) => {
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank', 'width=800,height=600');
+    if (!printWindow) {
+      toast.error("Pop-up blocked. Please allow pop-ups to print.");
+      return;
+    }
+    
+    // Add CSS and content to the new window
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>${applicant.fullName} - ID Card</title>
+          <style>
+            @media print {
+              body {
+                margin: 0;
+                padding: 20px;
+              }
+              .card-container {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                margin-bottom: 20px;
+              }
+              .card {
+                width: 350px;
+                height: 220px;
+                background: linear-gradient(to right, #006b3f, #006b3f99);
+                color: white;
+                padding: 16px;
+                border-radius: 8px;
+                margin-bottom: 20px;
+                position: relative;
+                overflow: hidden;
+              }
+              .color-band {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 16px;
+                display: flex;
+              }
+              .color-band div {
+                flex: 1;
+              }
+              .red-band {
+                background-color: #ce1126;
+              }
+              .yellow-band {
+                background-color: #fcd116;
+              }
+              .green-band {
+                background-color: #006b3f;
+              }
+              .page-break {
+                page-break-after: always;
+              }
+              @page {
+                size: auto;
+                margin: 10mm;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="card-container">
+            <h2 style="text-align:center;margin-bottom:20px;">${applicant.fullName} - ID Card</h2>
+            <div class="card">
+              <!-- Simplified card content for printing -->
+              <div style="text-align:center">
+                <h3>REPUBLIC OF GHANA</h3>
+                <p>NON-CITIZEN IDENTITY CARD</p>
+              </div>
+              <div class="color-band">
+                <div class="red-band"></div>
+                <div class="yellow-band"></div>
+                <div class="green-band"></div>
+              </div>
+            </div>
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+              setTimeout(function() { window.close(); }, 500);
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    
+    printWindow.document.close();
+    toast.success(`Printing ID card for ${applicant.fullName}`);
+  };
   
   return (
     <div className="space-y-6">
@@ -153,7 +251,12 @@ const IDCards: React.FC = () => {
                             Preview
                           </Link>
                         </Button>
-                        <Button variant="outline" size="sm" className="w-full">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="w-full"
+                          onClick={() => handlePrint(applicant)}
+                        >
                           <Printer className="h-4 w-4 mr-1" />
                           Print
                         </Button>
@@ -204,7 +307,11 @@ const IDCards: React.FC = () => {
                                 Preview
                               </Link>
                             </Button>
-                            <Button variant="outline" size="sm">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handlePrint(applicant)}
+                            >
                               <Printer className="h-4 w-4 mr-1" />
                               Print
                             </Button>

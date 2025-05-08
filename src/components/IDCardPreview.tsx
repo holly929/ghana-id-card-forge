@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -6,6 +5,13 @@ import { Shield, Printer, Download, Upload, Camera, Edit, Save } from 'lucide-re
 import { Input } from '@/components/ui/input';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from "sonner";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue
+} from "@/components/ui/select";
 
 interface IDCardPreviewProps {
   applicant: {
@@ -51,6 +57,9 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
   // State for logo
   const [logo, setLogo] = useState<string | null>(null);
   
+  // State for print format
+  const [printFormat, setPrintFormat] = useState('standard');
+  
   // Load system logo and settings from localStorage
   useEffect(() => {
     const savedLogo = localStorage.getItem('systemLogo');
@@ -60,14 +69,24 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
     
     const savedLabels = localStorage.getItem('cardLabels');
     if (savedLabels) {
-      setCardLabels(JSON.parse(savedLabels));
+      try {
+        const parsedLabels = JSON.parse(savedLabels);
+        setCardLabels(parsedLabels);
+      } catch (e) {
+        console.error("Error parsing card labels:", e);
+      }
     }
     
     const savedFooter = localStorage.getItem('cardFooter');
     if (savedFooter) {
       setFooter(savedFooter);
     }
-  }, []);
+    
+    const savedPhoto = localStorage.getItem(`applicantPhoto_${applicant.id}`);
+    if (savedPhoto) {
+      setPhoto(savedPhoto);
+    }
+  }, [applicant.id]);
   
   // Save settings to localStorage
   const saveSettings = () => {
@@ -135,11 +154,137 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
     if (file) {
       const reader = new FileReader();
       reader.onload = () => {
-        setPhoto(reader.result as string);
+        const result = reader.result as string;
+        setPhoto(result);
+        // Save photo for this specific applicant
+        localStorage.setItem(`applicantPhoto_${applicant.id}`, result);
         toast.success("Photo uploaded successfully");
       };
       reader.readAsDataURL(file);
     }
+  };
+  
+  // Handle printing
+  const handlePrint = () => {
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank', 'width=800,height=600');
+    if (!printWindow) {
+      toast.error("Pop-up blocked. Please allow pop-ups to print.");
+      return;
+    }
+    
+    // Get scale based on the print format
+    let scale = 1;
+    switch(printFormat) {
+      case 'small':
+        scale = 0.7;
+        break;
+      case 'large':
+        scale = 1.5;
+        break;
+      case 'standard':
+      default:
+        scale = 1;
+        break;
+    }
+    
+    // Add CSS and content to the new window
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>ID Card Print</title>
+          <style>
+            @media print {
+              body {
+                margin: 0;
+                padding: 20px;
+              }
+              .card-container {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                transform: scale(${scale});
+                transform-origin: top center;
+                margin-bottom: ${scale > 1 ? '100px' : '20px'};
+              }
+              .card-front, .card-back {
+                width: 350px;
+                height: 220px;
+                background: linear-gradient(to right, #006b3f, #006b3f99);
+                color: white;
+                padding: 16px;
+                border-radius: 8px;
+                margin-bottom: 20px;
+                position: relative;
+                overflow: hidden;
+              }
+              .color-band {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 16px;
+                display: flex;
+              }
+              .color-band div {
+                flex: 1;
+              }
+              .red-band {
+                background-color: #ce1126;
+              }
+              .yellow-band {
+                background-color: #fcd116;
+              }
+              .green-band {
+                background-color: #006b3f;
+              }
+              .page-break {
+                page-break-after: always;
+              }
+              @page {
+                size: auto;
+                margin: 10mm;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="card-container">
+            <h2 style="text-align:center;margin-bottom:20px;">${applicant.fullName} - ID Card</h2>
+            <div class="card-front">
+              <!-- Front card content would go here -->
+              <div style="text-align:center">
+                <h3>${cardLabels.title}</h3>
+                <p>${cardLabels.subtitle}</p>
+              </div>
+              <div class="color-band">
+                <div class="red-band"></div>
+                <div class="yellow-band"></div>
+                <div class="green-band"></div>
+              </div>
+            </div>
+            <div class="page-break"></div>
+            <div class="card-back">
+              <!-- Back card content would go here -->
+              <div class="color-band">
+                <div class="red-band"></div>
+                <div class="yellow-band"></div>
+                <div class="green-band"></div>
+              </div>
+            </div>
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+              setTimeout(function() { window.close(); }, 500);
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    
+    printWindow.document.close();
+    toast.success(`Printing ID card in ${printFormat} format`);
   };
   
   return (
@@ -147,10 +292,25 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
       {/* Action Buttons - Now more responsive */}
       <div className="mb-6 flex flex-wrap items-center gap-2 justify-center w-full">
         <div className="flex flex-wrap gap-2 justify-center">
-          <Button className={`${isMobile ? 'w-full' : ''}`}>
-            <Printer className="mr-2 h-4 w-4" />
-            Print ID Card
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button onClick={handlePrint} className={`${isMobile ? 'w-full' : ''}`}>
+              <Printer className="mr-2 h-4 w-4" />
+              Print ID Card
+            </Button>
+            <Select
+              value={printFormat}
+              onValueChange={setPrintFormat}
+            >
+              <SelectTrigger className="w-[100px]">
+                <SelectValue placeholder="Size" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="small">Small</SelectItem>
+                <SelectItem value="standard">Standard</SelectItem>
+                <SelectItem value="large">Large</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <Button variant="outline" className={`${isMobile ? 'w-full' : ''}`}>
             <Download className="mr-2 h-4 w-4" />
             Download PDF

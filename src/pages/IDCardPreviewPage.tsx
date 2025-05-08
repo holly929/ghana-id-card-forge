@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,6 +19,7 @@ const mockApplicants = [
     status: 'approved',
     dateCreated: '2023-07-10',
     occupation: 'Engineer',
+    photo: null,
   },
   {
     id: '2',
@@ -30,6 +31,7 @@ const mockApplicants = [
     status: 'pending',
     dateCreated: '2023-08-05',
     occupation: 'Student',
+    photo: null,
   },
   {
     id: '3',
@@ -41,6 +43,7 @@ const mockApplicants = [
     status: 'rejected',
     dateCreated: '2023-08-15',
     occupation: 'Consultant',
+    photo: null,
   },
   {
     id: '4',
@@ -52,6 +55,7 @@ const mockApplicants = [
     status: 'approved',
     dateCreated: '2023-08-20',
     occupation: 'Business Owner',
+    photo: null,
   },
   {
     id: '5',
@@ -63,6 +67,7 @@ const mockApplicants = [
     status: 'pending',
     dateCreated: '2023-08-25',
     occupation: 'Software Developer',
+    photo: null,
   },
 ];
 
@@ -71,7 +76,17 @@ const IDCardPreviewPage: React.FC = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   
-  const applicant = mockApplicants.find(a => a.id === id);
+  const [applicant, setApplicant] = useState(mockApplicants.find(a => a.id === id));
+  
+  // Load saved photo from localStorage if available
+  useEffect(() => {
+    if (applicant) {
+      const savedPhoto = localStorage.getItem(`applicantPhoto_${applicant.id}`);
+      if (savedPhoto) {
+        setApplicant(prev => prev ? {...prev, photo: savedPhoto} : prev);
+      }
+    }
+  }, [id]);
   
   if (!applicant) {
     return (
