@@ -143,7 +143,7 @@ const IDCardPreviewPage: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Passport Number</h3>
-                  <p>{applicant.passportNumber}</p>
+                  <p>{applicant.passportNumber || "Not provided"}</p>
                 </div>
               </div>
               

@@ -152,7 +152,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false, applic
                     placeholder="Enter passport number"
                     value={formData.passportNumber}
                     onChange={handleInputChange}
-                    required
+                    // Removed required attribute to make passport optional
                   />
                 </div>
               </div>
@@ -207,10 +207,10 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false, applic
                 <Textarea 
                   id="address"
                   name="address"
-                  placeholder="Enter address"
+                  placeholder="Enter address (optional)"
                   value={formData.address}
                   onChange={handleInputChange}
-                  required
+                  // Removed required attribute to make address optional
                 />
               </div>
             </CardContent>
@@ -242,9 +242,10 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false, applic
                     id="email"
                     name="email"
                     type="email"
-                    placeholder="Enter email address"
+                    placeholder="Enter email address (optional)"
                     value={formData.email}
                     onChange={handleInputChange}
+                    // Already optional as it had no required attribute
                   />
                 </div>
               </CardContent>
