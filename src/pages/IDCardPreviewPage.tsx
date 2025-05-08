@@ -6,9 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft } from 'lucide-react';
 import IDCardPreview from '@/components/IDCardPreview';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { toast } from 'sonner';
 
-// Mock data for applicants
-const mockApplicants = [
+// Default mock data (used as a fallback)
+const defaultApplicants = [
   {
     id: '1',
     fullName: 'Ahmed Mohammed',
@@ -76,7 +77,34 @@ const IDCardPreviewPage: React.FC = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   
-  const [applicant, setApplicant] = useState(mockApplicants.find(a => a.id === id));
+  const [applicants, setApplicants] = useState<any[]>([]);
+  const [applicant, setApplicant] = useState<any>(null);
+  
+  // Load applicants from localStorage
+  useEffect(() => {
+    const storedApplicants = localStorage.getItem('applicants');
+    if (storedApplicants) {
+      try {
+        setApplicants(JSON.parse(storedApplicants));
+      } catch (error) {
+        console.error('Error parsing applicants data:', error);
+        setApplicants(defaultApplicants);
+        toast.error('Failed to load applicant data');
+      }
+    } else {
+      setApplicants(defaultApplicants);
+    }
+  }, []);
+  
+  // Find applicant by ID after applicants are loaded
+  useEffect(() => {
+    if (applicants.length > 0 && id) {
+      const found = applicants.find(a => a.id === id);
+      if (found) {
+        setApplicant(found);
+      }
+    }
+  }, [applicants, id]);
   
   // Load saved photo from localStorage if available
   useEffect(() => {
@@ -86,7 +114,7 @@ const IDCardPreviewPage: React.FC = () => {
         setApplicant(prev => prev ? {...prev, photo: savedPhoto} : prev);
       }
     }
-  }, [id]);
+  }, [applicant?.id]);
   
   if (!applicant) {
     return (

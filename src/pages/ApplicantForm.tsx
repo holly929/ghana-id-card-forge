@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Card, 
@@ -22,6 +22,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { ArrowLeft, Save, Upload } from 'lucide-react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 interface ApplicantFormProps {
   isEditing?: boolean;
@@ -30,6 +31,8 @@ interface ApplicantFormProps {
 
 const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false, applicantId }) => {
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   const [formData, setFormData] = useState({
     fullName: '',
     nationality: '',
@@ -42,6 +45,8 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false, applic
     phoneNumber: '',
     email: '',
   });
+  
+  const [photo, setPhoto] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -52,19 +57,62 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false, applic
   const handleSelectChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
+  
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        setPhoto(result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Simulate API call
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Generate a unique ID for the new applicant (for demo purposes)
+      const newId = Math.floor(Math.random() * 10000).toString();
+      
+      // Get existing applicants or initialize empty array
+      const existingApplicantsString = localStorage.getItem('applicants');
+      const existingApplicants = existingApplicantsString ? JSON.parse(existingApplicantsString) : [];
+      
+      // Create the new applicant object
+      const newApplicant = {
+        id: isEditing && applicantId ? applicantId : newId,
+        ...formData,
+        status: 'pending',
+        dateCreated: new Date().toISOString(),
+      };
+      
+      // Update or add to the applicants array
+      if (isEditing && applicantId) {
+        const updatedApplicants = existingApplicants.map((app: any) => 
+          app.id === applicantId ? newApplicant : app
+        );
+        localStorage.setItem('applicants', JSON.stringify(updatedApplicants));
+      } else {
+        existingApplicants.push(newApplicant);
+        localStorage.setItem('applicants', JSON.stringify(existingApplicants));
+      }
+      
+      // Save photo separately
+      if (photo) {
+        localStorage.setItem(`applicantPhoto_${newApplicant.id}`, photo);
+      }
+      
       toast.success(
         isEditing 
           ? 'Applicant information updated successfully!' 
           : 'New applicant added successfully!'
       );
+      
+      // Navigate back to applicants list
       navigate('/applicants');
     } catch (error) {
       toast.error('An error occurred. Please try again.');
@@ -258,13 +306,33 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false, applic
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col items-center justify-center border-2 border-dashed rounded-md p-6 bg-gray-50">
-                  <div className="w-32 h-40 bg-gray-200 mb-4 flex items-center justify-center text-gray-400">
-                    No photo
-                  </div>
-                  <Button type="button" variant="outline">
+                  {photo ? (
+                    <div className="mb-4 relative">
+                      <Avatar className="w-32 h-40 rounded-md">
+                        <AvatarImage src={photo} className="object-cover" />
+                        <AvatarFallback className="bg-gray-200 rounded-md">Photo</AvatarFallback>
+                      </Avatar>
+                    </div>
+                  ) : (
+                    <div className="w-32 h-40 bg-gray-200 mb-4 flex items-center justify-center text-gray-400 rounded-md">
+                      No photo
+                    </div>
+                  )}
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => fileInputRef.current?.click()}
+                  >
                     <Upload className="mr-2 h-4 w-4" />
-                    Upload Photo
+                    {photo ? 'Change Photo' : 'Upload Photo'}
                   </Button>
+                  <input 
+                    ref={fileInputRef}
+                    type="file" 
+                    accept="image/*" 
+                    className="hidden" 
+                    onChange={handlePhotoUpload}
+                  />
                   <p className="text-xs text-gray-500 mt-2">
                     JPEG or PNG, max 5MB
                   </p>

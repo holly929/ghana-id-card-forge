@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth, UserRole } from '@/context/AuthContext';
 import { 
@@ -35,9 +34,10 @@ import {
   File
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
 
-// Mock data for applicants
-const mockApplicants = [
+// Default mock data (used when no localStorage data exists)
+const defaultApplicants = [
   {
     id: '1',
     fullName: 'Ahmed Mohammed',
@@ -47,6 +47,7 @@ const mockApplicants = [
     visaType: 'Work',
     status: 'approved',
     dateCreated: '2023-07-10',
+    occupation: 'Engineer',
   },
   {
     id: '2',
@@ -57,6 +58,7 @@ const mockApplicants = [
     visaType: 'Student',
     status: 'pending',
     dateCreated: '2023-08-05',
+    occupation: 'Student',
   },
   {
     id: '3',
@@ -93,13 +95,41 @@ const mockApplicants = [
 const Applicants: React.FC = () => {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
+  const [applicants, setApplicants] = useState(defaultApplicants);
+  
+  // Load applicants from localStorage on component mount
+  useEffect(() => {
+    const storedApplicants = localStorage.getItem('applicants');
+    if (storedApplicants) {
+      try {
+        setApplicants(JSON.parse(storedApplicants));
+      } catch (error) {
+        console.error('Error parsing applicants data:', error);
+        toast.error('Failed to load applicant data');
+      }
+    }
+  }, []);
   
   // Filter applicants based on search term
-  const filteredApplicants = mockApplicants.filter(applicant => 
+  const filteredApplicants = applicants.filter(applicant => 
     applicant.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     applicant.nationality.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    applicant.passportNumber.toLowerCase().includes(searchTerm.toLowerCase())
+    (applicant.passportNumber && applicant.passportNumber.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+  
+  // Handle applicant deletion
+  const handleDelete = (id: string) => {
+    if (confirm('Are you sure you want to delete this applicant?')) {
+      const updatedApplicants = applicants.filter(applicant => applicant.id !== id);
+      setApplicants(updatedApplicants);
+      localStorage.setItem('applicants', JSON.stringify(updatedApplicants));
+      
+      // Also remove any associated photo
+      localStorage.removeItem(`applicantPhoto_${id}`);
+      
+      toast.success('Applicant deleted successfully');
+    }
+  };
   
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -174,7 +204,7 @@ const Applicants: React.FC = () => {
                     <TableRow key={applicant.id}>
                       <TableCell className="font-medium">{applicant.fullName}</TableCell>
                       <TableCell>{applicant.nationality}</TableCell>
-                      <TableCell>{applicant.passportNumber}</TableCell>
+                      <TableCell>{applicant.passportNumber || 'Not provided'}</TableCell>
                       <TableCell>{applicant.visaType}</TableCell>
                       <TableCell>{getStatusBadge(applicant.status)}</TableCell>
                       <TableCell>
@@ -200,8 +230,11 @@ const Applicants: React.FC = () => {
                                     <span>Edit</span>
                                   </Link>
                                 </DropdownMenuItem>
-                                {user.role === UserRole.ADMIN && (
-                                  <DropdownMenuItem className="text-red-600">
+                                {user?.role === UserRole.ADMIN && (
+                                  <DropdownMenuItem 
+                                    className="text-red-600"
+                                    onClick={() => handleDelete(applicant.id)}
+                                  >
                                     <Trash className="mr-2 h-4 w-4" />
                                     <span>Delete</span>
                                   </DropdownMenuItem>
