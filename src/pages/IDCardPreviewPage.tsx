@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft } from 'lucide-react';
 import IDCardPreview from '@/components/IDCardPreview';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // Mock data for applicants
 const mockApplicants = [
@@ -68,6 +69,7 @@ const mockApplicants = [
 const IDCardPreviewPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   
   const applicant = mockApplicants.find(a => a.id === id);
   
