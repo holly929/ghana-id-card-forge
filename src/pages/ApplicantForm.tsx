@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -10,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, Save, Upload, Trash } from 'lucide-react';
 import { toast } from "sonner";
-import { generateUniqueId } from '@/lib/utils';
+import { generateUniqueId, handleImageUpload } from '@/lib/utils';
 
 interface ApplicantFormProps {
   isEditing?: boolean;
@@ -109,14 +108,18 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const result = event.target?.result as string;
-        if (result) {
+      try {
+        handleImageUpload(file, (result) => {
           setPhoto(result);
+          toast.success("Photo uploaded successfully");
+        });
+      } catch (error) {
+        if (error instanceof Error) {
+          toast.error(error.message);
+        } else {
+          toast.error("Failed to upload photo");
         }
-      };
-      reader.readAsDataURL(file);
+      }
     }
   };
   

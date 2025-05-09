@@ -5,6 +5,7 @@ import { Shield, Printer, Download, Upload, Camera, Edit, Save, View } from 'luc
 import { Input } from '@/components/ui/input';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from "sonner";
+import { handleImageUpload } from '@/lib/utils';
 import { 
   Select, 
   SelectContent, 
@@ -159,19 +160,22 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const result = event.target?.result as string;
-        if (result) {
+      try {
+        handleImageUpload(file, (result) => {
           setPhoto(result);
           // Save photo for this specific applicant
           localStorage.setItem(`applicantPhoto_${applicant.id}`, result);
           // Update the applicant data in localStorage too
           updateApplicantPhotoInStorage(applicant.id, result);
           toast.success("Photo uploaded successfully");
+        });
+      } catch (error) {
+        if (error instanceof Error) {
+          toast.error(error.message);
+        } else {
+          toast.error("Failed to upload photo");
         }
-      };
-      reader.readAsDataURL(file);
+      }
     }
   };
   

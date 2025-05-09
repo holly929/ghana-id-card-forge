@@ -28,14 +28,29 @@ const Settings: React.FC = () => {
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Check if file is an image
+      if (!file.type.startsWith('image/')) {
+        toast.error("Please upload an image file");
+        return;
+      }
+      
+      // Check file size (limit to 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error("Image size should be less than 2MB");
+        return;
+      }
+      
       const reader = new FileReader();
-      reader.onload = (event) => {
-        const result = event.target?.result as string;
+      reader.onloadend = () => {
+        const result = reader.result as string;
         if (result) {
           setLogo(result);
           localStorage.setItem('systemLogo', result);
           toast.success("Logo uploaded successfully");
         }
+      };
+      reader.onerror = () => {
+        toast.error("Failed to read file");
       };
       reader.readAsDataURL(file);
     }
@@ -73,17 +88,21 @@ const Settings: React.FC = () => {
               </div>
               
               <div className="flex items-center justify-center space-x-2">
-                <label className="w-full">
-                  <Button variant="outline" className="w-full cursor-pointer">
+                <Input
+                  type="file"
+                  id="logo-upload"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleLogoUpload}
+                />
+                <label
+                  htmlFor="logo-upload"
+                  className="w-full cursor-pointer"
+                >
+                  <Button variant="outline" className="w-full" type="button">
                     <Upload className="h-4 w-4 mr-2" />
                     Upload Logo
                   </Button>
-                  <Input 
-                    type="file" 
-                    accept="image/*" 
-                    className="hidden" 
-                    onChange={handleLogoUpload} 
-                  />
                 </label>
                 
                 {logo && (
