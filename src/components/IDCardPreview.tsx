@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Shield, Printer, Download, Upload, Camera, Edit, Save, Backup, Restore } from 'lucide-react';
+import { Shield, Printer, Download, Upload, Camera, Edit, Save, Archive } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from "sonner";
@@ -499,7 +499,7 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
           onClick={backupSettings}
           className={`${isMobile ? 'w-[48%]' : ''}`}
         >
-          <Backup className="mr-2 h-4 w-4" />
+          <Archive className="mr-2 h-4 w-4" />
           Backup Settings
         </Button>
         <Button 
@@ -508,7 +508,7 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
           onClick={restoreSettings}
           className={`${isMobile ? 'w-[48%]' : ''}`}
         >
-          <Restore className="mr-2 h-4 w-4" />
+          <Upload className="mr-2 h-4 w-4" />
           Restore Settings
         </Button>
       </div>

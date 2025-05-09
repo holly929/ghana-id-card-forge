@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Upload, Save, Backup, Restore } from 'lucide-react';
+import { Upload, Save, Archive } from 'lucide-react';
 import { toast } from "sonner";
 import { handleImageUpload, backupSystem, restoreSystem } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -227,7 +226,7 @@ const Settings: React.FC = () => {
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Button onClick={createBackup} className="w-full">
-                  <Backup className="h-4 w-4 mr-2" />
+                  <Archive className="h-4 w-4 mr-2" />
                   Create System Backup
                 </Button>
                 
@@ -240,7 +239,7 @@ const Settings: React.FC = () => {
                     onChange={handleRestoreFileSelect}
                   />
                   <Button variant="outline" className="w-full" onClick={triggerBackupFileInput}>
-                    <Restore className="h-4 w-4 mr-2" />
+                    <Upload className="h-4 w-4 mr-2" />
                     Restore From Backup
                   </Button>
                 </div>
