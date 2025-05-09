@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -328,7 +327,7 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
                     <div><strong>${cardLabels.name}</strong> ${applicant.fullName}</div>
                     <div><strong>${cardLabels.nationality}</strong> ${applicant.nationality}</div>
                     <div><strong>${cardLabels.dateOfBirth}</strong> ${formatDate(applicant.dateOfBirth)}</div>
-                    <div><strong>${cardLabels.idNo}</strong> ${generateCardNumber()}</div>
+                    <div><strong>${cardLabels.idNo}</strong> ${applicant.id}</div>
                     <div><strong>${cardLabels.passportNo}</strong> ${applicant.passportNumber || 'Not provided'}</div>
                     <div><strong>${cardLabels.expiryDate}</strong> ${formatDate(getExpiryDate())}</div>
                   </div>
@@ -648,7 +647,7 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
                 
                 <div className="grid grid-cols-3 gap-1">
                   <span className="font-semibold text-white">{cardLabels.idNo}</span>
-                  <span className="col-span-2">{generateCardNumber()}</span>
+                  <span className="col-span-2">{applicant.id}</span>
                 </div>
                 
                 <div className="grid grid-cols-3 gap-1">

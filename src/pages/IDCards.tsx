@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
@@ -37,7 +36,7 @@ import {
 // Default mock data
 const mockApplicants = [
   {
-    id: '1',
+    id: 'GIS-123456789',
     fullName: 'Ahmed Mohammed',
     nationality: 'Egyptian',
     passportNumber: 'A12345678',
@@ -263,7 +262,7 @@ const IDCards: React.FC = () => {
                     <div><strong>Name:</strong> ${applicant.fullName}</div>
                     <div><strong>Nationality:</strong> ${applicant.nationality}</div>
                     <div><strong>Date of Birth:</strong> ${new Date(applicant.dateOfBirth).toLocaleDateString()}</div>
-                    <div><strong>ID No:</strong> GIS-${Math.floor(1000000 + Math.random() * 9000000)}</div>
+                    <div><strong>ID No:</strong> ${applicant.id}</div>
                     <div><strong>Passport No:</strong> ${applicant.passportNumber || 'Not provided'}</div>
                     <div><strong>Expiry Date:</strong> ${new Date(new Date().setFullYear(new Date().getFullYear() + 2)).toLocaleDateString()}</div>
                   </div>

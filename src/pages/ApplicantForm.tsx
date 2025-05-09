@@ -1,370 +1,406 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle,
-  CardDescription,
-  CardFooter
-} from '@/components/ui/card';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
 } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { ArrowLeft, Save, Upload } from 'lucide-react';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
-interface ApplicantFormProps {
-  isEditing?: boolean;
-  applicantId?: string;
-}
+// Generate a unique GIS ID
+const generateUniqueId = () => {
+  const timestamp = Date.now().toString().slice(-6);
+  const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+  return `GIS-${timestamp}${random}`;
+};
 
-const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false, applicantId }) => {
+const formSchema = z.object({
+  fullName: z.string().min(2, {
+    message: "Full name must be at least 2 characters.",
+  }),
+  email: z.string().email({
+    message: "Please enter a valid email.",
+  }).optional().or(z.literal('')),
+  nationality: z.string().min(2, {
+    message: "Nationality must be at least 2 characters.",
+  }),
+  passportNumber: z.string().optional().or(z.literal('')),
+  dateOfBirth: z.string().min(1, {
+    message: "Date of birth is required."
+  }),
+  address: z.string().optional().or(z.literal('')),
+  visaType: z.string({
+    required_error: "Please select a visa type."
+  }),
+  occupation: z.string().min(2, {
+    message: "Occupation must be at least 2 characters."
+  }).optional().or(z.literal('')),
+  photo: z.any().optional(),
+});
+
+type FormData = z.infer<typeof formSchema>;
+
+const visaTypes = [
+  "Tourist",
+  "Business",
+  "Student",
+  "Work",
+  "Transit",
+  "Diplomatic",
+  "Residence"
+];
+
+const ApplicantForm: React.FC = () => {
   const navigate = useNavigate();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [loading, setLoading] = useState(false);
+  const [photo, setPhoto] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
   
-  const [formData, setFormData] = useState({
-    fullName: '',
-    nationality: '',
-    dateOfBirth: '',
-    passportNumber: '',
-    visaType: '',
-    visaExpiryDate: '',
-    occupation: '',
-    address: '',
-    phoneNumber: '',
-    email: '',
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      fullName: "",
+      email: "",
+      nationality: "",
+      passportNumber: "",
+      dateOfBirth: "",
+      address: "",
+      visaType: "Tourist",
+      occupation: "",
+      photo: null,
+    },
   });
   
-  const [photo, setPhoto] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  // Check if we are editing an existing applicant
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const id = searchParams.get('id');
+    
+    if (id) {
+      setEditing(true);
+      setEditId(id);
+      
+      // Fetch the applicant data from localStorage
+      const storedApplicants = localStorage.getItem('applicants');
+      if (storedApplicants) {
+        try {
+          const applicants = JSON.parse(storedApplicants);
+          const applicant = applicants.find((a: any) => a.id === id);
+          
+          if (applicant) {
+            // Pre-fill the form with the applicant data
+            form.reset({
+              fullName: applicant.fullName || "",
+              email: applicant.email || "",
+              nationality: applicant.nationality || "",
+              passportNumber: applicant.passportNumber || "",
+              dateOfBirth: applicant.dateOfBirth || "",
+              address: applicant.address || "",
+              visaType: applicant.visaType || "Tourist",
+              occupation: applicant.occupation || "",
+            });
+            
+            // Set the photo if it exists
+            if (applicant.photo) {
+              setPhoto(applicant.photo);
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching applicant data:', error);
+          toast.error('Failed to load applicant data');
+        }
+      }
+    }
+  }, [form]);
   
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    
     if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('File size should not exceed 5MB');
+        return;
+      }
+      
       const reader = new FileReader();
-      reader.onload = () => {
-        const result = reader.result as string;
-        setPhoto(result);
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          setPhoto(event.target.result as string);
+        }
       };
       reader.readAsDataURL(file);
     }
   };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
+  
+  const onSubmit = async (data: FormData) => {
+    setLoading(true);
     
     try {
-      // Generate a unique ID for the new applicant (for demo purposes)
-      const newId = Math.floor(Math.random() * 10000).toString();
-      
-      // Get existing applicants or initialize empty array
-      const existingApplicantsString = localStorage.getItem('applicants');
-      const existingApplicants = existingApplicantsString ? JSON.parse(existingApplicantsString) : [];
-      
-      // Create the new applicant object
-      const newApplicant = {
-        id: isEditing && applicantId ? applicantId : newId,
-        ...formData,
-        status: 'pending',
+      // Add unique ID and other metadata
+      const applicantData = {
+        ...data,
+        id: editing && editId ? editId : generateUniqueId(),
         dateCreated: new Date().toISOString(),
+        status: 'pending',
+        photo: photo
       };
       
-      // Update or add to the applicants array
-      if (isEditing && applicantId) {
-        const updatedApplicants = existingApplicants.map((app: any) => 
-          app.id === applicantId ? newApplicant : app
+      // Save to localStorage
+      const storedApplicants = localStorage.getItem('applicants');
+      let applicants = [];
+      
+      if (storedApplicants) {
+        applicants = JSON.parse(storedApplicants);
+      }
+      
+      if (editing && editId) {
+        // Update existing applicant
+        applicants = applicants.map((applicant: any) => 
+          applicant.id === editId ? applicantData : applicant
         );
-        localStorage.setItem('applicants', JSON.stringify(updatedApplicants));
+        toast.success('Applicant updated successfully');
       } else {
-        existingApplicants.push(newApplicant);
-        localStorage.setItem('applicants', JSON.stringify(existingApplicants));
+        // Add new applicant
+        applicants.push(applicantData);
+        toast.success('Applicant added successfully');
       }
       
-      // Save photo separately
-      if (photo) {
-        localStorage.setItem(`applicantPhoto_${newApplicant.id}`, photo);
-      }
+      localStorage.setItem('applicants', JSON.stringify(applicants));
       
-      toast.success(
-        isEditing 
-          ? 'Applicant information updated successfully!' 
-          : 'New applicant added successfully!'
-      );
-      
-      // Navigate back to applicants list
+      // Redirect to applicants list
       navigate('/applicants');
+      
     } catch (error) {
-      toast.error('An error occurred. Please try again.');
-      console.error(error);
+      console.error('Error saving applicant data:', error);
+      toast.error('Failed to save applicant data');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
   
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2">
-        <Button 
-          variant="ghost" 
-          size="icon"
-          onClick={() => navigate('/applicants')}
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-800">
-            {isEditing ? 'Edit Applicant' : 'New Applicant'}
-          </h1>
-          <p className="text-gray-600">
-            {isEditing 
-              ? 'Update the applicant\'s information' 
-              : 'Add a new non-citizen applicant to the system'}
-          </p>
-        </div>
+      <div>
+        <h1 className="text-2xl font-semibold text-gray-800">
+          {editing ? 'Edit Applicant' : 'New Applicant'}
+        </h1>
+        <p className="text-gray-600">
+          {editing 
+            ? 'Update the information for this applicant' 
+            : 'Enter the details for a new applicant'}
+        </p>
       </div>
       
-      <form onSubmit={handleSubmit}>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Personal Information */}
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle>Personal Information</CardTitle>
-              <CardDescription>Enter the applicant's personal details</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="fullName">Full Name</Label>
-                  <Input 
-                    id="fullName"
-                    name="fullName"
-                    placeholder="Enter full name"
-                    value={formData.fullName}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="nationality">Nationality</Label>
-                  <Input 
-                    id="nationality"
-                    name="nationality" 
-                    placeholder="Enter nationality"
-                    value={formData.nationality}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="dateOfBirth">Date of Birth</Label>
-                  <Input 
-                    id="dateOfBirth"
-                    name="dateOfBirth"
-                    type="date"
-                    value={formData.dateOfBirth}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="passportNumber">Passport Number</Label>
-                  <Input 
-                    id="passportNumber"
-                    name="passportNumber"
-                    placeholder="Enter passport number"
-                    value={formData.passportNumber}
-                    onChange={handleInputChange}
-                    // Removed required attribute to make passport optional
-                  />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="visaType">Visa Type</Label>
-                  <Select 
-                    onValueChange={(value) => handleSelectChange('visaType', value)}
-                    defaultValue={formData.visaType}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select visa type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="tourist">Tourist</SelectItem>
-                      <SelectItem value="business">Business</SelectItem>
-                      <SelectItem value="work">Work</SelectItem>
-                      <SelectItem value="student">Student</SelectItem>
-                      <SelectItem value="diplomatic">Diplomatic</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="visaExpiryDate">Visa Expiry Date</Label>
-                  <Input 
-                    id="visaExpiryDate"
-                    name="visaExpiryDate"
-                    type="date"
-                    value={formData.visaExpiryDate}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="occupation">Occupation</Label>
-                <Input 
-                  id="occupation"
-                  name="occupation"
-                  placeholder="Enter occupation"
-                  value={formData.occupation}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="address">Address in Ghana</Label>
-                <Textarea 
-                  id="address"
-                  name="address"
-                  placeholder="Enter address (optional)"
-                  value={formData.address}
-                  onChange={handleInputChange}
-                  // Removed required attribute to make address optional
-                />
-              </div>
-            </CardContent>
-          </Card>
-          
-          {/* Contact Information and Photo */}
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Contact Information</CardTitle>
-                <CardDescription>Enter the applicant's contact details</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="phoneNumber">Phone Number</Label>
-                  <Input 
-                    id="phoneNumber"
-                    name="phoneNumber"
-                    placeholder="Enter phone number"
-                    value={formData.phoneNumber}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
-                  <Input 
-                    id="email"
-                    name="email"
-                    type="email"
-                    placeholder="Enter email address (optional)"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    // Already optional as it had no required attribute
-                  />
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Applicant Photo</CardTitle>
-                <CardDescription>Upload a clear passport-sized photo</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col items-center justify-center border-2 border-dashed rounded-md p-6 bg-gray-50">
-                  {photo ? (
-                    <div className="mb-4 relative">
-                      <Avatar className="w-32 h-40 rounded-md">
-                        <AvatarImage src={photo} className="object-cover" />
-                        <AvatarFallback className="bg-gray-200 rounded-md">Photo</AvatarFallback>
-                      </Avatar>
-                    </div>
-                  ) : (
-                    <div className="w-32 h-40 bg-gray-200 mb-4 flex items-center justify-center text-gray-400 rounded-md">
-                      No photo
-                    </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>{editing ? 'Edit Applicant' : 'Applicant Information'}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <div className="grid gap-4 md:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="fullName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Full Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="John Doe" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <Upload className="mr-2 h-4 w-4" />
-                    {photo ? 'Change Photo' : 'Upload Photo'}
-                  </Button>
-                  <input 
-                    ref={fileInputRef}
-                    type="file" 
-                    accept="image/*" 
-                    className="hidden" 
-                    onChange={handlePhotoUpload}
-                  />
-                  <p className="text-xs text-gray-500 mt-2">
-                    JPEG or PNG, max 5MB
-                  </p>
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email (Optional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="email@example.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="nationality"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nationality</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nigerian" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="passportNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Passport Number (Optional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="A1234567" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="dateOfBirth"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Date of Birth</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="occupation"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Occupation (Optional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Engineer" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="address"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel>Address (Optional)</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="123 Main Street, Accra" 
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="visaType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Visa Type</FormLabel>
+                      <Select 
+                        defaultValue={field.value} 
+                        onValueChange={field.onChange}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a visa type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {visaTypes.map((type) => (
+                            <SelectItem key={type} value={type}>{type}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="md:col-span-2">
+                  <FormLabel>Photo (Optional)</FormLabel>
+                  <div className="mt-2 flex items-start space-x-4">
+                    <div className="w-24 h-32 border rounded-md overflow-hidden bg-gray-50 flex items-center justify-center">
+                      {photo ? (
+                        <img 
+                          src={photo} 
+                          alt="Applicant" 
+                          className="w-full h-full object-cover" 
+                        />
+                      ) : (
+                        <p className="text-xs text-center text-gray-400">No photo</p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <label className="inline-block">
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          className="cursor-pointer"
+                        >
+                          Upload Photo
+                        </Button>
+                        <Input 
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handlePhotoChange}
+                        />
+                      </label>
+                      <p className="text-xs text-gray-500">
+                        Max file size: 5MB. Recommended dimensions: 3x4.
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-        
-        <div className="mt-6 flex justify-end">
-          <Button 
-            variant="outline" 
-            onClick={() => navigate('/applicants')} 
-            className="mr-2"
-          >
-            Cancel
-          </Button>
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <div className="animate-spin mr-2 h-4 w-4 border-t-2 border-b-2 border-white rounded-full"></div>
-                {isEditing ? 'Updating...' : 'Saving...'}
-              </>
-            ) : (
-              <>
-                <Save className="mr-2 h-4 w-4" />
-                {isEditing ? 'Update Applicant' : 'Save Applicant'}
-              </>
-            )}
-          </Button>
-        </div>
-      </form>
+              </div>
+              
+              <div className="flex justify-end space-x-2">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => navigate('/applicants')}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={loading}>
+                  {loading ? 'Saving...' : editing ? 'Update Applicant' : 'Add Applicant'}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
     </div>
   );
 };

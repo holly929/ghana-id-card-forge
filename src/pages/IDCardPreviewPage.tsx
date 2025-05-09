@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 // Default mock data (used as a fallback)
 const defaultApplicants = [
   {
-    id: '1',
+    id: 'GIS-123456789',
     fullName: 'Ahmed Mohammed',
     nationality: 'Egyptian',
     passportNumber: 'A12345678',
@@ -23,7 +23,7 @@ const defaultApplicants = [
     photo: null,
   },
   {
-    id: '2',
+    id: 'GIS-234567890',
     fullName: 'Maria Sanchez',
     nationality: 'Mexican',
     passportNumber: 'B87654321',
@@ -161,7 +161,7 @@ const IDCardPreviewPage: React.FC = () => {
         <div>
           <h1 className="text-2xl font-semibold text-gray-800">ID Card Preview</h1>
           <p className="text-gray-600">
-            Preview the ID card for {applicant.fullName}
+            Preview the ID card for {applicant?.fullName}
           </p>
         </div>
       </div>
@@ -176,48 +176,55 @@ const IDCardPreviewPage: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Full Name</h3>
-                  <p>{applicant.fullName}</p>
+                  <p>{applicant?.fullName}</p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Nationality</h3>
-                  <p>{applicant.nationality}</p>
+                  <p>{applicant?.nationality}</p>
                 </div>
               </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Date of Birth</h3>
-                  <p>{new Date(applicant.dateOfBirth).toLocaleDateString()}</p>
+                  <p>{new Date(applicant?.dateOfBirth).toLocaleDateString()}</p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Passport Number</h3>
-                  <p>{applicant.passportNumber || "Not provided"}</p>
+                  <p>{applicant?.passportNumber || "Not provided"}</p>
                 </div>
               </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Visa Type</h3>
-                  <p>{applicant.visaType}</p>
+                  <p>{applicant?.visaType}</p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Occupation</h3>
-                  <p>{applicant.occupation || "Not provided"}</p>
+                  <p>{applicant?.occupation || "Not provided"}</p>
                 </div>
               </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Status</h3>
-                  <p className="capitalize">{applicant.status}</p>
+                  <p className="capitalize">{applicant?.status}</p>
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500">Date Created</h3>
-                  <p>{new Date(applicant.dateCreated).toLocaleDateString()}</p>
+                  <h3 className="text-sm font-medium text-gray-500">ID Number</h3>
+                  <p>{applicant?.id}</p>
                 </div>
               </div>
               
-              {applicant.photo && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Date Created</h3>
+                  <p>{new Date(applicant?.dateCreated).toLocaleDateString()}</p>
+                </div>
+              </div>
+              
+              {applicant?.photo && (
                 <div className="mt-4">
                   <h3 className="text-sm font-medium text-gray-500 mb-2">Photo</h3>
                   <div className="w-32 h-40 border overflow-hidden">
