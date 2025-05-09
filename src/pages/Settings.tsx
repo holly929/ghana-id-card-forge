@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Upload, Save, Image } from 'lucide-react';
 import { toast } from "sonner";
+import { handleImageUpload } from '@/lib/utils';
 
 const Settings: React.FC = () => {
   const [logo, setLogo] = useState<string | null>(null);
@@ -28,31 +29,23 @@ const Settings: React.FC = () => {
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Check if file is an image
-      if (!file.type.startsWith('image/')) {
-        toast.error("Please upload an image file");
-        return;
-      }
-      
-      // Check file size (limit to 2MB)
-      if (file.size > 2 * 1024 * 1024) {
-        toast.error("Image size should be less than 2MB");
-        return;
-      }
-      
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        if (result) {
-          setLogo(result);
-          localStorage.setItem('systemLogo', result);
-          toast.success("Logo uploaded successfully");
+      try {
+        handleImageUpload(
+          file,
+          (result) => {
+            setLogo(result);
+            localStorage.setItem('systemLogo', result);
+            toast.success("Logo uploaded successfully");
+          },
+          { maxSizeMB: 1 }
+        );
+      } catch (error) {
+        if (error instanceof Error) {
+          toast.error(error.message);
+        } else {
+          toast.error("Failed to upload logo");
         }
-      };
-      reader.onerror = () => {
-        toast.error("Failed to read file");
-      };
-      reader.readAsDataURL(file);
+      }
     }
   };
   

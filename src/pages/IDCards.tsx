@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
@@ -20,7 +21,8 @@ import {
   Search, 
   Eye,
   Printer,
-  View
+  FileImage,
+  Files
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -32,6 +34,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
+import BulkPrintModal from '@/components/BulkPrintModal';
 
 // Default mock data
 const mockApplicants = [
@@ -93,6 +96,7 @@ const IDCards: React.FC = () => {
   const isMobile = useIsMobile();
   const [applicants, setApplicants] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showBulkPrintModal, setShowBulkPrintModal] = useState(false);
   
   // Load applicants from localStorage
   useEffect(() => {
@@ -174,8 +178,8 @@ const IDCards: React.FC = () => {
                 margin-bottom: ${scale > 1 ? '100px' : '20px'};
               }
               .card {
-                width: 350px;
-                height: 220px;
+                width: 85.6mm;
+                height: 53.98mm;
                 background: linear-gradient(to right, #006b3f, #006b3f99);
                 color: white;
                 padding: 16px;
@@ -183,6 +187,7 @@ const IDCards: React.FC = () => {
                 margin-bottom: 20px;
                 position: relative;
                 overflow: hidden;
+                box-sizing: border-box;
               }
               .logo-container {
                 text-align: center;
@@ -307,6 +312,10 @@ const IDCards: React.FC = () => {
           <h1 className="text-2xl font-semibold text-gray-800">ID Cards</h1>
           <p className="text-gray-600">Manage and print non-citizen ID cards</p>
         </div>
+        <Button onClick={() => setShowBulkPrintModal(true)}>
+          <Files className="mr-2 h-4 w-4" />
+          Bulk Print
+        </Button>
       </div>
       
       <Card>
@@ -447,6 +456,13 @@ const IDCards: React.FC = () => {
           )}
         </CardContent>
       </Card>
+      
+      {/* Bulk Print Modal */}
+      <BulkPrintModal
+        open={showBulkPrintModal}
+        onClose={() => setShowBulkPrintModal(false)}
+        applicants={approvedApplicants}
+      />
     </div>
   );
 };

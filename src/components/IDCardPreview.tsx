@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Shield, Printer, Download, Upload, Camera, Edit, Save, View } from 'lucide-react';
+import { Shield, Printer, Download, Upload, Camera, Edit, Save } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from "sonner";
-import { handleImageUpload } from '@/lib/utils';
+import { handleImageUpload, optimizeImage } from '@/lib/utils';
 import { 
   Select, 
   SelectContent, 
@@ -134,11 +134,6 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
     }
   };
   
-  // Generate a random ID card number for demo
-  const generateCardNumber = () => {
-    return `GIS-${Math.floor(1000000 + Math.random() * 9000000)}`;
-  };
-  
   // Calculate expiry date (2 years from now)
   const getExpiryDate = () => {
     const date = new Date();
@@ -157,18 +152,33 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
   };
   
   // Handle photo upload
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       try {
-        handleImageUpload(file, (result) => {
-          setPhoto(result);
-          // Save photo for this specific applicant
-          localStorage.setItem(`applicantPhoto_${applicant.id}`, result);
-          // Update the applicant data in localStorage too
-          updateApplicantPhotoInStorage(applicant.id, result);
-          toast.success("Photo uploaded successfully");
-        });
+        handleImageUpload(
+          file,
+          async (result) => {
+            try {
+              // Optimize image before saving
+              const optimized = await optimizeImage(result);
+              
+              setPhoto(optimized);
+              // Save photo for this specific applicant
+              localStorage.setItem(`applicantPhoto_${applicant.id}`, optimized);
+              // Update the applicant data in localStorage too
+              updateApplicantPhotoInStorage(applicant.id, optimized);
+              toast.success("Photo uploaded successfully");
+            } catch (error) {
+              console.error("Error optimizing image:", error);
+              setPhoto(result);
+              localStorage.setItem(`applicantPhoto_${applicant.id}`, result);
+              updateApplicantPhotoInStorage(applicant.id, result);
+              toast.success("Photo uploaded successfully");
+            }
+          },
+          { maxSizeMB: 1 }  // Smaller size limit for ID photos
+        );
       } catch (error) {
         if (error instanceof Error) {
           toast.error(error.message);
@@ -192,7 +202,6 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
           return app;
         });
         localStorage.setItem('applicants', JSON.stringify(updatedApplicants));
-        console.log("Updated applicant photo in storage");
       }
     } catch (error) {
       console.error("Error updating applicant photo in storage:", error);
@@ -243,8 +252,8 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
                 margin-bottom: ${scale > 1 ? '100px' : '20px'};
               }
               .card-front, .card-back {
-                width: 350px;
-                height: 220px;
+                width: 85.6mm;
+                height: 53.98mm;
                 background: linear-gradient(to right, #006b3f, #006b3f99);
                 color: white;
                 padding: 16px;
@@ -252,6 +261,7 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
                 margin-bottom: 20px;
                 position: relative;
                 overflow: hidden;
+                box-sizing: border-box;
               }
               .logo-container {
                 text-align: center;
