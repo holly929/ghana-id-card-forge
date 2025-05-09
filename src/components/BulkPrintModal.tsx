@@ -130,7 +130,7 @@ const BulkPrintModal: React.FC<BulkPrintModalProps> = ({
                   <div><strong>Date of Birth:</strong> ${formatDate(applicant.dateOfBirth)}</div>
                   <div><strong>ID No:</strong> ${applicant.id}</div>
                   <div><strong>Passport No:</strong> ${applicant.passportNumber || 'Not provided'}</div>
-                  <div><strong>Expiry Date:</strong> ${formatDate(new Date(new Date().setFullYear(new Date().getFullYear() + 2)))}</div>
+                  <div><strong>Expiry Date:</strong> ${formatDate(new Date(new Date().setFullYear(new Date().getFullYear() + 2)).toISOString().split('T')[0])}</div>
                 </div>
               </div>
             </div>
