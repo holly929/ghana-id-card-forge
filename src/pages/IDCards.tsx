@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
@@ -22,7 +21,8 @@ import {
   Eye,
   Printer,
   FileImage,
-  Files
+  Files,
+  Download
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -312,10 +312,18 @@ const IDCards: React.FC = () => {
           <h1 className="text-2xl font-semibold text-gray-800">ID Cards</h1>
           <p className="text-gray-600">Manage and print non-citizen ID cards</p>
         </div>
-        <Button onClick={() => setShowBulkPrintModal(true)}>
-          <Files className="mr-2 h-4 w-4" />
-          Bulk Print
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={() => setShowBulkPrintModal(true)}>
+            <Files className="mr-2 h-4 w-4" />
+            Print Selection
+          </Button>
+          <Button variant="outline" asChild>
+            <Link to="/id-cards/print">
+              <Printer className="mr-2 h-4 w-4" />
+              Print All Cards
+            </Link>
+          </Button>
+        </div>
       </div>
       
       <Card>
@@ -407,7 +415,7 @@ const IDCards: React.FC = () => {
                     <TableHead>Passport Number</TableHead>
                     <TableHead>Visa Type</TableHead>
                     <TableHead>ID Card Status</TableHead>
-                    <TableHead className="w-[180px]">Actions</TableHead>
+                    <TableHead className="w-[240px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -444,6 +452,16 @@ const IDCards: React.FC = () => {
                             >
                               <Printer className="h-4 w-4 mr-1" />
                               Print
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              asChild
+                            >
+                              <Link to={`/id-cards/${applicant.id}/print`}>
+                                <Download className="h-4 w-4 mr-1" />
+                                Print Page
+                              </Link>
                             </Button>
                           </div>
                         </TableCell>

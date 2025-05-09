@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Printer } from 'lucide-react';
 import IDCardPreview from '@/components/IDCardPreview';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from 'sonner';
@@ -164,6 +163,16 @@ const IDCardPreviewPage: React.FC = () => {
             Preview the ID card for {applicant?.fullName}
           </p>
         </div>
+      </div>
+      
+      {/* Add Print Page Button */}
+      <div>
+        <Button variant="outline" asChild className="flex items-center gap-2">
+          <Link to={`/id-cards/${applicant.id}/print`}>
+            <Printer className="h-4 w-4" />
+            Go to Print Page
+          </Link>
+        </Button>
       </div>
       
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">

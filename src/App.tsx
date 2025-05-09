@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -24,6 +23,7 @@ import IDCardPreviewPage from "./pages/IDCardPreviewPage";
 import IDCards from "./pages/IDCards";
 import Users from "./pages/Users";
 import Settings from "./pages/Settings";
+import IDCardPrintPage from './pages/IDCardPrintPage';
 
 const queryClient = new QueryClient();
 
@@ -82,14 +82,10 @@ const App = () => (
               </ProtectedRoute>
             } />
             
-            <Route path="/id-cards/:id/preview" element={
-              <ProtectedRoute>
-                <DashboardLayout>
-                  <IDCardPreviewPage />
-                </DashboardLayout>
-              </ProtectedRoute>
-            } />
-
+            <Route path="/id-cards/:id/preview" element={<ProtectedRoute><IDCardPreviewPage /></ProtectedRoute>} />
+            <Route path="/id-cards/:id/print" element={<ProtectedRoute><IDCardPrintPage /></ProtectedRoute>} />
+            <Route path="/id-cards/print" element={<ProtectedRoute><IDCardPrintPage /></ProtectedRoute>} />
+            
             {/* User Management Route */}
             <Route path="/users" element={
               <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
