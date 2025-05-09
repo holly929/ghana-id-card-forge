@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, View } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import IDCardPreview from '@/components/IDCardPreview';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from 'sonner';
@@ -117,7 +117,7 @@ const IDCardPreviewPage: React.FC = () => {
           }
         }
         
-        setApplicant(found);
+        setApplicant({...found});
       } else {
         console.log('Applicant not found with ID:', id);
         toast.error(`Applicant with ID ${id} not found`);

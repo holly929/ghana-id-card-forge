@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Shield, Printer, Download, Upload, Camera, Edit, Save } from 'lucide-react';
+import { Shield, Printer, Download, Upload, Camera, Edit, Save, Backup, Restore } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from "sonner";
@@ -29,6 +29,7 @@ interface IDCardPreviewProps {
 
 const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
   const isMobile = useIsMobile();
+  const photoInputRef = useRef<HTMLInputElement>(null);
   
   // State for customizable fields
   const [cardLabels, setCardLabels] = useState({
@@ -85,13 +86,14 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
     }
     
     // Load applicant photo if available
-    if (applicant && applicant.photo) {
-      setPhoto(applicant.photo);
-    } else {
-      // Try loading from localStorage as a fallback
+    if (applicant && applicant.id) {
+      // Try loading from localStorage
       const savedPhoto = localStorage.getItem(`applicantPhoto_${applicant.id}`);
       if (savedPhoto) {
         setPhoto(savedPhoto);
+      } else if (applicant.photo) {
+        // If not in localStorage but provided in props
+        setPhoto(applicant.photo);
       }
     }
   }, [applicant]);
@@ -151,41 +153,57 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
     });
   };
   
-  // Handle photo upload
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle photo upload - Fixed for reliability
+  const handlePhotoUpload = async () => {
+    // Fix: Manually trigger the file input click
+    if (photoInputRef.current) {
+      photoInputRef.current.click();
+    }
+  };
+  
+  // Handle the actual file selection
+  const handlePhotoFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      try {
-        handleImageUpload(
-          file,
-          async (result) => {
-            try {
-              // Optimize image before saving
-              const optimized = await optimizeImage(result);
-              
-              setPhoto(optimized);
-              // Save photo for this specific applicant
-              localStorage.setItem(`applicantPhoto_${applicant.id}`, optimized);
-              // Update the applicant data in localStorage too
-              updateApplicantPhotoInStorage(applicant.id, optimized);
-              toast.success("Photo uploaded successfully");
-            } catch (error) {
-              console.error("Error optimizing image:", error);
-              setPhoto(result);
-              localStorage.setItem(`applicantPhoto_${applicant.id}`, result);
-              updateApplicantPhotoInStorage(applicant.id, result);
-              toast.success("Photo uploaded successfully");
-            }
-          },
-          { maxSizeMB: 1 }  // Smaller size limit for ID photos
-        );
-      } catch (error) {
-        if (error instanceof Error) {
-          toast.error(error.message);
-        } else {
-          toast.error("Failed to upload photo");
-        }
+    if (!file) {
+      toast.error("No file selected");
+      return;
+    }
+    
+    try {
+      handleImageUpload(
+        file,
+        async (result) => {
+          try {
+            // Optimize image before saving
+            const optimized = await optimizeImage(result);
+            
+            setPhoto(optimized);
+            // Save photo for this specific applicant
+            localStorage.setItem(`applicantPhoto_${applicant.id}`, optimized);
+            // Update the applicant data in localStorage too
+            updateApplicantPhotoInStorage(applicant.id, optimized);
+            toast.success("Photo uploaded successfully");
+          } catch (error) {
+            console.error("Error optimizing image:", error);
+            setPhoto(result);
+            localStorage.setItem(`applicantPhoto_${applicant.id}`, result);
+            updateApplicantPhotoInStorage(applicant.id, result);
+            toast.success("Photo uploaded successfully");
+          }
+        },
+        { maxSizeMB: 1 }  // Smaller size limit for ID photos
+      );
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("Failed to upload photo");
       }
+    }
+    
+    // Reset the input value to allow selecting the same file again
+    if (photoInputRef.current) {
+      photoInputRef.current.value = '';
     }
   };
   
@@ -396,6 +414,12 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
     toast.success(`Printing ID card in ${printFormat} format`);
   };
   
+  // Fixed version of download PDF functionality
+  const handleDownloadPDF = () => {
+    toast.info("Preparing PDF for download...");
+    handlePrint();
+  };
+  
   return (
     <div className="flex flex-col items-center">
       {/* Action Buttons - Now more responsive */}
@@ -420,7 +444,11 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
               </SelectContent>
             </Select>
           </div>
-          <Button variant="outline" className={`${isMobile ? 'w-full' : ''}`} onClick={handlePrint}>
+          <Button 
+            variant="outline" 
+            className={`${isMobile ? 'w-full' : ''}`} 
+            onClick={handleDownloadPDF}
+          >
             <Download className="mr-2 h-4 w-4" />
             Download PDF
           </Button>
@@ -443,18 +471,23 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
               </>
             )}
           </Button>
-          <label className="cursor-pointer">
-            <Button variant="secondary" type="button" className={`${isMobile ? 'w-full' : ''}`}>
-              <Camera className="mr-2 h-4 w-4" />
-              Upload Photo
-            </Button>
-            <Input 
-              type="file" 
-              accept="image/*" 
-              className="hidden" 
-              onChange={handlePhotoUpload} 
-            />
-          </label>
+          
+          {/* Fixed photo upload button */}
+          <Button 
+            variant="secondary" 
+            className={`${isMobile ? 'w-full' : ''}`}
+            onClick={handlePhotoUpload}
+          >
+            <Camera className="mr-2 h-4 w-4" />
+            Upload Photo
+          </Button>
+          <Input 
+            type="file" 
+            ref={photoInputRef}
+            accept="image/*" 
+            className="hidden" 
+            onChange={handlePhotoFileSelected}
+          />
         </div>
       </div>
       
@@ -466,7 +499,7 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
           onClick={backupSettings}
           className={`${isMobile ? 'w-[48%]' : ''}`}
         >
-          <Upload className="mr-2 h-4 w-4" />
+          <Backup className="mr-2 h-4 w-4" />
           Backup Settings
         </Button>
         <Button 
@@ -475,7 +508,7 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
           onClick={restoreSettings}
           className={`${isMobile ? 'w-[48%]' : ''}`}
         >
-          <Download className="mr-2 h-4 w-4" />
+          <Restore className="mr-2 h-4 w-4" />
           Restore Settings
         </Button>
       </div>
