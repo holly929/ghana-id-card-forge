@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   Card, 
   CardContent, 
@@ -16,6 +16,13 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/table';
+import { 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { 
   Search, 
   Eye,
@@ -34,6 +41,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
+import BulkPrintSelector from '@/components/BulkPrintSelector';
 import BulkPrintModal from '@/components/BulkPrintModal';
 
 // Default mock data
@@ -97,6 +105,8 @@ const IDCards: React.FC = () => {
   const [applicants, setApplicants] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showBulkPrintModal, setShowBulkPrintModal] = useState(false);
+  const [showBulkSelector, setShowBulkSelector] = useState(false);
+  const navigate = useNavigate();
   
   // Load applicants from localStorage
   useEffect(() => {
@@ -294,6 +304,23 @@ const IDCards: React.FC = () => {
     toast.success(`Printing ID card for ${applicant.fullName} in ${printFormat} format`);
   };
   
+  // Handle bulk print selection
+  const handleBulkPrintSelection = (selectedApplicants: any[]) => {
+    // Store the selected applicants in localStorage for the print page
+    try {
+      localStorage.setItem('selectedApplicantsForPrint', JSON.stringify(selectedApplicants));
+      // Navigate to the bulk print page
+      navigate('/id-cards/print');
+      toast.success(`${selectedApplicants.length} applicants selected for printing`);
+    } catch (error) {
+      console.error('Error storing selected applicants:', error);
+      toast.error('Failed to prepare selected applicants for printing');
+    }
+    
+    // Close the selector
+    setShowBulkSelector(false);
+  };
+  
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -313,10 +340,24 @@ const IDCards: React.FC = () => {
           <p className="text-gray-600">Manage and print non-citizen ID cards</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button onClick={() => setShowBulkPrintModal(true)}>
-            <Files className="mr-2 h-4 w-4" />
-            Print Selection
-          </Button>
+          <Dialog open={showBulkSelector} onOpenChange={setShowBulkSelector}>
+            <DialogTrigger asChild>
+              <Button>
+                <Files className="mr-2 h-4 w-4" />
+                Select & Print
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Select Applicants to Print</DialogTitle>
+              </DialogHeader>
+              <BulkPrintSelector 
+                applicants={approvedApplicants}
+                onPrintSelection={handleBulkPrintSelection} 
+              />
+            </DialogContent>
+          </Dialog>
+          
           <Button variant="outline" asChild>
             <Link to="/id-cards/print">
               <Printer className="mr-2 h-4 w-4" />
@@ -335,7 +376,7 @@ const IDCards: React.FC = () => {
             <div className="relative flex-grow">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
               <Input
-                placeholder="Search by name, nationality, or passport number..."
+                placeholder="Search by name, nationality, or area..."
                 className="pl-8"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -412,7 +453,7 @@ const IDCards: React.FC = () => {
                   <TableRow>
                     <TableHead>Full Name</TableHead>
                     <TableHead>Nationality</TableHead>
-                    <TableHead>Passport Number</TableHead>
+                    <TableHead>Area</TableHead>
                     <TableHead>Visa Type</TableHead>
                     <TableHead>ID Card Status</TableHead>
                     <TableHead className="w-[240px]">Actions</TableHead>
@@ -430,7 +471,7 @@ const IDCards: React.FC = () => {
                       <TableRow key={applicant.id}>
                         <TableCell className="font-medium">{applicant.fullName}</TableCell>
                         <TableCell>{applicant.nationality}</TableCell>
-                        <TableCell>{applicant.passportNumber || "Not provided"}</TableCell>
+                        <TableCell>{applicant.area || applicant.passportNumber || "Not provided"}</TableCell>
                         <TableCell>{applicant.visaType}</TableCell>
                         <TableCell>
                           <Badge className="bg-ghana-green text-white hover:bg-ghana-green/80">
@@ -475,7 +516,7 @@ const IDCards: React.FC = () => {
         </CardContent>
       </Card>
       
-      {/* Bulk Print Modal */}
+      {/* Bulk Print Modal - Keep for backwards compatibility */}
       <BulkPrintModal
         open={showBulkPrintModal}
         onClose={() => setShowBulkPrintModal(false)}

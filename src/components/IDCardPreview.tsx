@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Shield, Printer, Download, Upload, Camera, Edit, Save, Archive } from 'lucide-react';
+import { Shield, Printer, Download, Upload, Camera, Edit, Save, Archive, Files } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from "sonner";
@@ -62,6 +62,9 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
   
   // State for print format
   const [printFormat, setPrintFormat] = useState('standard');
+  
+  // State for single-page print option
+  const [singlePagePrint, setSinglePagePrint] = useState(true);
   
   // Load system logo and settings from localStorage
   useEffect(() => {
@@ -226,7 +229,7 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
     }
   };
   
-  // Handle printing with different formats
+  // Handle printing with different formats and single/double page option
   const handlePrint = () => {
     // Create a new window for printing
     const printWindow = window.open('', '_blank', 'width=800,height=600');
@@ -276,10 +279,18 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
                 color: white;
                 padding: 16px;
                 border-radius: 8px;
-                margin-bottom: 20px;
                 position: relative;
                 overflow: hidden;
                 box-sizing: border-box;
+              }
+              .card-front {
+                margin-bottom: ${singlePagePrint ? '5px' : '20px'};
+              }
+              .card-layout {
+                display: ${singlePagePrint ? 'flex' : 'block'};
+                flex-direction: ${singlePagePrint ? 'row' : 'column'};
+                gap: ${singlePagePrint ? '10px' : '0'};
+                justify-content: ${singlePagePrint ? 'center' : 'flex-start'};
               }
               .logo-container {
                 text-align: center;
@@ -322,7 +333,7 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
                 background-color: #006b3f;
               }
               .page-break {
-                page-break-after: always;
+                ${singlePagePrint ? 'display: none;' : 'page-break-after: always;'}
               }
               @page {
                 size: auto;
@@ -334,69 +345,71 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
         <body>
           <div class="card-container">
             <h2 style="text-align:center;margin-bottom:20px;">${applicant.fullName} - ID Card</h2>
-            <div class="card-front">
-              <!-- Front card content with photo and logo -->
-              <div style="display: flex; height: 100%;">
-                <div style="width: 33%; display: flex; flex-direction: column; align-items: center; justify-content: space-between;">
-                  <div class="logo-container">
-                    ${logo ? `<img src="${logo}" alt="Logo" class="logo-image" />` : ''}
+            <div class="card-layout">
+              <div class="card-front">
+                <!-- Front card content with photo and logo -->
+                <div style="display: flex; height: 100%;">
+                  <div style="width: 33%; display: flex; flex-direction: column; align-items: center; justify-content: space-between;">
+                    <div class="logo-container">
+                      ${logo ? `<img src="${logo}" alt="Logo" class="logo-image" />` : ''}
+                    </div>
+                    <div class="photo-container">
+                      ${photo ? `<img src="${photo}" alt="Applicant" class="photo-image" />` : ''}
+                    </div>
+                    <div style="margin-top: 5px; text-align: center;">
+                      <div style="background: #fcd116; color: black; padding: 3px 8px; border-radius: 2px; font-weight: bold; font-size: 10px;">
+                        ${applicant.visaType.toUpperCase()}
+                      </div>
+                    </div>
                   </div>
-                  <div class="photo-container">
-                    ${photo ? `<img src="${photo}" alt="Applicant" class="photo-image" />` : ''}
-                  </div>
-                  <div style="margin-top: 5px; text-align: center;">
-                    <div style="background: #fcd116; color: black; padding: 3px 8px; border-radius: 2px; font-weight: bold; font-size: 10px;">
-                      ${applicant.visaType.toUpperCase()}
+                  <div style="width: 67%; padding-left: 10px;">
+                    <div style="text-align: center; margin-bottom: 10px;">
+                      <div style="font-weight: bold; font-size: 12px;">${cardLabels.title}</div>
+                      <div style="font-size: 10px;">${cardLabels.subtitle}</div>
+                    </div>
+                    <div style="font-size: 10px;">
+                      <div><strong>${cardLabels.name}</strong> ${applicant.fullName}</div>
+                      <div><strong>${cardLabels.nationality}</strong> ${applicant.nationality}</div>
+                      <div><strong>${cardLabels.dateOfBirth}</strong> ${formatDate(applicant.dateOfBirth)}</div>
+                      <div><strong>${cardLabels.idNo}</strong> ${applicant.id}</div>
+                      <div><strong>${cardLabels.passportNo}</strong> ${applicant.passportNumber || 'Not provided'}</div>
+                      <div><strong>${cardLabels.expiryDate}</strong> ${formatDate(getExpiryDate())}</div>
                     </div>
                   </div>
                 </div>
-                <div style="width: 67%; padding-left: 10px;">
-                  <div style="text-align: center; margin-bottom: 10px;">
-                    <div style="font-weight: bold; font-size: 12px;">${cardLabels.title}</div>
-                    <div style="font-size: 10px;">${cardLabels.subtitle}</div>
+                <div class="color-band">
+                  <div class="red-band"></div>
+                  <div class="yellow-band"></div>
+                  <div class="green-band"></div>
+                </div>
+              </div>
+              <div class="page-break"></div>
+              <div class="card-back">
+                <!-- Back card content -->
+                <div style="text-align: center; margin-bottom: 10px;">
+                  <div style="font-weight: bold; font-size: 12px;">${cardLabels.title}</div>
+                  <div style="font-size: 9px;">This card remains the property of the Ghana Immigration Service</div>
+                </div>
+                <div style="font-size: 10px; margin-bottom: 10px;">
+                  <div><strong>${cardLabels.occupation}</strong> ${applicant.occupation || 'Not specified'}</div>
+                  <div><strong>${cardLabels.issueDate}</strong> ${formatDate(new Date().toISOString().split('T')[0])}</div>
+                </div>
+                <div style="border-top: 1px solid rgba(255,255,255,0.3); padding-top: 5px; margin-top: 10px;">
+                  <div style="text-align: center; font-size: 9px;">${footer}</div>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: auto; position: absolute; bottom: 25px; left: 10px; right: 10px;">
+                  <div style="width: 80px; border-top: 1px solid rgba(255,255,255,0.5); text-align: center; font-size: 8px; padding-top: 2px;">
+                    ${cardLabels.holderSignature}
                   </div>
-                  <div style="font-size: 10px;">
-                    <div><strong>${cardLabels.name}</strong> ${applicant.fullName}</div>
-                    <div><strong>${cardLabels.nationality}</strong> ${applicant.nationality}</div>
-                    <div><strong>${cardLabels.dateOfBirth}</strong> ${formatDate(applicant.dateOfBirth)}</div>
-                    <div><strong>${cardLabels.idNo}</strong> ${applicant.id}</div>
-                    <div><strong>${cardLabels.passportNo}</strong> ${applicant.passportNumber || 'Not provided'}</div>
-                    <div><strong>${cardLabels.expiryDate}</strong> ${formatDate(getExpiryDate())}</div>
+                  <div style="width: 80px; border-top: 1px solid rgba(255,255,255,0.5); text-align: center; font-size: 8px; padding-top: 2px;">
+                    ${cardLabels.issuingOfficer}
                   </div>
                 </div>
-              </div>
-              <div class="color-band">
-                <div class="red-band"></div>
-                <div class="yellow-band"></div>
-                <div class="green-band"></div>
-              </div>
-            </div>
-            <div class="page-break"></div>
-            <div class="card-back">
-              <!-- Back card content -->
-              <div style="text-align: center; margin-bottom: 10px;">
-                <div style="font-weight: bold; font-size: 12px;">${cardLabels.title}</div>
-                <div style="font-size: 9px;">This card remains the property of the Ghana Immigration Service</div>
-              </div>
-              <div style="font-size: 10px; margin-bottom: 10px;">
-                <div><strong>${cardLabels.occupation}</strong> ${applicant.occupation || 'Not specified'}</div>
-                <div><strong>${cardLabels.issueDate}</strong> ${formatDate(new Date().toISOString().split('T')[0])}</div>
-              </div>
-              <div style="border-top: 1px solid rgba(255,255,255,0.3); padding-top: 5px; margin-top: 10px;">
-                <div style="text-align: center; font-size: 9px;">${footer}</div>
-              </div>
-              <div style="display: flex; justify-content: space-between; margin-top: auto; position: absolute; bottom: 25px; left: 10px; right: 10px;">
-                <div style="width: 80px; border-top: 1px solid rgba(255,255,255,0.5); text-align: center; font-size: 8px; padding-top: 2px;">
-                  ${cardLabels.holderSignature}
+                <div class="color-band">
+                  <div class="red-band"></div>
+                  <div class="yellow-band"></div>
+                  <div class="green-band"></div>
                 </div>
-                <div style="width: 80px; border-top: 1px solid rgba(255,255,255,0.5); text-align: center; font-size: 8px; padding-top: 2px;">
-                  ${cardLabels.issuingOfficer}
-                </div>
-              </div>
-              <div class="color-band">
-                <div class="red-band"></div>
-                <div class="yellow-band"></div>
-                <div class="green-band"></div>
               </div>
             </div>
           </div>
@@ -411,7 +424,7 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
     `);
     
     printWindow.document.close();
-    toast.success(`Printing ID card in ${printFormat} format`);
+    toast.success(`Printing ID card in ${printFormat} format${singlePagePrint ? ' on single page' : ''}`);
   };
   
   // Fixed version of download PDF functionality
@@ -451,6 +464,16 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
           >
             <Download className="mr-2 h-4 w-4" />
             Download PDF
+          </Button>
+          
+          {/* Add single page print toggle */}
+          <Button 
+            variant={singlePagePrint ? "secondary" : "outline"}
+            onClick={() => setSinglePagePrint(!singlePagePrint)}
+            className={`${isMobile ? 'w-full' : ''}`}
+          >
+            <Files className="mr-2 h-4 w-4" />
+            {singlePagePrint ? "Single Page" : "Double Page"}
           </Button>
         </div>
         <div className="flex flex-wrap gap-2 justify-center">

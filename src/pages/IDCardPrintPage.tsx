@@ -1,9 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Printer, FileText } from 'lucide-react';
+import { ArrowLeft, Printer, FileText, Files, Copy } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from "sonner";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 // Default mock data (used as a fallback)
 const defaultApplicants = [
@@ -31,6 +40,8 @@ const IDCardPrintPage: React.FC = () => {
   const [selectedApplicants, setSelectedApplicants] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [logo, setLogo] = useState<string | null>(null);
+  const [singleSidedPrint, setSingleSidedPrint] = useState(true);
+  const [printFormat, setPrintFormat] = useState('standard');
   
   // Load applicants from localStorage
   useEffect(() => {
@@ -38,6 +49,32 @@ const IDCardPrintPage: React.FC = () => {
     const savedLogo = localStorage.getItem('systemLogo');
     if (savedLogo) {
       setLogo(savedLogo);
+    }
+    
+    // First check if we have selected applicants for bulk printing
+    const selectedForPrint = localStorage.getItem('selectedApplicantsForPrint');
+    if (selectedForPrint && !id) {
+      try {
+        const parsedSelected = JSON.parse(selectedForPrint);
+        if (Array.isArray(parsedSelected) && parsedSelected.length > 0) {
+          // Update their photos if needed
+          const withPhotos = parsedSelected.map((a: any) => {
+            if (!a.photo) {
+              const savedPhoto = localStorage.getItem(`applicantPhoto_${a.id}`);
+              if (savedPhoto) {
+                return { ...a, photo: savedPhoto };
+              }
+            }
+            return a;
+          });
+          setSelectedApplicants(withPhotos);
+          setLoading(false);
+          return; // Exit early since we already have what we need
+        }
+      } catch (error) {
+        console.error('Error parsing selected applicants:', error);
+        // Continue with normal loading
+      }
     }
     
     const storedApplicants = localStorage.getItem('applicants');
@@ -136,6 +173,21 @@ const IDCardPrintPage: React.FC = () => {
       return;
     }
     
+    // Get scale based on the print format
+    let scale = 1;
+    switch(printFormat) {
+      case 'small':
+        scale = 0.8;
+        break;
+      case 'large':
+        scale = 1.2;
+        break;
+      case 'standard':
+      default:
+        scale = 1;
+        break;
+    }
+    
     // Add CSS and content to the new window
     printWindow.document.write(`
       <html>
@@ -156,10 +208,11 @@ const IDCardPrintPage: React.FC = () => {
               }
               .card-container {
                 display: flex;
-                flex-direction: column;
-                width: 85.6mm;
+                flex-direction: ${singleSidedPrint ? 'row' : 'column'};
+                width: ${singleSidedPrint ? '180mm' : '85.6mm'};
                 margin-bottom: 5mm;
                 page-break-inside: avoid;
+                gap: 5px;
               }
               .card-front, .card-back {
                 width: 85.6mm;
@@ -168,7 +221,7 @@ const IDCardPrintPage: React.FC = () => {
                 color: white;
                 padding: 10px;
                 border-radius: 8px;
-                margin-bottom: 5px;
+                margin-bottom: ${singleSidedPrint ? '0' : '5px'};
                 position: relative;
                 overflow: hidden;
                 box-sizing: border-box;
@@ -259,76 +312,84 @@ const IDCardPrintPage: React.FC = () => {
               .card-info strong {
                 font-weight: bold;
               }
+              .scale-container {
+                transform: scale(${scale});
+                transform-origin: top left;
+                margin-bottom: ${scale > 1 ? '20mm' : '0'};
+                margin-right: ${scale > 1 ? '20mm' : '0'};
+              }
             }
           </style>
         </head>
         <body>
           <div class="page-container">
             ${selectedApplicants.map(applicant => `
-              <div class="card-container">
-                <!-- Front of ID Card -->
-                <div class="card-front">
-                  <div class="card-content">
-                    <div class="left-side">
-                      <div class="logo-container">
-                        ${logo ? `<img src="${logo}" alt="Logo" class="logo-image" />` : ''}
+              <div class="scale-container">
+                <div class="card-container">
+                  <!-- Front of ID Card -->
+                  <div class="card-front">
+                    <div class="card-content">
+                      <div class="left-side">
+                        <div class="logo-container">
+                          ${logo ? `<img src="${logo}" alt="Logo" class="logo-image" />` : ''}
+                        </div>
+                        <div class="photo-container">
+                          ${applicant.photo ? `<img src="${applicant.photo}" alt="Applicant" class="photo-image" />` : ''}
+                        </div>
+                        <div style="margin-top: 3px;">
+                          <div class="visa-type">
+                            ${applicant.visaType.toUpperCase()}
+                          </div>
+                        </div>
                       </div>
-                      <div class="photo-container">
-                        ${applicant.photo ? `<img src="${applicant.photo}" alt="Applicant" class="photo-image" />` : ''}
-                      </div>
-                      <div style="margin-top: 3px;">
-                        <div class="visa-type">
-                          ${applicant.visaType.toUpperCase()}
+                      <div class="right-side">
+                        <div class="card-title">
+                          <div>REPUBLIC OF GHANA</div>
+                          <div>NON-CITIZEN IDENTITY CARD</div>
+                        </div>
+                        <div class="card-info">
+                          <div><strong>Name:</strong> ${applicant.fullName}</div>
+                          <div><strong>Nationality:</strong> ${applicant.nationality}</div>
+                          <div><strong>Date of Birth:</strong> ${formatDate(applicant.dateOfBirth)}</div>
+                          <div><strong>ID No:</strong> ${applicant.id}</div>
+                          <div><strong>Area:</strong> ${applicant.area || 'Not provided'}</div>
+                          <div><strong>Expiry Date:</strong> ${formatDate(getExpiryDate())}</div>
                         </div>
                       </div>
                     </div>
-                    <div class="right-side">
-                      <div class="card-title">
-                        <div>REPUBLIC OF GHANA</div>
-                        <div>NON-CITIZEN IDENTITY CARD</div>
+                    <div class="color-band">
+                      <div class="red-band"></div>
+                      <div class="yellow-band"></div>
+                      <div class="green-band"></div>
+                    </div>
+                  </div>
+                  
+                  <!-- Back of ID Card -->
+                  <div class="card-back">
+                    <div style="text-align: center; margin-bottom: 8px;">
+                      <div style="font-weight: bold; font-size: 10px;">REPUBLIC OF GHANA</div>
+                      <div style="font-size: 8px;">This card remains the property of the Ghana Immigration Service</div>
+                    </div>
+                    <div style="font-size: 9px; margin-bottom: 8px;">
+                      <div><strong>Occupation:</strong> ${applicant.occupation || 'Not specified'}</div>
+                      <div><strong>Date of Issue:</strong> ${formatDate(new Date().toISOString().split('T')[0])}</div>
+                    </div>
+                    <div style="border-top: 1px solid rgba(255,255,255,0.3); padding-top: 4px; margin-top: 8px;">
+                      <div style="text-align: center; font-size: 8px;">If found, please return to the nearest Ghana Immigration Service office</div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: auto; position: absolute; bottom: 20px; left: 10px; right: 10px;">
+                      <div style="width: 70px; border-top: 1px solid rgba(255,255,255,0.5); text-align: center; font-size: 7px; padding-top: 2px;">
+                        Holder's Signature
                       </div>
-                      <div class="card-info">
-                        <div><strong>Name:</strong> ${applicant.fullName}</div>
-                        <div><strong>Nationality:</strong> ${applicant.nationality}</div>
-                        <div><strong>Date of Birth:</strong> ${formatDate(applicant.dateOfBirth)}</div>
-                        <div><strong>ID No:</strong> ${applicant.id}</div>
-                        <div><strong>Passport No:</strong> ${applicant.passportNumber || 'Not provided'}</div>
-                        <div><strong>Expiry Date:</strong> ${formatDate(getExpiryDate())}</div>
+                      <div style="width: 70px; border-top: 1px solid rgba(255,255,255,0.5); text-align: center; font-size: 7px; padding-top: 2px;">
+                        Issuing Officer
                       </div>
                     </div>
-                  </div>
-                  <div class="color-band">
-                    <div class="red-band"></div>
-                    <div class="yellow-band"></div>
-                    <div class="green-band"></div>
-                  </div>
-                </div>
-                
-                <!-- Back of ID Card -->
-                <div class="card-back">
-                  <div style="text-align: center; margin-bottom: 8px;">
-                    <div style="font-weight: bold; font-size: 10px;">REPUBLIC OF GHANA</div>
-                    <div style="font-size: 8px;">This card remains the property of the Ghana Immigration Service</div>
-                  </div>
-                  <div style="font-size: 9px; margin-bottom: 8px;">
-                    <div><strong>Occupation:</strong> ${applicant.occupation || 'Not specified'}</div>
-                    <div><strong>Date of Issue:</strong> ${formatDate(new Date().toISOString().split('T')[0])}</div>
-                  </div>
-                  <div style="border-top: 1px solid rgba(255,255,255,0.3); padding-top: 4px; margin-top: 8px;">
-                    <div style="text-align: center; font-size: 8px;">If found, please return to the nearest Ghana Immigration Service office</div>
-                  </div>
-                  <div style="display: flex; justify-content: space-between; margin-top: auto; position: absolute; bottom: 20px; left: 10px; right: 10px;">
-                    <div style="width: 70px; border-top: 1px solid rgba(255,255,255,0.5); text-align: center; font-size: 7px; padding-top: 2px;">
-                      Holder's Signature
+                    <div class="color-band">
+                      <div class="red-band"></div>
+                      <div class="yellow-band"></div>
+                      <div class="green-band"></div>
                     </div>
-                    <div style="width: 70px; border-top: 1px solid rgba(255,255,255,0.5); text-align: center; font-size: 7px; padding-top: 2px;">
-                      Issuing Officer
-                    </div>
-                  </div>
-                  <div class="color-band">
-                    <div class="red-band"></div>
-                    <div class="yellow-band"></div>
-                    <div class="green-band"></div>
                   </div>
                 </div>
               </div>
@@ -345,7 +406,14 @@ const IDCardPrintPage: React.FC = () => {
     `);
     
     printWindow.document.close();
-    toast.success(`Printing ${selectedApplicants.length} ID cards`);
+    toast.success(`Printing ${selectedApplicants.length} ID cards${singleSidedPrint ? ' on single-sided layout' : ''}`);
+  };
+  
+  // Handle duplicate printing - print multiple copies
+  const handleDuplicatePrint = () => {
+    toast.info('Preparing duplicate print...');
+    // Simply call the existing print function
+    handlePrintAllCards();
   };
   
   if (loading) {
@@ -392,29 +460,124 @@ const IDCardPrintPage: React.FC = () => {
         </div>
       </div>
       
-      <div className="flex flex-wrap gap-3">
-        <Button onClick={handlePrintAllCards} className="flex items-center gap-2">
-          <Printer className="h-4 w-4" />
-          Print All Cards ({selectedApplicants.length})
-        </Button>
+      <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
+        <div className="space-y-2">
+          <div className="text-sm font-medium">Print Layout</div>
+          <div className="flex items-center space-x-2">
+            <Switch 
+              id="single-sided" 
+              checked={singleSidedPrint}
+              onCheckedChange={setSingleSidedPrint} 
+            />
+            <Label htmlFor="single-sided">Single-sided layout (save paper)</Label>
+          </div>
+        </div>
         
-        <Button variant="outline" onClick={() => navigate('/id-cards')} className="flex items-center gap-2">
-          <FileText className="h-4 w-4" />
-          Back to ID Cards
-        </Button>
+        <div className="space-y-2">
+          <div className="text-sm font-medium">Size</div>
+          <Select
+            value={printFormat}
+            onValueChange={setPrintFormat}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Print Format" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="small">Small</SelectItem>
+              <SelectItem value="standard">Standard</SelectItem>
+              <SelectItem value="large">Large</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div className="space-y-2 sm:col-span-2 md:col-span-1">
+          <div className="text-sm font-medium">Actions</div>
+          <div className="flex flex-wrap gap-3">
+            <Button onClick={handlePrintAllCards} className="flex items-center gap-2">
+              <Printer className="h-4 w-4" />
+              Print All Cards ({selectedApplicants.length})
+            </Button>
+            
+            <Button variant="outline" onClick={() => navigate('/id-cards')} className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Back to ID Cards
+            </Button>
+            
+            <Button variant="secondary" onClick={handleDuplicatePrint} className="flex items-center gap-2">
+              <Copy className="h-4 w-4" />
+              Print Duplicates
+            </Button>
+          </div>
+        </div>
       </div>
       
       <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
         <h3 className="text-lg font-medium mb-3">Print Preview</h3>
         <p className="text-sm text-gray-600 mb-4">
-          Click the Print button above to print all {selectedApplicants.length} cards on a single page. 
-          The cards will be arranged to maximize space usage on standard A4 paper.
+          {singleSidedPrint 
+            ? "Cards will be printed with front and back side-by-side on the same page to save paper."
+            : "Cards will be printed with front and back sides stacked (traditional layout)."
+          }
         </p>
         
-        <div className="bg-white p-4 rounded border border-gray-300 text-center">
-          <p className="text-gray-500">
-            {selectedApplicants.length} ID cards will be printed with front and back sides.
-          </p>
+        <div className="bg-white p-4 rounded border border-gray-300">
+          {singleSidedPrint ? (
+            <div className="flex items-center justify-center">
+              <div className="relative h-24 w-80 bg-gradient-to-r from-ghana-green to-ghana-green/70 rounded-md flex">
+                <div className="w-1/2 border-r border-white/20 flex items-center justify-center text-white text-xs">
+                  Front Side
+                </div>
+                <div className="w-1/2 flex items-center justify-center text-white text-xs">
+                  Back Side
+                </div>
+                <div className="absolute bottom-0 left-0 right-0 h-2 flex">
+                  <div className="flex-1 bg-red-600"></div>
+                  <div className="flex-1 bg-yellow-400"></div>
+                  <div className="flex-1 bg-green-600"></div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center gap-2">
+              <div className="relative h-16 w-40 bg-gradient-to-r from-ghana-green to-ghana-green/70 rounded-md flex items-center justify-center text-white text-xs">
+                Front Side
+                <div className="absolute bottom-0 left-0 right-0 h-2 flex">
+                  <div className="flex-1 bg-red-600"></div>
+                  <div className="flex-1 bg-yellow-400"></div>
+                  <div className="flex-1 bg-green-600"></div>
+                </div>
+              </div>
+              <div className="relative h-16 w-40 bg-gradient-to-r from-ghana-green to-ghana-green/70 rounded-md flex items-center justify-center text-white text-xs">
+                Back Side
+                <div className="absolute bottom-0 left-0 right-0 h-2 flex">
+                  <div className="flex-1 bg-red-600"></div>
+                  <div className="flex-1 bg-yellow-400"></div>
+                  <div className="flex-1 bg-green-600"></div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+      
+      <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
+        <h3 className="text-lg font-medium mb-3">Cards to Print ({selectedApplicants.length})</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+          {selectedApplicants.map(applicant => (
+            <div key={applicant.id} className="border rounded-md p-2 bg-white flex items-center gap-2">
+              <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
+                {applicant.photo ? (
+                  <img src={applicant.photo} alt={applicant.fullName} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-xs text-gray-500">No photo</span>
+                )}
+              </div>
+              <div className="flex-1 truncate">
+                <div className="font-medium text-sm">{applicant.fullName}</div>
+                <div className="text-xs text-gray-500">{applicant.nationality} • {applicant.area || 'No area'}</div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
