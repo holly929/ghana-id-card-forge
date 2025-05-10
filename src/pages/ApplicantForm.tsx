@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,9 +7,9 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Save, Upload, Trash } from 'lucide-react';
+import { ArrowLeft, Save, Upload, Trash, Camera } from 'lucide-react';
 import { toast } from "sonner";
-import { generateUniqueId, handleImageUpload } from '@/lib/utils';
+import { generateUniqueId } from '@/lib/utils';
 
 interface ApplicantFormProps {
   isEditing?: boolean;
@@ -18,6 +18,7 @@ interface ApplicantFormProps {
 const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -107,19 +108,39 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
   // Handle photo upload
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      try {
-        handleImageUpload(file, (result) => {
-          setPhoto(result);
-          toast.success("Photo uploaded successfully");
-        });
-      } catch (error) {
-        if (error instanceof Error) {
-          toast.error(error.message);
-        } else {
-          toast.error("Failed to upload photo");
-        }
+    if (!file) return;
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+    
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Image size should be less than 2MB');
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target?.result) {
+        setPhoto(event.target.result as string);
+        toast.success('Photo uploaded successfully');
       }
+    };
+    reader.onerror = () => {
+      toast.error('Failed to read file');
+    };
+    reader.readAsDataURL(file);
+  };
+  
+  // Take photo using camera
+  const handleTakePhoto = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.capture = 'user';
+      fileInputRef.current.accept = 'image/*';
+      fileInputRef.current.click();
     }
   };
   
@@ -140,17 +161,16 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
       }
     }
     
-    // Create applicant object with photo
-    const applicantData = {
-      ...formData,
-      photo
-    };
-    
     // Update existing or add new
     if (isEditing && id) {
       const index = applicants.findIndex((a: any) => a.id === id);
       
       if (index !== -1) {
+        // Keep only essential data in the main applicant object
+        const applicantData = {
+          ...formData
+        };
+        
         applicants[index] = applicantData;
         
         // Save applicant data
@@ -159,6 +179,9 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
         // Save photo separately for easier access
         if (photo) {
           localStorage.setItem(`applicantPhoto_${id}`, photo);
+        } else {
+          // Remove photo if it was deleted
+          localStorage.removeItem(`applicantPhoto_${id}`);
         }
         
         toast.success('Applicant updated successfully');
@@ -168,6 +191,10 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
       }
     } else {
       // Add new applicant
+      const applicantData = {
+        ...formData
+      };
+      
       applicants.push(applicantData);
       
       // Save applicant data
@@ -212,6 +239,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
             <CardTitle>Personal Information</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="fullName">Full Name</Label>
@@ -362,23 +390,36 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
                   )}
                 </div>
                 
-                <div className="mt-4">
-                  <label className="w-full">
+                <div className="mt-4 space-y-2">
+                  <input 
+                    ref={fileInputRef}
+                    type="file" 
+                    className="hidden" 
+                    accept="image/*"
+                    onChange={handlePhotoUpload}
+                  />
+                  
+                  <div className="flex gap-2">
                     <Button 
                       type="button"
                       variant="outline" 
                       className="w-full cursor-pointer"
+                      onClick={() => fileInputRef.current?.click()}
                     >
                       <Upload className="h-4 w-4 mr-2" />
                       Upload Photo
                     </Button>
-                    <Input 
-                      type="file" 
-                      className="hidden" 
-                      accept="image/*"
-                      onChange={handlePhotoUpload}
-                    />
-                  </label>
+                    
+                    <Button 
+                      type="button"
+                      variant="outline" 
+                      className="w-full cursor-pointer"
+                      onClick={handleTakePhoto}
+                    >
+                      <Camera className="h-4 w-4 mr-2" />
+                      Take Photo
+                    </Button>
+                  </div>
                   <p className="text-xs text-gray-500 mt-2">
                     Recommended: Passport-style photo, front-facing on white background
                   </p>

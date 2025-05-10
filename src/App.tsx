@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -19,6 +20,7 @@ import DashboardLayout from "./components/layout/DashboardLayout";
 import Dashboard from "./pages/Dashboard";
 import Applicants from "./pages/Applicants";
 import ApplicantForm from "./pages/ApplicantForm";
+import ApplicantDetails from "./pages/ApplicantDetails"; // Add this import
 import IDCardPreviewPage from "./pages/IDCardPreviewPage";
 import IDCards from "./pages/IDCards";
 import Users from "./pages/Users";
@@ -61,6 +63,14 @@ const App = () => (
               <ProtectedRoute allowedRoles={[UserRole.ADMIN, UserRole.DATA_ENTRY]}>
                 <DashboardLayout>
                   <ApplicantForm />
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/applicants/:id" element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <ApplicantDetails />
                 </DashboardLayout>
               </ProtectedRoute>
             } />

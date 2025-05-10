@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth, UserRole } from '@/context/AuthContext';
@@ -31,7 +32,7 @@ import {
   Trash, 
   Eye, 
   CreditCard,
-  File
+  FileImage
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
@@ -241,18 +242,23 @@ const Applicants: React.FC = () => {
                                 )}
                               </>
                             )}
-                            <DropdownMenuItem asChild>
-                              <Link to={`/id-cards/${applicant.id}/generate`}>
-                                <CreditCard className="mr-2 h-4 w-4" />
-                                <span>Generate ID Card</span>
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                              <Link to={`/id-cards/${applicant.id}/preview`}>
-                                <File className="mr-2 h-4 w-4" />
-                                <span>Preview ID Card</span>
-                              </Link>
-                            </DropdownMenuItem>
+                            {applicant.status === 'approved' && (
+                              <DropdownMenuItem asChild>
+                                <Link to={`/id-cards/${applicant.id}/preview`}>
+                                  <CreditCard className="mr-2 h-4 w-4" />
+                                  <span>View ID Card</span>
+                                </Link>
+                              </DropdownMenuItem>
+                            )}
+                            {applicant.status !== 'approved' && (
+                              <DropdownMenuItem
+                                className="text-gray-400"
+                                disabled
+                              >
+                                <FileImage className="mr-2 h-4 w-4" />
+                                <span>Approval Required for ID</span>
+                              </DropdownMenuItem>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
