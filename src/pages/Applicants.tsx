@@ -115,6 +115,7 @@ const Applicants: React.FC = () => {
   const filteredApplicants = applicants.filter(applicant => 
     applicant.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     applicant.nationality.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (applicant.area && applicant.area.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (applicant.passportNumber && applicant.passportNumber.toLowerCase().includes(searchTerm.toLowerCase()))
   );
   
@@ -143,6 +144,11 @@ const Applicants: React.FC = () => {
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
+  };
+  
+  // Check if ID card is available
+  const canViewIDCard = (applicant: any) => {
+    return applicant.status === 'approved' || applicant.idCardApproved === true;
   };
 
   const canEditApplicants = user && [UserRole.ADMIN, UserRole.DATA_ENTRY].includes(user.role);
@@ -173,7 +179,7 @@ const Applicants: React.FC = () => {
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
               <Input
-                placeholder="Search applicants by name, nationality, or passport number..."
+                placeholder="Search applicants by name, nationality, or area..."
                 className="pl-8"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -187,16 +193,17 @@ const Applicants: React.FC = () => {
                 <TableRow>
                   <TableHead>Full Name</TableHead>
                   <TableHead>Nationality</TableHead>
-                  <TableHead>Passport Number</TableHead>
+                  <TableHead>Area</TableHead>
                   <TableHead>Visa Type</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>ID Card</TableHead>
                   <TableHead className="w-[100px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredApplicants.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                       No applicants found matching your search.
                     </TableCell>
                   </TableRow>
@@ -205,9 +212,14 @@ const Applicants: React.FC = () => {
                     <TableRow key={applicant.id}>
                       <TableCell className="font-medium">{applicant.fullName}</TableCell>
                       <TableCell>{applicant.nationality}</TableCell>
-                      <TableCell>{applicant.passportNumber || 'Not provided'}</TableCell>
+                      <TableCell>{applicant.area || applicant.passportNumber || 'Not provided'}</TableCell>
                       <TableCell>{applicant.visaType}</TableCell>
                       <TableCell>{getStatusBadge(applicant.status)}</TableCell>
+                      <TableCell>
+                        {applicant.idCardApproved && (
+                          <Badge className="bg-blue-100 text-blue-800">Approved</Badge>
+                        )}
+                      </TableCell>
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -242,15 +254,14 @@ const Applicants: React.FC = () => {
                                 )}
                               </>
                             )}
-                            {applicant.status === 'approved' && (
+                            {canViewIDCard(applicant) ? (
                               <DropdownMenuItem asChild>
                                 <Link to={`/id-cards/${applicant.id}/preview`}>
                                   <CreditCard className="mr-2 h-4 w-4" />
                                   <span>View ID Card</span>
                                 </Link>
                               </DropdownMenuItem>
-                            )}
-                            {applicant.status !== 'approved' && (
+                            ) : (
                               <DropdownMenuItem
                                 className="text-gray-400"
                                 disabled

@@ -65,6 +65,8 @@ const ApplicantDetails: React.FC = () => {
         return <Badge variant="outline">{status}</Badge>;
     }
   };
+
+  const canViewIDCard = applicant && (applicant.status === 'approved' || applicant.idCardApproved === true);
   
   if (loading) {
     return (
@@ -124,12 +126,19 @@ const ApplicantDetails: React.FC = () => {
           </Link>
         </Button>
         
-        <Button asChild>
-          <Link to={`/id-cards/${id}/preview`}>
+        {canViewIDCard ? (
+          <Button asChild>
+            <Link to={`/id-cards/${id}/preview`}>
+              <CreditCard className="mr-2 h-4 w-4" />
+              View ID Card
+            </Link>
+          </Button>
+        ) : (
+          <Button disabled variant="secondary">
             <CreditCard className="mr-2 h-4 w-4" />
-            View ID Card
-          </Link>
-        </Button>
+            Approval Required
+          </Button>
+        )}
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -159,6 +168,13 @@ const ApplicantDetails: React.FC = () => {
               <div className="mt-2">
                 {getStatusBadge(applicant.status)}
               </div>
+              
+              {/* ID Card Approval Status */}
+              {applicant.idCardApproved && (
+                <div className="mt-2">
+                  <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">ID Card Approved</Badge>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -190,8 +206,8 @@ const ApplicantDetails: React.FC = () => {
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500">Passport Number</h3>
-                  <p className="text-base">{applicant.passportNumber || 'Not provided'}</p>
+                  <h3 className="text-sm font-medium text-gray-500">Area</h3>
+                  <p className="text-base">{applicant.area || applicant.passportNumber || 'Not provided'}</p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">ID Number</h3>
@@ -221,6 +237,18 @@ const ApplicantDetails: React.FC = () => {
                   <h3 className="text-sm font-medium text-gray-500">Date Created</h3>
                   <p className="text-base">{formatDate(applicant.dateCreated)}</p>
                 </div>
+              </div>
+              
+              {/* ID Card Approval info */}
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">ID Card Status</h3>
+                <p className="text-base">
+                  {applicant.idCardApproved 
+                    ? "Approved for ID card issuance" 
+                    : applicant.status === 'approved' 
+                      ? "Eligible for ID card (status approved)" 
+                      : "Not eligible for ID card yet"}
+                </p>
               </div>
             </div>
           </CardContent>

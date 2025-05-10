@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -7,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowLeft, Save, Upload, Trash, Camera } from 'lucide-react';
 import { toast } from "sonner";
 import { generateUniqueId } from '@/lib/utils';
@@ -25,11 +27,12 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
     id: '',
     fullName: '',
     nationality: '',
-    passportNumber: '',
+    area: '',   // Changed from passportNumber to area
     dateOfBirth: '',
     visaType: 'Tourist',
     occupation: '',
     status: 'pending',
+    idCardApproved: false,  // New field for ID card approval
     dateCreated: new Date().toISOString().split('T')[0],
   });
   
@@ -53,11 +56,12 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
               id: applicant.id,
               fullName: applicant.fullName || '',
               nationality: applicant.nationality || '',
-              passportNumber: applicant.passportNumber || '',
+              area: applicant.area || applicant.passportNumber || '',  // Support both old and new field names
               dateOfBirth: applicant.dateOfBirth || '',
               visaType: applicant.visaType || 'Tourist',
               occupation: applicant.occupation || '',
               status: applicant.status || 'pending',
+              idCardApproved: applicant.idCardApproved || false,  // Load ID card approval status
               dateCreated: applicant.dateCreated || new Date().toISOString().split('T')[0],
             });
             
@@ -102,6 +106,14 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
     setFormData(prev => ({
       ...prev,
       [name]: value
+    }));
+  };
+  
+  // Handle checkbox change
+  const handleCheckboxChange = (checked: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      idCardApproved: checked
     }));
   };
   
@@ -268,14 +280,14 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="passportNumber">Passport Number</Label>
+                <Label htmlFor="area">Area</Label>
                 <Input 
-                  id="passportNumber"
-                  name="passportNumber"
-                  value={formData.passportNumber}
+                  id="area"
+                  name="area"
+                  value={formData.area}
                   onChange={handleChange}
                   required
-                  placeholder="Enter passport number"
+                  placeholder="Enter residential area"
                 />
               </div>
               
@@ -355,6 +367,24 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
                 />
               </div>
             </div>
+            
+            {/* ID Card Approval Checkbox */}
+            <div className="flex items-center space-x-2 pt-2">
+              <Checkbox 
+                id="idCardApproved" 
+                checked={formData.idCardApproved} 
+                onCheckedChange={handleCheckboxChange}
+              />
+              <Label 
+                htmlFor="idCardApproved" 
+                className="font-medium text-sm cursor-pointer"
+              >
+                Approve for ID Card issuance
+              </Label>
+            </div>
+            <p className="text-xs text-gray-500">
+              Check this box to approve this applicant for ID card generation, even if status is pending
+            </p>
           </CardContent>
         </Card>
         
