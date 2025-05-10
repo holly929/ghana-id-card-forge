@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   Card, 
@@ -31,6 +30,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import AddUserDialog from '@/components/AddUserDialog';
 
 // Mock users for the users management page
 const mockUsersList = [
@@ -205,6 +205,7 @@ const Users: React.FC = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [deleteUser, setDeleteUser] = useState<{id: string, username: string} | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   
   // Only admin users should be able to manage other users
   if (user?.role !== UserRole.ADMIN) {
@@ -262,6 +263,19 @@ const Users: React.FC = () => {
     }
   };
 
+  // Open add user dialog
+  const handleAddUser = () => {
+    setIsAddDialogOpen(true);
+  };
+
+  // Save new user
+  const handleSaveNewUser = (newUser: any) => {
+    const generatedPassword = generatePassword();
+    setUsers(prev => [...prev, newUser]);
+    setIsAddDialogOpen(false);
+    toast.success(`User ${newUser.username} has been created with password: ${generatedPassword}`);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
@@ -269,7 +283,7 @@ const Users: React.FC = () => {
           <h1 className="text-2xl font-semibold text-gray-800">User Management</h1>
           <p className="text-gray-600">Manage system users and permissions</p>
         </div>
-        <Button className="self-start">
+        <Button className="self-start" onClick={handleAddUser}>
           <Plus className="h-4 w-4 mr-2" /> Add New User
         </Button>
       </div>
@@ -452,6 +466,13 @@ const Users: React.FC = () => {
           onConfirm={handleDeleteConfirm}
         />
       )}
+
+      {/* Add User Dialog */}
+      <AddUserDialog
+        isOpen={isAddDialogOpen}
+        onClose={() => setIsAddDialogOpen(false)}
+        onSave={handleSaveNewUser}
+      />
     </div>
   );
 };
