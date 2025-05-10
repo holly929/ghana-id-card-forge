@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -11,8 +11,23 @@ const Login: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [logo, setLogo] = useState<string | null>(null);
+  const [companyName, setCompanyName] = useState('Ghana Immigration Service');
   const { login } = useAuth();
   const navigate = useNavigate();
+
+  // Load logo and company name from localStorage
+  useEffect(() => {
+    const savedLogo = localStorage.getItem('systemLogo');
+    if (savedLogo) {
+      setLogo(savedLogo);
+    }
+    
+    const savedCompanyName = localStorage.getItem('companyName');
+    if (savedCompanyName) {
+      setCompanyName(savedCompanyName);
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,9 +49,13 @@ const Login: React.FC = () => {
         <div className="flex justify-center mb-6">
           <div className="flex flex-col items-center">
             <div className="flex items-center justify-center w-16 h-16 rounded-full bg-primary text-white">
-              <Shield className="h-8 w-8" />
+              {logo ? (
+                <img src={logo} alt="System Logo" className="h-16 w-16 rounded-full object-cover" />
+              ) : (
+                <Shield className="h-8 w-8" />
+              )}
             </div>
-            <h1 className="mt-4 text-2xl font-bold text-center text-gray-800">Ghana Immigration Service</h1>
+            <h1 className="mt-4 text-2xl font-bold text-center text-gray-800">{companyName}</h1>
             <p className="mt-1 text-center text-gray-600">Non-Citizen ID Card System</p>
           </div>
         </div>
@@ -97,15 +116,6 @@ const Login: React.FC = () => {
             </CardFooter>
           </form>
         </Card>
-        
-        <div className="mt-6 text-center">
-          <div className="text-sm text-gray-600">
-            <p>Demo Accounts:</p>
-            <p>admin / admin123 (Admin)</p>
-            <p>entry / entry123 (Data Entry)</p>
-            <p>viewer / viewer123 (Viewer)</p>
-          </div>
-        </div>
       </div>
     </div>
   );
