@@ -13,7 +13,8 @@ import {
   CreditCard,
   User,
   Search,
-  Plus
+  Plus,
+  Copyright
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -223,6 +224,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         <main className="flex-1 overflow-y-auto bg-gray-50 p-4">
           {children}
         </main>
+
+        {/* Copyright Footer */}
+        <footer className="bg-white border-t py-2 px-4 text-center text-xs text-gray-600 flex items-center justify-center">
+          <Copyright size={14} className="mr-1" />
+          <span>DEVELOPED BY ANEH I.T CONSORTIUM | ALL RIGHTS RESERVED @2025</span>
+        </footer>
       </div>
     </div>
   );
