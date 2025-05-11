@@ -52,12 +52,19 @@ export const DashboardReports = () => {
                 />
                 <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip
-                  content={(props) => (
-                    <ChartTooltipContent 
-                      {...props}
-                      className="border border-gray-200 shadow-lg"
-                    />
-                  )}
+                  content={({ active, payload, label }) => {
+                    if (active && payload && payload.length) {
+                      return (
+                        <ChartTooltipContent 
+                          active={active}
+                          payload={payload}
+                          label={label}
+                          className="border border-gray-200 shadow-lg"
+                        />
+                      );
+                    }
+                    return null;
+                  }}
                 />
                 <Legend verticalAlign="top" height={36} />
                 <Line
