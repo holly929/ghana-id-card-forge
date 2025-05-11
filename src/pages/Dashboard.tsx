@@ -46,22 +46,44 @@ const Dashboard: React.FC = () => {
       description: "All reports are being compiled for download",
     });
     
-    // Simulate processing time for report generation
-    setTimeout(() => {
-      toast({
-        title: "Reports package ready",
-        description: "Your reports have been downloaded as a ZIP file",
+    try {
+      // Create CSV content for all periods
+      const periods: TimePeriod[] = ['weekly', 'monthly', 'annually'];
+      let allReportsContent = '';
+      
+      periods.forEach(period => {
+        const periodData = getReportData(period);
+        allReportsContent += `\n\n${period.toUpperCase()} REPORT\n`;
+        allReportsContent += "date,applicants,cards\n";
+        
+        periodData.forEach(item => {
+          allReportsContent += `${item.date},${item.applicants},${item.cards}\n`;
+        });
       });
       
-      // Mock ZIP download - in a real app, you'd generate a real ZIP file
-      const mockZipContent = "ZIP Content";
-      const blob = new Blob([mockZipContent], { type: 'application/zip' });
+      // Create blob and download
+      const blob = new Blob([allReportsContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.setAttribute('href', url);
-      link.setAttribute('download', `ghana-immigration-reports-${new Date().toISOString().split('T')[0]}.zip`);
+      link.setAttribute('download', `ghana-immigration-all-reports-${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
       link.click();
-    }, 2000);
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      toast({
+        title: "Reports package ready",
+        description: "Your reports have been downloaded as a CSV file",
+      });
+    } catch (error) {
+      console.error("Error generating reports package:", error);
+      toast({
+        title: "Download failed",
+        description: "There was an error generating the reports package",
+        variant: "destructive",
+      });
+    }
   };
 
   const stats = [
@@ -154,7 +176,33 @@ const Dashboard: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-xs text-gray-500 mb-3">Summary of applicant registration for the past week</p>
-                <Button size="sm" variant="outline" className="w-full flex items-center gap-1" onClick={() => toast({ title: "Report queued", description: "Your weekly report will be ready shortly" })}>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="w-full flex items-center gap-1" 
+                  onClick={() => {
+                    const weeklyData = getReportData('weekly');
+                    let csvContent = "date,applicants,cards\n";
+                    weeklyData.forEach(item => {
+                      csvContent += `${item.date},${item.applicants},${item.cards}\n`;
+                    });
+                    
+                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', `weekly-applicant-report-${new Date().toISOString().split('T')[0]}.csv`);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                    
+                    toast({ 
+                      title: "Report downloaded", 
+                      description: "Your weekly report is ready" 
+                    });
+                  }}
+                >
                   <Download size={14} />
                   Download
                 </Button>
@@ -167,7 +215,33 @@ const Dashboard: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-xs text-gray-500 mb-3">Monthly summary of ID cards issued and pending</p>
-                <Button size="sm" variant="outline" className="w-full flex items-center gap-1" onClick={() => toast({ title: "Report queued", description: "Your monthly report will be ready shortly" })}>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="w-full flex items-center gap-1" 
+                  onClick={() => {
+                    const monthlyData = getReportData('monthly');
+                    let csvContent = "date,applicants,cards\n";
+                    monthlyData.forEach(item => {
+                      csvContent += `${item.date},${item.applicants},${item.cards}\n`;
+                    });
+                    
+                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', `monthly-card-issuance-${new Date().toISOString().split('T')[0]}.csv`);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                    
+                    toast({ 
+                      title: "Report downloaded", 
+                      description: "Your monthly report is ready" 
+                    });
+                  }}
+                >
                   <Download size={14} />
                   Download
                 </Button>
@@ -180,7 +254,33 @@ const Dashboard: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-xs text-gray-500 mb-3">Comprehensive annual statistics and analysis</p>
-                <Button size="sm" variant="outline" className="w-full flex items-center gap-1" onClick={() => toast({ title: "Report queued", description: "Your annual report will be ready shortly" })}>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="w-full flex items-center gap-1" 
+                  onClick={() => {
+                    const annualData = getReportData('annually');
+                    let csvContent = "date,applicants,cards\n";
+                    annualData.forEach(item => {
+                      csvContent += `${item.date},${item.applicants},${item.cards}\n`;
+                    });
+                    
+                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', `annual-performance-report-${new Date().toISOString().split('T')[0]}.csv`);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                    
+                    toast({ 
+                      title: "Report downloaded", 
+                      description: "Your annual report is ready" 
+                    });
+                  }}
+                >
                   <Download size={14} />
                   Download
                 </Button>

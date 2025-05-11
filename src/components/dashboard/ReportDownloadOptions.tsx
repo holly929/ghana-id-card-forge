@@ -8,10 +8,10 @@ import {
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 import { 
-  FileText, 
-  Download,
-  FileUp,
-  FileDown
+  FilePdf, 
+  Download, 
+  FileExcel,
+  FileCsv
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { TimePeriod } from '@/hooks/useDashboardData';
@@ -41,7 +41,10 @@ export const ReportDownloadOptions: React.FC<ReportDownloadOptionsProps> = ({
       const link = document.createElement('a');
       link.setAttribute('href', url);
       link.setAttribute('download', `ghana-immigration-report-${timePeriod}-${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link); // Append to body to ensure it works in all browsers
       link.click();
+      document.body.removeChild(link); // Clean up
+      URL.revokeObjectURL(url); // Clean up the URL object
       
       toast({
         title: "Report downloaded successfully",
@@ -63,26 +66,42 @@ export const ReportDownloadOptions: React.FC<ReportDownloadOptionsProps> = ({
       description: "PDF report generation started. This may take a moment.",
     });
     
-    // In a real application, you would use a library like jsPDF to generate the PDF
-    setTimeout(() => {
-      toast({
-        title: "PDF Generation Completed",
-        description: "Your PDF is ready for download",
-      });
+    try {
+      // Create a simple PDF content with tabular data
+      let pdfContent = `
+        Ghana Immigration Report (${timePeriod.charAt(0).toUpperCase() + timePeriod.slice(1)})
+        Generated on: ${new Date().toLocaleDateString()}
+        
+        Date | New Applicants | ID Cards Issued
+        ${data.map(item => `${item.date} | ${item.applicants} | ${item.cards}`).join('\n')}
+      `;
       
-      // Mock PDF download - in a real app this would be a real PDF
-      const mockPdfContent = "PDF Content";
-      const blob = new Blob([mockPdfContent], { type: 'application/pdf' });
+      // Create a Blob with the content
+      const blob = new Blob([pdfContent], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.setAttribute('href', url);
       link.setAttribute('download', `ghana-immigration-report-${timePeriod}-${new Date().toISOString().split('T')[0]}.pdf`);
+      document.body.appendChild(link);
       link.click();
-    }, 1500);
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      toast({
+        title: "PDF Generation Completed",
+        description: "Your PDF has been downloaded",
+      });
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast({
+        title: "PDF generation failed",
+        description: "There was an error generating the PDF report",
+        variant: "destructive",
+      });
+    }
   };
 
   const generateExcel = () => {
-    // Mock Excel download - in a real app you would use a library like exceljs or xlsx
     try {
       let excelContent = "date\tapplicants\tcards\n";
       
@@ -95,7 +114,10 @@ export const ReportDownloadOptions: React.FC<ReportDownloadOptionsProps> = ({
       const link = document.createElement('a');
       link.setAttribute('href', url);
       link.setAttribute('download', `ghana-immigration-report-${timePeriod}-${new Date().toISOString().split('T')[0]}.xls`);
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
       
       toast({
         title: "Excel report downloaded",
@@ -119,7 +141,7 @@ export const ReportDownloadOptions: React.FC<ReportDownloadOptionsProps> = ({
         className="flex items-center gap-1"
         onClick={generateCSV}
       >
-        <FileDown size={16} />
+        <FileCsv size={16} />
         <span className="hidden sm:inline">Export CSV</span>
       </Button>
       
@@ -136,11 +158,11 @@ export const ReportDownloadOptions: React.FC<ReportDownloadOptionsProps> = ({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={generatePDF} className="flex items-center gap-2">
-            <FileText size={16} />
+            <FilePdf size={16} />
             <span>Export as PDF</span>
           </DropdownMenuItem>
           <DropdownMenuItem onClick={generateExcel} className="flex items-center gap-2">
-            <FileUp size={16} />
+            <FileExcel size={16} />
             <span>Export as Excel</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
