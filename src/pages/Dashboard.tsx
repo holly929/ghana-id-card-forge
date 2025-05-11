@@ -1,12 +1,14 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
-import { Users, CreditCard, User, Clock } from 'lucide-react';
+import { Users, CreditCard, User, Clock, ChartLine, Download } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import DashboardReports from '@/components/dashboard/DashboardReports';
 import { format } from 'date-fns';
+import { toast } from '@/hooks/use-toast';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -36,6 +38,30 @@ const Dashboard: React.FC = () => {
     } else {
       return format(date, 'dd MMM yyyy, HH:mm');
     }
+  };
+
+  const handleDownloadAllReports = () => {
+    toast({
+      title: "Preparing reports package",
+      description: "All reports are being compiled for download",
+    });
+    
+    // Simulate processing time for report generation
+    setTimeout(() => {
+      toast({
+        title: "Reports package ready",
+        description: "Your reports have been downloaded as a ZIP file",
+      });
+      
+      // Mock ZIP download - in a real app, you'd generate a real ZIP file
+      const mockZipContent = "ZIP Content";
+      const blob = new Blob([mockZipContent], { type: 'application/zip' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `ghana-immigration-reports-${new Date().toISOString().split('T')[0]}.zip`);
+      link.click();
+    }, 2000);
   };
 
   const stats = [
@@ -71,9 +97,20 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-gray-800">Welcome back, {user?.name}</h1>
-        <p className="text-gray-600">Here's an overview of your ID card system</p>
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-800">Welcome back, {user?.name}</h1>
+          <p className="text-gray-600">Here's an overview of your ID card system</p>
+        </div>
+        
+        <Button 
+          variant="outline"
+          className="flex items-center gap-2"
+          onClick={handleDownloadAllReports}
+        >
+          <Download size={16} />
+          <span>Download All Reports</span>
+        </Button>
       </div>
       
       {/* Stats */}
@@ -100,6 +137,58 @@ const Dashboard: React.FC = () => {
       
       {/* Reports Section */}
       <DashboardReports />
+      
+      {/* Available Reports Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ChartLine size={20} />
+            Available Reports
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Weekly Applicant Report</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xs text-gray-500 mb-3">Summary of applicant registration for the past week</p>
+                <Button size="sm" variant="outline" className="w-full flex items-center gap-1" onClick={() => toast({ title: "Report queued", description: "Your weekly report will be ready shortly" })}>
+                  <Download size={14} />
+                  Download
+                </Button>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Monthly ID Card Issuance</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xs text-gray-500 mb-3">Monthly summary of ID cards issued and pending</p>
+                <Button size="sm" variant="outline" className="w-full flex items-center gap-1" onClick={() => toast({ title: "Report queued", description: "Your monthly report will be ready shortly" })}>
+                  <Download size={14} />
+                  Download
+                </Button>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Annual Performance Report</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xs text-gray-500 mb-3">Comprehensive annual statistics and analysis</p>
+                <Button size="sm" variant="outline" className="w-full flex items-center gap-1" onClick={() => toast({ title: "Report queued", description: "Your annual report will be ready shortly" })}>
+                  <Download size={14} />
+                  Download
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </CardContent>
+      </Card>
       
       {/* Recent Activity */}
       <Card>

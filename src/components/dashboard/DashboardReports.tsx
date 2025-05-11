@@ -2,9 +2,10 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { ChartContainer, ChartTooltip } from '@/components/ui/chart';
 import { Legend, Line, LineChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { TimePeriod, getReportData } from '@/hooks/useDashboardData';
+import ReportDownloadOptions from './ReportDownloadOptions';
 
 export const DashboardReports = () => {
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('weekly');
@@ -18,20 +19,23 @@ export const DashboardReports = () => {
   return (
     <Card>
       <CardHeader className="space-y-1">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-4">
           <CardTitle>ID Card System Reports</CardTitle>
-          <Tabs 
-            defaultValue="weekly" 
-            value={timePeriod} 
-            onValueChange={handlePeriodChange}
-            className="w-auto"
-          >
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="weekly">Weekly</TabsTrigger>
-              <TabsTrigger value="monthly">Monthly</TabsTrigger>
-              <TabsTrigger value="annually">Annually</TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <div className="flex items-center flex-wrap gap-4">
+            <ReportDownloadOptions timePeriod={timePeriod} data={data} />
+            <Tabs 
+              defaultValue="weekly" 
+              value={timePeriod} 
+              onValueChange={handlePeriodChange}
+              className="w-auto"
+            >
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="weekly">Weekly</TabsTrigger>
+                <TabsTrigger value="monthly">Monthly</TabsTrigger>
+                <TabsTrigger value="annually">Annually</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -52,15 +56,17 @@ export const DashboardReports = () => {
                 />
                 <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip
-                  content={({ active, payload, label }) => {
-                    if (active && payload && payload.length) {
+                  content={(props) => {
+                    if (props.active && props.payload && props.payload.length) {
                       return (
-                        <ChartTooltipContent 
-                          active={active}
-                          payload={payload}
-                          label={label}
-                          className="border border-gray-200 shadow-lg"
-                        />
+                        <div className="border border-gray-200 shadow-lg p-2 bg-white rounded-md">
+                          <p className="font-medium">{props.label}</p>
+                          {props.payload.map((entry, index) => (
+                            <p key={`item-${index}`} style={{ color: entry.color }}>
+                              {entry.name}: {entry.value}
+                            </p>
+                          ))}
+                        </div>
                       );
                     }
                     return null;
