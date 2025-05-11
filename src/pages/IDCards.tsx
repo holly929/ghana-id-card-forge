@@ -23,13 +23,24 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { 
   Search, 
   Eye,
   Printer,
   FileImage,
   Files,
-  Download
+  Download,
+  Trash2
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -106,6 +117,8 @@ const IDCards: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showBulkPrintModal, setShowBulkPrintModal] = useState(false);
   const [showBulkSelector, setShowBulkSelector] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [applicantToDelete, setApplicantToDelete] = useState<any>(null);
   const navigate = useNavigate();
   
   // Load applicants from localStorage
@@ -321,6 +334,30 @@ const IDCards: React.FC = () => {
     setShowBulkSelector(false);
   };
   
+  // Handle delete ID card
+  const handleDeleteClick = (applicant: any) => {
+    setApplicantToDelete(applicant);
+    setDeleteDialogOpen(true);
+  };
+  
+  const handleDeleteConfirm = () => {
+    if (applicantToDelete) {
+      // Find and remove the applicant from the list
+      const updatedApplicants = applicants.filter(app => app.id !== applicantToDelete.id);
+      
+      // Update state and localStorage
+      setApplicants(updatedApplicants);
+      localStorage.setItem('applicants', JSON.stringify(updatedApplicants));
+      
+      // Show success message
+      toast.success(`ID card for ${applicantToDelete.fullName} has been deleted`);
+      
+      // Close dialog and clear selected applicant
+      setDeleteDialogOpen(false);
+      setApplicantToDelete(null);
+    }
+  };
+  
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -439,6 +476,15 @@ const IDCards: React.FC = () => {
                           <Printer className="h-4 w-4 mr-1" />
                           Print {printFormat}
                         </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="w-full"
+                          onClick={() => handleDeleteClick(applicant)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-1 text-red-500" />
+                          Delete
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>
@@ -456,7 +502,7 @@ const IDCards: React.FC = () => {
                     <TableHead>Area</TableHead>
                     <TableHead>Visa Type</TableHead>
                     <TableHead>ID Card Status</TableHead>
-                    <TableHead className="w-[240px]">Actions</TableHead>
+                    <TableHead className="w-[280px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -504,6 +550,14 @@ const IDCards: React.FC = () => {
                                 Print Page
                               </Link>
                             </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleDeleteClick(applicant)}
+                            >
+                              <Trash2 className="h-4 w-4 mr-1 text-red-500" />
+                              Delete
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -522,6 +576,24 @@ const IDCards: React.FC = () => {
         onClose={() => setShowBulkPrintModal(false)}
         applicants={approvedApplicants}
       />
+      
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete ID Card</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the ID card for {applicantToDelete?.fullName}? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setApplicantToDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-red-600 hover:bg-red-700">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
