@@ -306,7 +306,7 @@ const IDCardPrintPage = () => {
                       <div><strong>Expiry Date:</strong> ${formatDate(applicant.dateOfBirth)}</div>
                       <div><strong>ID No:</strong> ${applicant.id}</div>
                       <div><strong>Location:</strong> ${applicant.area || 'Not provided'}</div>
-                      <div><strong>Expiry Date:</strong> ${formatDate(getExpiryDate())}</div>
+                      
                     </div>
                   </div>
                 </div>
