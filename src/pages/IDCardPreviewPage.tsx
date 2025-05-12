@@ -146,7 +146,7 @@ const IDCardPreviewPage: React.FC = () => {
             </div>
             <div style="text-align:center; background:#fcd116; padding:2px 4px; border-radius:2px; font-weight:bold;">${applicantData.visaType.toUpperCase()}</div>
             <div style="text-align:center;">
-              <div style="font-weight:bold;">REPUBLIC OF GHANA</div>
+              <div style="font-weight:bold;">GHANA IMMIGRATION SERVICE</div>
               <div>NON-CITIZEN IDENTITY CARD</div>
             </div>
             <div>
@@ -163,7 +163,7 @@ const IDCardPreviewPage: React.FC = () => {
           <!-- Back -->
           <div class="back" style="margin-top:10px;">
             <div style="text-align:center;">
-              <div style="font-weight:bold;">REPUBLIC OF GHANA</div>
+              <div style="font-weight:bold;">GHANA IMMIGRATION SERVICE-KWAHU EAST</div>
               <div>This card remains the property of the Ghana Immigration Service</div>
             </div>
             <div>
