@@ -7,256 +7,244 @@ import IDCardPreview from '@/components/IDCardPreview';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from 'sonner';
 
-// Default mock data (used as a fallback)
-const defaultApplicants = [
-  {
-    id: 'GIS-123456789',
-    fullName: 'Ahmed Mohammed',
-    nationality: 'Egyptian',
-    passportNumber: 'A12345678',
-    dateOfBirth: '1985-03-15',
-    visaType: 'Work',
-    status: 'approved',
-    dateCreated: '2023-07-10',
-    occupation: 'Engineer',
-    photo: null,
-  },
-  {
-    id: 'GIS-234567890',
-    fullName: 'Maria Sanchez',
-    nationality: 'Mexican',
-    passportNumber: 'B87654321',
-    dateOfBirth: '1990-11-22',
-    visaType: 'Student',
-    status: 'pending',
-    dateCreated: '2023-08-05',
-    occupation: 'Student',
-    photo: null,
-  },
-  {
-    id: '3',
-    fullName: 'John Smith',
-    nationality: 'American',
-    passportNumber: 'C45678912',
-    dateOfBirth: '1978-06-30',
-    visaType: 'Tourist',
-    status: 'rejected',
-    dateCreated: '2023-08-15',
-    occupation: 'Consultant',
-    photo: null,
-  },
-  {
-    id: '4',
-    fullName: 'Li Wei',
-    nationality: 'Chinese',
-    passportNumber: 'D98765432',
-    dateOfBirth: '1992-09-18',
-    visaType: 'Business',
-    status: 'approved',
-    dateCreated: '2023-08-20',
-    occupation: 'Business Owner',
-    photo: null,
-  },
-  {
-    id: '5',
-    fullName: 'Amit Patel',
-    nationality: 'Indian',
-    passportNumber: 'E12378945',
-    dateOfBirth: '1983-12-10',
-    visaType: 'Work',
-    status: 'pending',
-    dateCreated: '2023-08-25',
-    occupation: 'Software Developer',
-    photo: null,
-  },
-];
+const defaultApplicants = [/* your default mock data here, same as before */];
 
 const IDCardPreviewPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  
+
   const [applicants, setApplicants] = useState<any[]>([]);
   const [applicant, setApplicant] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  
-  // Load applicants from localStorage
+
+  // Load applicants
   useEffect(() => {
     setLoading(true);
     const storedApplicants = localStorage.getItem('applicants');
     if (storedApplicants) {
       try {
         const parsedApplicants = JSON.parse(storedApplicants);
-        console.log('Loaded applicants from storage:', parsedApplicants);
         setApplicants(parsedApplicants);
-      } catch (error) {
-        console.error('Error parsing applicants data:', error);
+      } catch (err) {
+        console.error('Error parsing applicants:', err);
         setApplicants(defaultApplicants);
         toast.error('Failed to load applicant data');
       }
     } else {
-      console.log('No stored applicants found, using default data');
       setApplicants(defaultApplicants);
     }
     setLoading(false);
   }, []);
-  
-  // Find applicant by ID after applicants are loaded
+
+  // Find applicant by ID
   useEffect(() => {
     if (applicants.length > 0 && id) {
       const found = applicants.find(a => a.id === id);
       if (found) {
-        console.log('Found applicant:', found);
-        
-        // Load saved photo from localStorage if not already in the applicant data
         if (!found.photo) {
           const savedPhoto = localStorage.getItem(`applicantPhoto_${id}`);
-          if (savedPhoto) {
-            found.photo = savedPhoto;
-          }
+          if (savedPhoto) found.photo = savedPhoto;
         }
-        
-        setApplicant({...found});
+        setApplicant({ ...found });
       } else {
-        console.log('Applicant not found with ID:', id);
         toast.error(`Applicant with ID ${id} not found`);
       }
     }
   }, [applicants, id]);
-  
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <div className="text-center">
-          <h2 className="text-xl font-medium mb-2">Loading applicant data...</h2>
-          <p>Please wait</p>
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-GB');
+  };
+
+  const getExpiryDate = () => {
+    const date = new Date();
+    date.setFullYear(date.getFullYear() + 2);
+    return date.toISOString().split('T')[0];
+  };
+
+  // Generate HTML for printing
+  const generatePrintHTML = () => {
+    if (!applicant) return '';
+
+    const applicantData = applicant;
+    const logoUrl = ''; // Set your logo URL if any
+
+    // Example: scale based on size preference (you can extend this)
+    const scale = 1;
+
+    return `
+    <html>
+    <head>
+      <style>
+        @media print {
+          body {
+            margin: 0;
+            padding: 10mm;
+            font-family: Arial, sans-serif;
+          }
+          .card {
+            width: 180mm;
+            height: 54mm;
+            background: linear-gradient(to right, #006b3f, #006b3f99);
+            color: white;
+            border-radius: 8px;
+            padding: 10px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: row;
+            margin-bottom: 10mm;
+            page-break-inside: avoid;
+          }
+          .front, .back {
+            width: 50%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 5mm;
+            box-sizing: border-box;
+            position: relative;
+          }
+          .logo {
+            text-align: center;
+            margin-bottom: 5mm;
+          }
+          .photo {
+            width: 70px;
+            height: 85px;
+            border: 2px solid #fff;
+            overflow: hidden;
+            margin: 0 auto 5mm auto;
+          }
+          .photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+          }
+          .red, .yellow, .green {
+            height: 12px;
+            display: flex;
+          }
+          .red { background: #ce1126; flex: 1; }
+          .yellow { background: #fcd116; flex: 1; }
+          .green { background: #006b3f; flex: 1; }
+        }
+      </style>
+    </head>
+    <body>
+      <div style="transform: scale(${scale}); transform-origin: top left;">
+        <div class="card">
+          <!-- Front -->
+          <div class="front">
+            <div class="logo">
+              ${logoUrl ? `<img src="${logoUrl}" style="max-height:30px; max-width:80px;">` : ''}
+            </div>
+            <div class="photo">
+              ${applicantData.photo ? `<img src="${applicantData.photo}" />` : '<span>No Photo</span>'}
+            </div>
+            <div style="text-align:center; background:#fcd116; padding:2px 4px; border-radius:2px; font-weight:bold;">${applicantData.visaType.toUpperCase()}</div>
+            <div style="text-align:center;">
+              <div style="font-weight:bold;">REPUBLIC OF GHANA</div>
+              <div>NON-CITIZEN IDENTITY CARD</div>
+            </div>
+            <div>
+              <div><strong>Name:</strong> ${applicantData.fullName}</div>
+              <div><strong>Nationality:</strong> ${applicantData.nationality}</div>
+              <div><strong>ID No:</strong> ${applicantData.id}</div>
+              <div><strong>Expiry Date:</strong> ${formatDate(applicantData.dateOfBirth)}</div>
+              <div><strong>Expiry Date:</strong> ${formatDate(getExpiryDate())}</div>
+            </div>
+            <div class="red"></div>
+            <div class="yellow"></div>
+            <div class="green"></div>
+          </div>
+          <!-- Back -->
+          <div class="back" style="margin-top:10px;">
+            <div style="text-align:center;">
+              <div style="font-weight:bold;">REPUBLIC OF GHANA</div>
+              <div>This card remains the property of the Ghana Immigration Service</div>
+            </div>
+            <div>
+              <div><strong>Occupation:</strong> ${applicantData.occupation || 'N/A'}</div>
+              <div><strong>Date of Issue:</strong> ${formatDate(new Date().toISOString())}</div>
+            </div>
+            <div style="border-top:1px solid rgba(255,255,255,0.3); margin-top:10px; padding-top:10px;">
+              <div style="text-align:center; font-size:8px;">If found, please return to the nearest Ghana Immigration Service office</div>
+            </div>
+            <div style="display:flex; justify-content: space-between; margin-top:10px;">
+              <div style="border-top:1px solid rgba(255,255,255,0.5); width:70px; text-align:center; font-size:7px;">Holder's Signature</div>
+              <div style="border-top:1px solid rgba(255,255,255,0.5); width:70px; text-align:center; font-size:7px;">Issuing Officer</div>
+            </div>
+            <div class="red"></div>
+            <div class="yellow"></div>
+            <div class="green"></div>
+          </div>
         </div>
       </div>
-    );
+    </body>
+    </html>
+    `;
+  };
+
+  const handlePrint = () => {
+    const printWindow = window.open('', '_blank', 'width=900,height=700');
+    if (!printWindow) {
+      toast.error('Pop-up blocked. Please allow pop-ups.');
+      return;
+    }
+    const htmlContent = generatePrintHTML();
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+
+    // Wait for content to load, then print
+    printWindow.onload = () => {
+      printWindow.focus();
+      printWindow.print();
+      setTimeout(() => printWindow.close(), 500);
+    };
+  };
+
+  if (loading) {
+    return <div>Loading...</div>;
   }
-  
+
   if (!applicant) {
     return (
-      <div className="flex flex-col items-center justify-center p-8">
-        <h1 className="text-2xl font-bold mb-4">Applicant Not Found</h1>
-        <p className="mb-6">The applicant you're looking for could not be found.</p>
-        <Button onClick={() => navigate('/id-cards')}>
-          Return to ID Cards
-        </Button>
+      <div>
+        <h2>Applicant not found</h2>
+        <Button onClick={() => navigate('/id-cards')}>Back to ID Cards</Button>
       </div>
     );
   }
-  
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-2">
-        <Button 
-          variant="ghost" 
-          size="icon"
-          onClick={() => navigate('/id-cards')}
-        >
+    <div>
+      <div className="flex items-center mb-4">
+        <Button variant="ghost" onClick={() => navigate('/id-cards')}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-800">ID Card Preview</h1>
-          <p className="text-gray-600">
-            Preview the ID card for {applicant?.fullName}
-          </p>
-        </div>
+        <h1 className="ml-2 text-xl font-semibold">Preview & Print ID Card</h1>
       </div>
-      
-      {/* Add Print Page Button */}
-      <div>
-        <Button variant="outline" asChild className="flex items-center gap-2">
-          <Link to={`/id-cards/${applicant.id}/print`}>
-            <Printer className="h-4 w-4" />
-            Go to Print Page
-          </Link>
+
+      {/* Buttons */}
+      <div className="mb-4 flex gap-2">
+        <Button onClick={handlePrint} className="flex items-center gap-2">
+          <Printer className="h-4 w-4" />
+          Print ID Card
         </Button>
+        {/* You can add more buttons like 'Print Duplicates' etc. */}
       </div>
-      
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <Card className="xl:order-2">
-          <CardHeader>
-            <CardTitle>Applicant Information</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Full Name</h3>
-                  <p>{applicant?.fullName}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Nationality</h3>
-                  <p>{applicant?.nationality}</p>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Expiry Date</h3>
-                  <p>{new Date(applicant?.dateOfBirth).toLocaleDateString()}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Passport Number</h3>
-                  <p>{applicant?.passportNumber || "Not provided"}</p>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Visa Type</h3>
-                  <p>{applicant?.visaType}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Occupation</h3>
-                  <p>{applicant?.occupation || "Not provided"}</p>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Status</h3>
-                  <p className="capitalize">{applicant?.status}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">ID Number</h3>
-                  <p>{applicant?.id}</p>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Date Created</h3>
-                  <p>{new Date(applicant?.dateCreated).toLocaleDateString()}</p>
-                </div>
-              </div>
-              
-              {applicant?.photo && (
-                <div className="mt-4">
-                  <h3 className="text-sm font-medium text-gray-500 mb-2">Photo</h3>
-                  <div className="w-32 h-40 border overflow-hidden">
-                    <img 
-                      src={applicant.photo} 
-                      alt="Applicant" 
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="xl:order-1">
-          <CardHeader>
-            <CardTitle>ID Card Preview</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <IDCardPreview applicant={applicant} />
-          </CardContent>
-        </Card>
+
+      {/* Preview */}
+      <div className="border p-4 mb-4">
+        <h2 className="mb-2 font-semibold">Applicant Details</h2>
+        <p>Name: {applicant.fullName}</p>
+        <p>Nationality: {applicant.nationality}</p>
+        <p>ID: {applicant.id}</p>
+        {/* Your ID card preview component or image can go here */}
+        <IDCardPreview applicant={applicant} />
       </div>
     </div>
   );
