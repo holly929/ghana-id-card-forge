@@ -244,7 +244,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
           <!-- Back -->
           <div class="back" style="margin-top:10px;">
             <div style="text-align:center;">
-              <div style="font-weight:bold;">REPUBLIC OF GHANA</div>
+              <div style="font-weight:bold;">GHANA IMMIGRATION SERVICE-KWAHU EAST</div>
               <div>This card remains the property of the Ghana Immigration Service</div>
             </div>
             <div>
