@@ -289,7 +289,7 @@ const IDCards: React.FC = () => {
                   <div style="font-size: 10px;">
                     <div><strong>Name:</strong> ${applicant.fullName}</div>
                     <div><strong>Nationality:</strong> ${applicant.nationality}</div>
-                    <div><strong>Date of Birth:</strong> ${new Date(applicant.dateOfBirth).toLocaleDateString()}</div>
+                    <div><strong>Expiry Date:</strong> ${new Date(applicant.dateOfBirth).toLocaleDateString()}</div>
                     <div><strong>ID No:</strong> ${applicant.id}</div>
                     <div><strong>Passport No:</strong> ${applicant.passportNumber || 'Not provided'}</div>
                     <div><strong>Expiry Date:</strong> ${new Date(new Date().setFullYear(new Date().getFullYear() + 2)).toLocaleDateString()}</div>
