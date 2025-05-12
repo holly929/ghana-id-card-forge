@@ -297,7 +297,7 @@ const IDCardPrintPage = () => {
                   </div>
                   <div class="right-side">
                     <div class="card-title">
-                      <div>REPUBLIC OF GHANA</div>
+                      <div>GHANA IMMIGRATION SERVICE-KWAHU EAST</div>
                       <div>NON-CITIZEN IDENTITY CARD</div>
                     </div>
                     <div class="card-info">
