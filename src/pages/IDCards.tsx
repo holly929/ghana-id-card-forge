@@ -292,7 +292,7 @@ const IDCards: React.FC = () => {
                     <div><strong>Expiry Date:</strong> ${new Date(applicant.dateOfBirth).toLocaleDateString()}</div>
                     <div><strong>ID No:</strong> ${applicant.id}</div>
                     <div><strong>Passport No:</strong> ${applicant.passportNumber || 'Not provided'}</div>
-                    <div><strong>Expiry Date:</strong> ${new Date(new Date().setFullYear(new Date().getFullYear() + 2)).toLocaleDateString()}</div>
+                    
                   </div>
                 </div>
               </div>
