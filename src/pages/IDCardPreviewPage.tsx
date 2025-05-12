@@ -7,7 +7,7 @@ import IDCardPreview from '@/components/IDCardPreview';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from 'sonner';
 
-// Default mock data (used as a fallback)
+// Default mock data with expiryDate added
 const defaultApplicants = [
   {
     id: 'GIS-123456789',
@@ -20,6 +20,7 @@ const defaultApplicants = [
     dateCreated: '2023-07-10',
     occupation: 'Engineer',
     photo: null,
+    expiryDate: '2025-07-10', // Added expiry date
   },
   {
     id: 'GIS-234567890',
@@ -32,6 +33,7 @@ const defaultApplicants = [
     dateCreated: '2023-08-05',
     occupation: 'Student',
     photo: null,
+    expiryDate: '2024-11-22',
   },
   {
     id: '3',
@@ -44,6 +46,7 @@ const defaultApplicants = [
     dateCreated: '2023-08-15',
     occupation: 'Consultant',
     photo: null,
+    expiryDate: '2023-08-30',
   },
   {
     id: '4',
@@ -56,6 +59,7 @@ const defaultApplicants = [
     dateCreated: '2023-08-20',
     occupation: 'Business Owner',
     photo: null,
+    expiryDate: '2026-09-18',
   },
   {
     id: '5',
@@ -68,6 +72,7 @@ const defaultApplicants = [
     dateCreated: '2023-08-25',
     occupation: 'Software Developer',
     photo: null,
+    expiryDate: '2024-12-10',
   },
 ];
 
@@ -75,11 +80,11 @@ const IDCardPreviewPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  
+
   const [applicants, setApplicants] = useState<any[]>([]);
   const [applicant, setApplicant] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  
+
   // Load applicants from localStorage
   useEffect(() => {
     setLoading(true);
@@ -100,30 +105,36 @@ const IDCardPreviewPage: React.FC = () => {
     }
     setLoading(false);
   }, []);
-  
-  // Find applicant by ID after applicants are loaded
+
+  // Find applicant by ID
   useEffect(() => {
     if (applicants.length > 0 && id) {
-      const found = applicants.find(a => a.id === id);
+      const found = applicants.find((a) => a.id === id);
       if (found) {
         console.log('Found applicant:', found);
-        
-        // Load saved photo from localStorage if not already in the applicant data
+
+        // Load saved photo if exists
         if (!found.photo) {
           const savedPhoto = localStorage.getItem(`applicantPhoto_${id}`);
           if (savedPhoto) {
             found.photo = savedPhoto;
           }
         }
-        
-        setApplicant({...found});
+
+        // Ensure expiryDate exists
+        if (!found.expiryDate) {
+          // Set default if missing
+          found.expiryDate = '2025-12-31';
+        }
+
+        setApplicant({ ...found });
       } else {
         console.log('Applicant not found with ID:', id);
         toast.error(`Applicant with ID ${id} not found`);
       }
     }
   }, [applicants, id]);
-  
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -134,7 +145,7 @@ const IDCardPreviewPage: React.FC = () => {
       </div>
     );
   }
-  
+
   if (!applicant) {
     return (
       <div className="flex flex-col items-center justify-center p-8">
@@ -146,15 +157,12 @@ const IDCardPreviewPage: React.FC = () => {
       </div>
     );
   }
-  
+
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center gap-2">
-        <Button 
-          variant="ghost" 
-          size="icon"
-          onClick={() => navigate('/id-cards')}
-        >
+        <Button variant="ghost" size="icon" onClick={() => navigate('/id-cards')}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
@@ -164,8 +172,8 @@ const IDCardPreviewPage: React.FC = () => {
           </p>
         </div>
       </div>
-      
-      {/* Add Print Page Button */}
+
+      {/* Go to Print Page Button */}
       <div>
         <Button variant="outline" asChild className="flex items-center gap-2">
           <Link to={`/id-cards/${applicant.id}/print`}>
@@ -174,14 +182,17 @@ const IDCardPreviewPage: React.FC = () => {
           </Link>
         </Button>
       </div>
-      
+
+      {/* Applicant info and ID Card */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        {/* Applicant info */}
         <Card className="xl:order-2">
           <CardHeader>
             <CardTitle>Applicant Information</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
+              {/* Basic info */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Full Name</h3>
@@ -192,7 +203,8 @@ const IDCardPreviewPage: React.FC = () => {
                   <p>{applicant?.nationality}</p>
                 </div>
               </div>
-              
+
+              {/* DOB & Passport */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Date of Birth</h3>
@@ -200,10 +212,11 @@ const IDCardPreviewPage: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Passport Number</h3>
-                  <p>{applicant?.passportNumber || "Not provided"}</p>
+                  <p>{applicant?.passportNumber || 'Not provided'}</p>
                 </div>
               </div>
-              
+
+              {/* Visa Type & Occupation */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Visa Type</h3>
@@ -211,10 +224,11 @@ const IDCardPreviewPage: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Occupation</h3>
-                  <p>{applicant?.occupation || "Not provided"}</p>
+                  <p>{applicant?.occupation || 'Not provided'}</p>
                 </div>
               </div>
-              
+
+              {/* Status & ID Number */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Status</h3>
@@ -225,21 +239,29 @@ const IDCardPreviewPage: React.FC = () => {
                   <p>{applicant?.id}</p>
                 </div>
               </div>
-              
+
+              {/* Date Created */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Date Created</h3>
                   <p>{new Date(applicant?.dateCreated).toLocaleDateString()}</p>
                 </div>
               </div>
-              
+
+              {/* Expiry Date */}
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">Expiry Date</h3>
+                <p>{new Date(applicant?.expiryDate).toLocaleDateString()}</p>
+              </div>
+
+              {/* Photo */}
               {applicant?.photo && (
                 <div className="mt-4">
                   <h3 className="text-sm font-medium text-gray-500 mb-2">Photo</h3>
                   <div className="w-32 h-40 border overflow-hidden">
-                    <img 
-                      src={applicant.photo} 
-                      alt="Applicant" 
+                    <img
+                      src={applicant.photo}
+                      alt="Applicant"
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -248,7 +270,8 @@ const IDCardPreviewPage: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-        
+
+        {/* ID Card Preview */}
         <Card className="xl:order-1">
           <CardHeader>
             <CardTitle>ID Card Preview</CardTitle>
