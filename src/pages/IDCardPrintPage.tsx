@@ -350,9 +350,9 @@ const IDCardPrintPage: React.FC = () => {
                         <div class="card-info">
                           <div><strong>Name:</strong> ${applicant.fullName}</div>
                           <div><strong>Nationality:</strong> ${applicant.nationality}</div>
-                          <div><strong>Date of Birth:</strong> ${formatDate(applicant.dateOfBirth)}</div>
+                          <div><strong>Expiry Date:</strong> ${formatDate(applicant.dateOfBirth)}</div>
                           <div><strong>ID No:</strong> ${applicant.id}</div>
-                          <div><strong>Area:</strong> ${applicant.area || 'Not provided'}</div>
+                          <div><strong>Location:</strong> ${applicant.area || 'Not provided'}</div>
                           <div><strong>Expiry Date:</strong> ${formatDate(getExpiryDate())}</div>
                         </div>
                       </div>
