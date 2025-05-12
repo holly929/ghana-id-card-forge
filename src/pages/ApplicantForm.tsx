@@ -21,19 +21,18 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  // Form state with added phoneNumber and removed visaType
+  // Form state
   const [formData, setFormData] = useState({
     id: '',
     fullName: '',
     nationality: '',
     area: '',   // Changed from passportNumber to area
     dateOfBirth: '',
-    // Removed visaType
+    visaType: 'Tourist',
     occupation: '',
     status: 'pending',
-    idCardApproved: false,
+    idCardApproved: false,  // New field for ID card approval
     dateCreated: new Date().toISOString().split('T')[0],
-    phoneNumber: '', // New field
   });
   
   const [photo, setPhoto] = useState<string | null>(null);
@@ -56,16 +55,16 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
               id: applicant.id,
               fullName: applicant.fullName || '',
               nationality: applicant.nationality || '',
-              area: applicant.area || applicant.passportNumber || '',
+              area: applicant.area || applicant.passportNumber || '',  // Support both old and new field names
               dateOfBirth: applicant.dateOfBirth || '',
-              // Removed visaType
+              visaType: applicant.visaType || 'Tourist',
               occupation: applicant.occupation || '',
               status: applicant.status || 'pending',
-              idCardApproved: applicant.idCardApproved || false,
+              idCardApproved: applicant.idCardApproved || false,  // Load ID card approval status
               dateCreated: applicant.dateCreated || new Date().toISOString().split('T')[0],
-              phoneNumber: applicant.phoneNumber || '', // Load phone number
             });
             
+            // Check for stored photo
             const storedPhoto = localStorage.getItem(`applicantPhoto_${id}`);
             if (storedPhoto) {
               setPhoto(storedPhoto);
@@ -122,14 +121,18 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
     const file = e.target.files?.[0];
     if (!file) return;
     
+    // Validate file type
     if (!file.type.startsWith('image/')) {
       toast.error('Please select an image file');
       return;
     }
+    
+    // Validate file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
       toast.error('Image size should be less than 2MB');
       return;
     }
+    
     const reader = new FileReader();
     reader.onload = (event) => {
       if (event.target?.result) {
@@ -157,8 +160,10 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
     e.preventDefault();
     setLoading(true);
     
+    // Retrieve existing applicants
     const storedApplicants = localStorage.getItem('applicants');
     let applicants = [];
+    
     if (storedApplicants) {
       try {
         applicants = JSON.parse(storedApplicants);
@@ -167,39 +172,58 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
       }
     }
     
+    // Update existing or add new
     if (isEditing && id) {
       const index = applicants.findIndex((a: any) => a.id === id);
+      
       if (index !== -1) {
+        // Keep only essential data in the main applicant object
         const applicantData = {
           ...formData
         };
+        
         applicants[index] = applicantData;
+        
+        // Save applicant data
         localStorage.setItem('applicants', JSON.stringify(applicants));
+        
+        // Save photo separately for easier access
         if (photo) {
           localStorage.setItem(`applicantPhoto_${id}`, photo);
         } else {
+          // Remove photo if it was deleted
           localStorage.removeItem(`applicantPhoto_${id}`);
         }
+        
         toast.success('Applicant updated successfully');
         navigate('/applicants');
       } else {
         toast.error('Failed to update applicant');
       }
     } else {
+      // Add new applicant
       const applicantData = {
         ...formData
       };
+      
       applicants.push(applicantData);
+      
+      // Save applicant data
       localStorage.setItem('applicants', JSON.stringify(applicants));
+      
+      // Save photo separately for easier access
       if (photo && formData.id) {
         localStorage.setItem(`applicantPhoto_${formData.id}`, photo);
       }
+      
       toast.success('Applicant created successfully');
       navigate('/applicants');
     }
+    
     setLoading(false);
   };
   
+  // Render form
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2">
@@ -226,6 +250,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
             <CardTitle>Personal Information</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="fullName">Full Name</Label>
@@ -238,6 +263,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
                   placeholder="Enter full name"
                 />
               </div>
+              
               <div className="space-y-2">
                 <Label htmlFor="nationality">Nationality</Label>
                 <Input 
@@ -250,6 +276,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
                 />
               </div>
             </div>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="area">Location</Label>
@@ -262,6 +289,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
                   placeholder="Enter residential area"
                 />
               </div>
+              
               <div className="space-y-2">
                 <Label htmlFor="dateOfBirth">Date of Birth</Label>
                 <Input 
@@ -274,22 +302,28 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
                 />
               </div>
             </div>
-            {/* Removed Visa Type select */}
-            {/* New Phone Number Field */}
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="phoneNumber">Phone Number</Label>
-                <Input 
-                  id="phoneNumber"
-                  name="phoneNumber"
-                  type="tel"
-                  value={formData.phoneNumber}
-                  onChange={handleChange}
-                  placeholder="Enter phone number"
-                />
+                <Label htmlFor="visaType">Visa Type</Label>
+                <Select 
+                  value={formData.visaType} 
+                  onValueChange={(value) => handleSelectChange('visaType', value)}
+                >
+                  <SelectTrigger id="visaType">
+                    <SelectValue placeholder="Select visa type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Tourist">Tourist</SelectItem>
+                    <SelectItem value="Business">Business</SelectItem>
+                    <SelectItem value="Student">Student</SelectItem>
+                    <SelectItem value="Work">Work</SelectItem>
+                    <SelectItem value="Transit">Transit</SelectItem>
+                    <SelectItem value="Diplomatic">Diplomatic</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              
               <div className="space-y-2">
                 <Label htmlFor="occupation">Occupation</Label>
                 <Input 
@@ -300,6 +334,9 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
                   placeholder="Enter occupation"
                 />
               </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
                 <Select 
@@ -316,6 +353,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
                   </SelectContent>
                 </Select>
               </div>
+              
               {/* ID display (readonly for editing) */}
               <div className="space-y-2">
                 <Label htmlFor="id">ID Number</Label>
@@ -328,6 +366,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
                 />
               </div>
             </div>
+            
             {/* ID Card Approval Checkbox */}
             <div className="flex items-center space-x-2 pt-2">
               <Checkbox 
@@ -379,6 +418,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
                     </div>
                   )}
                 </div>
+                
                 <div className="mt-4 space-y-2">
                   <input 
                     ref={fileInputRef}
@@ -387,6 +427,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
                     accept="image/*"
                     onChange={handlePhotoUpload}
                   />
+                  
                   <div className="flex gap-2">
                     <Button 
                       type="button"
@@ -397,6 +438,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
                       <Upload className="h-4 w-4 mr-2" />
                       Upload Photo
                     </Button>
+                    
                     <Button 
                       type="button"
                       variant="outline" 
@@ -412,6 +454,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
                   </p>
                 </div>
               </div>
+              
               <div className="flex-1">
                 <div className="space-y-2">
                   <Label htmlFor="notes">Notes</Label>
