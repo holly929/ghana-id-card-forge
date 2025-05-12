@@ -154,7 +154,7 @@ const IDCardPreviewPage: React.FC = () => {
               <div><strong>Nationality:</strong> ${applicantData.nationality}</div>
               <div><strong>ID No:</strong> ${applicantData.id}</div>
               <div><strong>Expiry Date:</strong> ${formatDate(applicantData.dateOfBirth)}</div>
-              <div><strong>Expiry Date:</strong> ${formatDate(getExpiryDate())}</div>
+              
             </div>
             <div class="red"></div>
             <div class="yellow"></div>
