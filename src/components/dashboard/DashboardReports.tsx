@@ -19,17 +19,17 @@ export const DashboardReports = () => {
   return (
     <Card>
       <CardHeader className="space-y-1">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <CardTitle className="text-lg">ID Card System Reports</CardTitle>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <CardTitle>ID Card System Reports</CardTitle>
+          <div className="flex items-center flex-wrap gap-4">
             <ReportDownloadOptions timePeriod={timePeriod} data={data} />
             <Tabs 
               defaultValue="weekly" 
               value={timePeriod} 
               onValueChange={handlePeriodChange}
-              className="w-full sm:w-auto"
+              className="w-auto"
             >
-              <TabsList className="grid grid-cols-3 w-full">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="weekly">Weekly</TabsTrigger>
                 <TabsTrigger value="monthly">Monthly</TabsTrigger>
                 <TabsTrigger value="annually">Annually</TabsTrigger>
@@ -39,7 +39,7 @@ export const DashboardReports = () => {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="h-[250px] sm:h-[300px] w-full mt-2 sm:mt-4">
+        <div className="h-[300px] w-full mt-4">
           <ChartContainer
             config={{
               applicants: { color: "#4b89ec" },
@@ -47,28 +47,22 @@ export const DashboardReports = () => {
             }}
           >
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 20 }}>
+              <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 25 }}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                 <XAxis 
                   dataKey="date" 
-                  tick={{ fontSize: 10 }}
+                  tick={{ fontSize: 12 }}
                   tickMargin={10}
-                  interval="preserveEnd"
-                  angle={-45}
-                  textAnchor="end"
                 />
-                <YAxis 
-                  tick={{ fontSize: 10 }}
-                  width={30}
-                />
+                <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip
                   content={(props) => {
                     if (props.active && props.payload && props.payload.length) {
                       return (
-                        <div className="border border-gray-200 shadow-lg p-2 bg-white rounded-md text-xs sm:text-sm">
+                        <div className="border border-gray-200 shadow-lg p-2 bg-white rounded-md">
                           <p className="font-medium">{props.label}</p>
                           {props.payload.map((entry, index) => (
-                            <p key={`item-${index}`} style={{ color: entry.color }} className="whitespace-nowrap">
+                            <p key={`item-${index}`} style={{ color: entry.color }}>
                               {entry.name}: {entry.value}
                             </p>
                           ))}
@@ -78,26 +72,22 @@ export const DashboardReports = () => {
                     return null;
                   }}
                 />
-                <Legend 
-                  verticalAlign="top" 
-                  height={36}
-                  wrapperStyle={{ fontSize: '12px' }}
-                />
+                <Legend verticalAlign="top" height={36} />
                 <Line
                   name="New Applicants"
                   dataKey="applicants"
                   stroke="#4b89ec"
                   strokeWidth={2}
-                  dot={{ r: 3 }}
-                  activeDot={{ r: 5 }}
+                  dot={{ r: 4 }}
+                  activeDot={{ r: 6 }}
                 />
                 <Line
                   name="ID Cards Issued"
                   dataKey="cards"
                   stroke="#10b981"
                   strokeWidth={2}
-                  dot={{ r: 3 }}
-                  activeDot={{ r: 5 }}
+                  dot={{ r: 4 }}
+                  activeDot={{ r: 6 }}
                 />
               </LineChart>
             </ResponsiveContainer>

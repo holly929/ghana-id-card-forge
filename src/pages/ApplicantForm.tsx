@@ -280,7 +280,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="area">Location</Label>
+                <Label htmlFor="area">Area</Label>
                 <Input 
                   id="area"
                   name="area"
