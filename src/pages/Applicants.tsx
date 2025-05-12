@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth, UserRole } from '@/context/AuthContext';
@@ -45,7 +46,7 @@ const defaultApplicants = [
     area: 'Downtown',
     passportNumber: 'A12345678', // Keep for backwards compatibility
     dateOfBirth: '1985-03-15',
-    // Removed visaType
+    visaType: 'Work',
     status: 'approved',
     dateCreated: '2023-07-10',
     occupation: 'Engineer',
@@ -58,7 +59,7 @@ const defaultApplicants = [
     area: 'North District',
     passportNumber: 'B87654321',
     dateOfBirth: '1990-11-22',
-    // Removed visaType
+    visaType: 'Student',
     status: 'pending',
     dateCreated: '2023-08-05',
     occupation: 'Student',
@@ -71,7 +72,7 @@ const defaultApplicants = [
     area: 'West Side',
     passportNumber: 'C45678912',
     dateOfBirth: '1978-06-30',
-    // Removed visaType
+    visaType: 'Tourist',
     status: 'rejected',
     dateCreated: '2023-08-15',
     idCardApproved: false,
@@ -83,7 +84,7 @@ const defaultApplicants = [
     area: 'East District',
     passportNumber: 'D98765432',
     dateOfBirth: '1992-09-18',
-    // Removed visaType
+    visaType: 'Business',
     status: 'approved',
     dateCreated: '2023-08-20',
     idCardApproved: true,
@@ -95,7 +96,7 @@ const defaultApplicants = [
     area: 'South Area',
     passportNumber: 'E12378945',
     dateOfBirth: '1983-12-10',
-    // Removed visaType
+    visaType: 'Work',
     status: 'pending',
     dateCreated: '2023-08-25',
     idCardApproved: false,
@@ -135,7 +136,7 @@ const Applicants: React.FC = () => {
       setApplicants(updatedApplicants);
       localStorage.setItem('applicants', JSON.stringify(updatedApplicants));
       
-      // Remove associated photo
+      // Also remove any associated photo
       localStorage.removeItem(`applicantPhoto_${id}`);
       
       toast.success('Applicant deleted successfully');
@@ -155,6 +156,7 @@ const Applicants: React.FC = () => {
     }
   };
   
+  // Check if ID card is available
   const canViewIDCard = (applicant: any) => {
     return applicant.status === 'approved' || applicant.idCardApproved === true;
   };
@@ -168,6 +170,7 @@ const Applicants: React.FC = () => {
           <h1 className="text-2xl font-semibold text-gray-800">Applicants</h1>
           <p className="text-gray-600">Manage non-citizen applicants and their ID cards</p>
         </div>
+        
         {canEditApplicants && (
           <Link to="/applicants/new">
             <Button>
@@ -201,7 +204,7 @@ const Applicants: React.FC = () => {
                   <TableHead>Full Name</TableHead>
                   <TableHead>Nationality</TableHead>
                   <TableHead>Area</TableHead>
-                  {/* Removed Visa Type column */}
+                  <TableHead>Visa Type</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>ID Card</TableHead>
                   <TableHead className="w-[100px]">Actions</TableHead>
@@ -210,7 +213,7 @@ const Applicants: React.FC = () => {
               <TableBody>
                 {filteredApplicants.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                       No applicants found matching your search.
                     </TableCell>
                   </TableRow>
@@ -220,7 +223,7 @@ const Applicants: React.FC = () => {
                       <TableCell className="font-medium">{applicant.fullName}</TableCell>
                       <TableCell>{applicant.nationality}</TableCell>
                       <TableCell>{applicant.area || applicant.passportNumber || 'Not provided'}</TableCell>
-                      {/* Removed visaType display */}
+                      <TableCell>{applicant.visaType}</TableCell>
                       <TableCell>{getStatusBadge(applicant.status)}</TableCell>
                       <TableCell>
                         {applicant.idCardApproved && (
