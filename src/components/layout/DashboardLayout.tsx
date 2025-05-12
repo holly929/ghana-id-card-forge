@@ -93,6 +93,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
     item => user && item.requiresRole.includes(user.role)
   );
 
+  // Add overlay for mobile when sidebar is open
+  const overlayClasses = cn(
+    "fixed inset-0 bg-black/30 z-10 transition-opacity duration-300 md:hidden",
+    sidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+  );
+
   const sidebarClasses = cn(
     "fixed inset-y-0 left-0 z-20 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out md:translate-x-0",
     sidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -100,6 +106,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
 
   return (
     <div className="flex h-screen bg-gray-100">
+      {/* Mobile sidebar overlay */}
+      <div className={overlayClasses} onClick={toggleSidebar} />
+
       {/* Mobile sidebar toggle */}
       <div className="fixed bottom-4 left-4 md:hidden z-30">
         <Button
@@ -117,7 +126,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         <div className="flex items-center justify-between h-16 p-4 border-b">
           <div className="flex items-center space-x-2">
             <Shield className="h-6 w-6 text-ghana-green" />
-            <span className="text-lg font-semibold text-gray-800">Ghana Immigration</span>
+            <span className="text-lg font-semibold text-gray-800">GIS</span>
           </div>
           {isMobile && (
             <Button variant="ghost" size="icon" onClick={toggleSidebar}>
@@ -127,7 +136,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         </div>
 
         {/* Navigation */}
-        <nav className="mt-4 px-2">
+        <nav className="mt-4 px-2 overflow-y-auto max-h-[calc(100vh-8rem)]">
           <div className="space-y-1">
             <Link 
               to="/dashboard" 
@@ -137,6 +146,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                   ? "bg-ghana-green text-white" 
                   : "text-gray-700 hover:bg-gray-100"
               )}
+              onClick={isMobile ? toggleSidebar : undefined}
             >
               <Database className="mr-3 h-5 w-5" />
               Dashboard
@@ -152,6 +162,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                     ? "bg-ghana-green text-white"
                     : "text-gray-700 hover:bg-gray-100"
                 )}
+                onClick={isMobile ? toggleSidebar : undefined}
               >
                 <item.icon className="mr-3 h-5 w-5" />
                 {item.name}
@@ -192,7 +203,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
             </div>
 
             {/* Mobile title */}
-            <div className="md:hidden flex-1 text-center font-medium">
+            <div className="md:hidden flex-1 text-center font-medium truncate">
               Ghana Immigration
             </div>
 
@@ -221,14 +232,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto bg-gray-50 p-4">
+        <main className="flex-1 overflow-y-auto bg-gray-50 p-2 sm:p-4">
           {children}
         </main>
 
         {/* Copyright Footer */}
         <footer className="bg-white border-t py-2 px-4 text-center text-xs text-gray-600 flex items-center justify-center">
-          <Copyright size={14} className="mr-1" />
-          <span>DEVELOPED BY ANEH I.T CONSORTIUM | ALL RIGHTS RESERVED @2025</span>
+          <Copyright size={12} className="mr-1 flex-shrink-0" />
+          <span className="truncate">DEVELOPED BY ANEH I.T CONSORTIUM | ALL RIGHTS RESERVED @2025</span>
         </footer>
       </div>
     </div>
