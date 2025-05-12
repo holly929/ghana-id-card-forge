@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -8,10 +7,10 @@ import {
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 import { 
-  FilePdf, 
+  FileText, 
   Download, 
-  FileExcel,
-  FileCsv
+  FileSpreadsheet,
+  Files
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { TimePeriod } from '@/hooks/useDashboardData';
@@ -141,7 +140,7 @@ export const ReportDownloadOptions: React.FC<ReportDownloadOptionsProps> = ({
         className="flex items-center gap-1"
         onClick={generateCSV}
       >
-        <FileCsv size={16} />
+        <Files size={16} />
         <span className="hidden sm:inline">Export CSV</span>
       </Button>
       
@@ -158,11 +157,11 @@ export const ReportDownloadOptions: React.FC<ReportDownloadOptionsProps> = ({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={generatePDF} className="flex items-center gap-2">
-            <FilePdf size={16} />
+            <FileText size={16} />
             <span>Export as PDF</span>
           </DropdownMenuItem>
           <DropdownMenuItem onClick={generateExcel} className="flex items-center gap-2">
-            <FileExcel size={16} />
+            <FileSpreadsheet size={16} />
             <span>Export as Excel</span>
           </DropdownMenuItem>
         </DropdownMenuContent>

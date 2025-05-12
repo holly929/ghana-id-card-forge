@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 import { Users, CreditCard, User, Clock, ChartLine, Download } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useDashboardData } from '@/hooks/useDashboardData';
+import { useDashboardData, TimePeriod, getReportData } from '@/hooks/useDashboardData';
 import DashboardReports from '@/components/dashboard/DashboardReports';
 import { format } from 'date-fns';
 import { toast } from '@/hooks/use-toast';
