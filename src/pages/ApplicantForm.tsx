@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -21,7 +22,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  // Form state with added phoneNumber field
+  // Form state
   const [formData, setFormData] = useState({
     id: '',
     fullName: '',
@@ -31,9 +32,8 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
     visaType: 'Tourist',
     occupation: '',
     status: 'pending',
-    idCardApproved: false,
+    idCardApproved: false,  // New field for ID card approval
     dateCreated: new Date().toISOString().split('T')[0],
-    phoneNumber: '', // New field
   });
   
   const [photo, setPhoto] = useState<string | null>(null);
@@ -56,14 +56,13 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
               id: applicant.id,
               fullName: applicant.fullName || '',
               nationality: applicant.nationality || '',
-              area: applicant.area || applicant.passportNumber || '',
+              area: applicant.area || applicant.passportNumber || '',  // Support both old and new field names
               dateOfBirth: applicant.dateOfBirth || '',
               visaType: applicant.visaType || 'Tourist',
               occupation: applicant.occupation || '',
               status: applicant.status || 'pending',
-              idCardApproved: applicant.idCardApproved || false,
+              idCardApproved: applicant.idCardApproved || false,  // Load ID card approval status
               dateCreated: applicant.dateCreated || new Date().toISOString().split('T')[0],
-              phoneNumber: applicant.phoneNumber || '', // Load phone number
             });
             
             // Check for stored photo
@@ -301,21 +300,6 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
                   value={formData.dateOfBirth}
                   onChange={handleChange}
                   required
-                />
-              </div>
-            </div>
-            
-            {/* New Phone Number Field */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="phoneNumber">Phone Number</Label>
-                <Input 
-                  id="phoneNumber"
-                  name="phoneNumber"
-                  type="tel"
-                  value={formData.phoneNumber}
-                  onChange={handleChange}
-                  placeholder="Enter phone number"
                 />
               </div>
             </div>
