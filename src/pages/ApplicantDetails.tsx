@@ -197,7 +197,7 @@ const ApplicantDetails: React.FC = () => {
                   <p className="text-base">{applicant.nationality}</p>
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500">Date of Birth</h3>
+                  <h3 className="text-sm font-medium text-gray-500">Expiry Date</h3>
                   <p className="text-base">{formatDate(applicant.dateOfBirth)}</p>
                 </div>
               </div>
