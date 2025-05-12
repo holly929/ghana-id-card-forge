@@ -20,20 +20,20 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Initialize form data with expiryDate
+  // Initialize form data with expiryDate instead of dateOfBirth
   const [formData, setFormData] = useState({
     id: '',
     fullName: '',
     nationality: '',
     area: '', // changed from passportNumber
-    dateOfBirth: '',
+    // Removed dateOfBirth
+    expiryDate: '', // added expiryDate
     visaType: 'Tourist',
     occupation: '',
     status: 'pending',
     idCardApproved: false,
     dateCreated: new Date().toISOString().split('T')[0],
     phoneNumber: '',
-    expiryDate: '', // added expiryDate
   });
 
   const [photo, setPhoto] = useState<string | null>(null);
@@ -54,14 +54,13 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
               fullName: applicant.fullName || '',
               nationality: applicant.nationality || '',
               area: applicant.area || applicant.passportNumber || '',
-              dateOfBirth: applicant.dateOfBirth || '',
+              expiryDate: applicant.expiryDate || '',
               visaType: applicant.visaType || 'Tourist',
               occupation: applicant.occupation || '',
               status: applicant.status || 'pending',
               idCardApproved: applicant.idCardApproved || false,
               dateCreated: applicant.dateCreated || new Date().toISOString().split('T')[0],
               phoneNumber: applicant.phoneNumber || '',
-              expiryDate: applicant.expiryDate || '',
             });
             const storedPhoto = localStorage.getItem(`applicantPhoto_${id}`);
             if (storedPhoto) {
@@ -201,6 +200,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
             <CardTitle>Personal Information</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+
             {/* Name & Nationality */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -226,8 +226,11 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
                 />
               </div>
             </div>
-            {/* Location & DOB */}
+
+            {/* Location & Expiry Date */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+              {/* Location */}
               <div className="space-y-2">
                 <Label htmlFor="area">Location</Label>
                 <Input
@@ -239,19 +242,23 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
                   placeholder="Enter residential area"
                 />
               </div>
+
+              {/* Expiry Date */}
               <div className="space-y-2">
-                <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                <Label htmlFor="expiryDate">Expiry Date</Label>
                 <Input
-                  id="dateOfBirth"
-                  name="dateOfBirth"
+                  id="expiryDate"
+                  name="expiryDate"
                   type="date"
-                  value={formData.dateOfBirth}
+                  value={formData.expiryDate}
                   onChange={handleChange}
                   required
                 />
               </div>
+
             </div>
-            {/* Phone Number */}
+
+            {/* Phone Number & Visa Type */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="phoneNumber">Phone Number</Label>
@@ -264,9 +271,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
                   placeholder="Enter phone number"
                 />
               </div>
-            </div>
-            {/* Visa and Occupation */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
               <div className="space-y-2">
                 <Label htmlFor="visaType">Visa Type</Label>
                 <Select
@@ -286,18 +291,9 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="occupation">Occupation</Label>
-                <Input
-                  id="occupation"
-                  name="occupation"
-                  value={formData.occupation}
-                  onChange={handleChange}
-                  placeholder="Enter occupation"
-                />
-              </div>
             </div>
-            {/* Status & ID */}
+
+            {/* Status & ID Number */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
@@ -326,23 +322,22 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
                 />
               </div>
             </div>
-            {/* ID Card Approval */}
+
+            {/* ID Card approval */}
             <div className="flex items-center space-x-2 pt-2">
               <Checkbox
                 id="idCardApproved"
                 checked={formData.idCardApproved}
                 onCheckedChange={handleCheckboxChange}
               />
-              <Label
-                htmlFor="idCardApproved"
-                className="font-medium text-sm cursor-pointer"
-              >
+              <Label htmlFor="idCardApproved" className="font-medium text-sm cursor-pointer">
                 Approve for ID Card issuance
               </Label>
             </div>
             <p className="text-xs text-gray-500">
               Check this box to approve this applicant for ID card generation, even if status is pending
             </p>
+
             {/* Expiry Date Picker */}
             <div className="mt-4">
               <Label htmlFor="expiryDate">Expiry Date</Label>
@@ -357,23 +352,20 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
             </div>
           </CardContent>
         </Card>
-        {/* Photo Upload & Notes */}
+
+        {/* Photo & Notes */}
         <Card>
           <CardHeader>
             <CardTitle>Applicant Photo</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-col md:flex-row gap-6">
-              {/* Photo Preview & Upload */}
+              {/* Photo Upload & Preview */}
               <div className="flex-1">
                 <div className="border rounded-md p-4 flex flex-col items-center justify-center">
                   {photo ? (
                     <div className="relative">
-                      <img
-                        src={photo}
-                        alt="Applicant"
-                        className="w-32 h-40 object-cover border"
-                      />
+                      <img src={photo} alt="Applicant" className="w-32 h-40 object-cover border" />
                       <Button
                         type="button"
                         variant="destructive"
@@ -438,13 +430,10 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
             </div>
           </CardContent>
         </Card>
+
         {/* Buttons */}
         <div className="flex justify-end space-x-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => navigate('/applicants')}
-          >
+          <Button type="button" variant="outline" onClick={() => navigate('/applicants')}>
             Cancel
           </Button>
           <Button type="submit" disabled={loading}>
