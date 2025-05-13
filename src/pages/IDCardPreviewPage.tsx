@@ -198,11 +198,7 @@ const IDCardPreviewPage: React.FC = () => {
                   <h3 className="text-sm font-medium text-gray-500">Date of Birth</h3>
                   <p>{new Date(applicant?.dateOfBirth).toLocaleDateString()}</p>
                 </div>
-                <div>
-                  
-                </div>
-              </div>
-              
+                
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   >
