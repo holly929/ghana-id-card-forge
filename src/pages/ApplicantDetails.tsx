@@ -215,7 +215,11 @@ const ApplicantDetails: React.FC = () => {
                 </div>
               </div>
               
-              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Visa Type</h3>
+                  <p className="text-base">{applicant.visaType}</p>
+                </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Occupation</h3>
                   <p className="text-base">{applicant.occupation || 'Not specified'}</p>
