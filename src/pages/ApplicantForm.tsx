@@ -280,7 +280,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="area">Area</Label>
+                <Label htmlFor="area">Location</Label>
                 <Input 
                   id="area"
                   name="area"
@@ -292,7 +292,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                <Label htmlFor="dateOfBirth">Expiry Date</Label>
                 <Input 
                   id="dateOfBirth"
                   name="dateOfBirth"
@@ -317,10 +317,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
                   <SelectContent>
                     <SelectItem value="Tourist">Tourist</SelectItem>
                     <SelectItem value="Business">Business</SelectItem>
-                    <SelectItem value="Student">Student</SelectItem>
-                    <SelectItem value="Work">Work</SelectItem>
-                    <SelectItem value="Transit">Transit</SelectItem>
-                    <SelectItem value="Diplomatic">Diplomatic</SelectItem>
+                       <SelectItem value="None">Diplomatic</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
