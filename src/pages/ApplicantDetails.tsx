@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -8,34 +7,52 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { Separator } from '@/components/ui/separator';
 
+// Mock function to get phone number based on occupation and nationality
+const fetchPhoneNumberByOccupationAndNationality = (
+  occupation: string,
+  nationality: string
+): string => {
+  // Replace with actual data source or API call
+  if (occupation && nationality) {
+    // Example: generate dummy number based on occupation and nationality
+    return `+1-234-567-${occupation.slice(0,2).toUpperCase()}${nationality.slice(0,2).toUpperCase()}`;
+  }
+  return '';
+};
+
 const ApplicantDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  
+
   const [applicant, setApplicant] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [photo, setPhoto] = useState<string | null>(null);
-  
+  const [phoneNumber, setPhoneNumber] = useState<string | null>(null);
+
   useEffect(() => {
     setLoading(true);
-    
-    // Fetch from localStorage
     const storedApplicants = localStorage.getItem('applicants');
     if (storedApplicants && id) {
       try {
         const applicants = JSON.parse(storedApplicants);
         const foundApplicant = applicants.find((a: any) => a.id === id);
-        
         if (foundApplicant) {
           setApplicant(foundApplicant);
           
-          // Check for stored photo
+          // Load photo if any
           const storedPhoto = localStorage.getItem(`applicantPhoto_${id}`);
           if (storedPhoto) {
             setPhoto(storedPhoto);
           } else if (foundApplicant.photo) {
             setPhoto(foundApplicant.photo);
           }
+
+          // Derive/fetch phone number based on occupation and nationality
+          const occupation = foundApplicant.occupation || '';
+          const nationality = foundApplicant.nationality || '';
+          
+          const derivedPhone = fetchPhoneNumberByOccupationAndNationality(occupation, nationality);
+          setPhoneNumber(derivedPhone);
         } else {
           toast.error('Applicant not found');
           navigate('/applicants');
@@ -49,10 +66,9 @@ const ApplicantDetails: React.FC = () => {
       toast.error('No applicant data found');
       navigate('/applicants');
     }
-    
     setLoading(false);
   }, [id, navigate]);
-  
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'approved':
@@ -66,8 +82,15 @@ const ApplicantDetails: React.FC = () => {
     }
   };
 
-  const canViewIDCard = applicant && (applicant.status === 'approved' || applicant.idCardApproved === true);
-  
+  const formatDate = (dateString: string) => {
+    if (!dateString) return 'Not specified';
+    try {
+      return new Date(dateString).toLocaleDateString();
+    } catch {
+      return dateString;
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -78,7 +101,7 @@ const ApplicantDetails: React.FC = () => {
       </div>
     );
   }
-  
+
   if (!applicant) {
     return (
       <div className="flex flex-col items-center justify-center p-8">
@@ -90,18 +113,10 @@ const ApplicantDetails: React.FC = () => {
       </div>
     );
   }
-  
-  const formatDate = (dateString: string) => {
-    if (!dateString) return 'Not specified';
-    try {
-      return new Date(dateString).toLocaleDateString();
-    } catch {
-      return dateString;
-    }
-  };
-  
+
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center gap-2">
         <Button 
           variant="ghost" 
@@ -118,6 +133,7 @@ const ApplicantDetails: React.FC = () => {
         </div>
       </div>
       
+      {/* Action buttons */}
       <div className="flex flex-wrap gap-3">
         <Button variant="outline" asChild>
           <Link to={`/applicants/${id}/edit`}>
@@ -126,7 +142,7 @@ const ApplicantDetails: React.FC = () => {
           </Link>
         </Button>
         
-        {canViewIDCard ? (
+        {applicant.status === 'approved' || applicant.idCardApproved ? (
           <Button asChild>
             <Link to={`/id-cards/${id}/preview`}>
               <CreditCard className="mr-2 h-4 w-4" />
@@ -141,8 +157,9 @@ const ApplicantDetails: React.FC = () => {
         )}
       </div>
       
+      {/* Layout */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Left column - Photo and basic info */}
+        {/* Left: Photo & basic info */}
         <Card>
           <CardHeader>
             <CardTitle>Applicant Photo</CardTitle>
@@ -161,15 +178,10 @@ const ApplicantDetails: React.FC = () => {
                 <p className="text-gray-400 text-xs text-center p-2">No photo available</p>
               </div>
             )}
-            
             <div className="w-full text-center">
               <h2 className="font-medium text-xl">{applicant.fullName}</h2>
               <p className="text-gray-500 mt-1">{applicant.nationality}</p>
-              <div className="mt-2">
-                {getStatusBadge(applicant.status)}
-              </div>
-              
-              {/* ID Card Approval Status */}
+              <div className="mt-2">{getStatusBadge(applicant.status)}</div>
               {applicant.idCardApproved && (
                 <div className="mt-2">
                   <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">ID Card Approved</Badge>
@@ -179,18 +191,19 @@ const ApplicantDetails: React.FC = () => {
           </CardContent>
         </Card>
         
-        {/* Middle column - Personal details */}
+        {/* Middle & right: Details */}
         <Card className="md:col-span-2">
           <CardHeader>
             <CardTitle>Personal Information</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
+              {/* Basic info */}
               <div>
                 <h3 className="text-sm font-medium text-gray-500">Full Name</h3>
                 <p className="text-base">{applicant.fullName}</p>
               </div>
-              
+              {/* Details grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Nationality</h3>
@@ -201,9 +214,7 @@ const ApplicantDetails: React.FC = () => {
                   <p className="text-base">{formatDate(applicant.dateOfBirth)}</p>
                 </div>
               </div>
-              
               <Separator />
-              
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Location</h3>
@@ -214,7 +225,6 @@ const ApplicantDetails: React.FC = () => {
                   <p className="text-base font-mono">{applicant.id}</p>
                 </div>
               </div>
-              
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Visa Type</h3>
@@ -225,9 +235,12 @@ const ApplicantDetails: React.FC = () => {
                   <p className="text-base">{applicant.occupation || 'Not specified'}</p>
                 </div>
               </div>
-              
               <Separator />
-              
+              {/* Phone number fetched/derived from occupation & nationality */}
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">Phone Number</h3>
+                <p className="text-base">{phoneNumber || 'No phone number available'}</p>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Application Status</h3>
@@ -238,16 +251,15 @@ const ApplicantDetails: React.FC = () => {
                   <p className="text-base">{formatDate(applicant.dateCreated)}</p>
                 </div>
               </div>
-              
-              {/* ID Card Approval info */}
+              {/* ID Card approval info */}
               <div>
                 <h3 className="text-sm font-medium text-gray-500">ID Card Status</h3>
                 <p className="text-base">
-                  {applicant.idCardApproved 
-                    ? "Approved for ID card issuance" 
-                    : applicant.status === 'approved' 
-                      ? "Eligible for ID card (status approved)" 
-                      : "Not eligible for ID card yet"}
+                  {applicant.idCardApproved
+                    ? 'Approved for ID card issuance'
+                    : applicant.status === 'approved'
+                    ? 'Eligible for ID card (status approved)'
+                    : 'Not eligible for ID card yet'}
                 </p>
               </div>
             </div>
