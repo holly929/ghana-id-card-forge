@@ -206,7 +206,7 @@ const ApplicantDetails: React.FC = () => {
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500">Area</h3>
+                  <h3 className="text-sm font-medium text-gray-500">Location</h3>
                   <p className="text-base">{applicant.area || applicant.passportNumber || 'Not provided'}</p>
                 </div>
                 <div>
