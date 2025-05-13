@@ -175,24 +175,278 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
 
   return (
     <div className="space-y-6">
-      {/* Header and form omitted for brevity, same as previous code */}
-      {/* ... */}
-      {/* Inside the form, ensure the phone number input is included: */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-        <div className="space-y-2">
-          <Label htmlFor="phoneNumber">Phone Number</Label>
-          <Input
-            id="phoneNumber"
-            name="phoneNumber"
-            type="tel"
-            value={formData.phoneNumber}
-            onChange={handleChange}
-            required
-            placeholder="Enter phone number"
-          />
+      {/* Header */}
+      <div className="flex items-center gap-2">
+        <Button 
+          variant="ghost" 
+          size="icon"
+          onClick={() => navigate('/applicants')}
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-800">
+            {isEditing ? 'Edit Applicant' : 'New Applicant'}
+          </h1>
+          <p className="text-gray-600">
+            {isEditing ? 'Update applicant information' : 'Create a new applicant record'}
+          </p>
         </div>
       </div>
-      {/* ... rest of form */}
+      
+      {/* Form */}
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Personal Information Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Personal Information</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Name and Nationality */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="fullName">Full Name</Label>
+                <Input 
+                  id="fullName"
+                  name="fullName"
+                  value={formData.fullName}
+                  onChange={handleChange}
+                  required
+                  placeholder="Enter full name"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="nationality">Nationality</Label>
+                <Input 
+                  id="nationality"
+                  name="nationality"
+                  value={formData.nationality}
+                  onChange={handleChange}
+                  required
+                  placeholder="Enter nationality"
+                />
+              </div>
+            </div>
+            {/* Location and Expiry Date */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="area">Location</Label>
+                <Input 
+                  id="area"
+                  name="area"
+                  value={formData.area}
+                  onChange={handleChange}
+                  required
+                  placeholder="Enter residential area"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="dateOfBirth">Expiry Date</Label>
+                <Input 
+                  id="dateOfBirth"
+                  name="dateOfBirth"
+                  type="date"
+                  value={formData.dateOfBirth}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+            </div>
+            {/* Visa Type and Occupation */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="visaType">Visa Type</Label>
+                <Select 
+                  value={formData.visaType} 
+                  onValueChange={(value) => handleSelectChange('visaType', value)}
+                >
+                  <SelectTrigger id="visaType">
+                    <SelectValue placeholder="Select visa type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Tourist">Tourist</SelectItem>
+                    <SelectItem value="Business">Business</SelectItem>
+                    <SelectItem value="None">None</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="occupation">Occupation</Label>
+                <Input 
+                  id="occupation"
+                  name="occupation"
+                  value={formData.occupation}
+                  onChange={handleChange}
+                  placeholder="Enter occupation"
+                />
+              </div>
+            </div>
+
+            {/* Phone Number immediately after Occupation */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div className="space-y-2">
+                <Label htmlFor="phoneNumber">Phone Number</Label>
+                <Input
+                  id="phoneNumber"
+                  name="phoneNumber"
+                  type="tel"
+                  value={formData.phoneNumber}
+                  onChange={handleChange}
+                  required
+                  placeholder="Enter phone number"
+                />
+              </div>
+            </div>
+
+            {/* Status and ID */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="status">Status</Label>
+                <Select 
+                  value={formData.status} 
+                  onValueChange={(value) => handleSelectChange('status', value)}
+                >
+                  <SelectTrigger id="status">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="approved">Approved</SelectItem>
+                    <SelectItem value="rejected">Rejected</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {/* ID Number (read-only) */}
+              <div className="space-y-2">
+                <Label htmlFor="id">ID Number</Label>
+                <Input 
+                  id="id"
+                  name="id"
+                  value={formData.id}
+                  readOnly
+                  className="bg-gray-50"
+                />
+              </div>
+            </div>
+            {/* ID Card Approval */}
+            <div className="flex items-center space-x-2 pt-2">
+              <Checkbox 
+                id="idCardApproved" 
+                checked={formData.idCardApproved} 
+                onCheckedChange={handleCheckboxChange}
+              />
+              <Label 
+                htmlFor="idCardApproved" 
+                className="font-medium text-sm cursor-pointer"
+              >
+                Approve for ID Card issuance
+              </Label>
+            </div>
+            <p className="text-xs text-gray-500">
+              Check this box to approve this applicant for ID card generation, even if status is pending
+            </p>
+            
+          </CardContent>
+        </Card>
+
+        {/* Photo Upload Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Applicant Photo</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col md:flex-row gap-6">
+              {/* Photo Preview and Upload */}
+              <div className="flex-1">
+                <div className="border rounded-md p-4 flex flex-col items-center justify-center">
+                  {photo ? (
+                    <div className="relative">
+                      <img 
+                        src={photo} 
+                        alt="Applicant" 
+                        className="w-32 h-40 object-cover border"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute -top-2 -right-2 h-6 w-6"
+                        onClick={() => setPhoto(null)}
+                      >
+                        <Trash className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="w-32 h-40 border flex flex-col items-center justify-center text-gray-400">
+                      <p className="text-xs text-center">No photo uploaded</p>
+                    </div>
+                  )}
+                </div>
+                {/* Upload buttons */}
+                <div className="mt-4 space-y-2">
+                  <input 
+                    ref={fileInputRef}
+                    type="file" 
+                    className="hidden" 
+                    accept="image/*"
+                    onChange={handlePhotoUpload}
+                  />
+                  <div className="flex gap-2">
+                    <Button 
+                      type="button"
+                      variant="outline" 
+                      className="w-full cursor-pointer"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      Upload Photo
+                    </Button>
+                    <Button 
+                      type="button"
+                      variant="outline" 
+                      className="w-full cursor-pointer"
+                      onClick={handleTakePhoto}
+                    >
+                      <Camera className="h-4 w-4 mr-2" />
+                      Take Photo
+                    </Button>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Recommended: Passport-style photo, front-facing on white background
+                  </p>
+                </div>
+              </div>
+              {/* Notes */}
+              <div className="flex-1">
+                <div className="space-y-2">
+                  <Label htmlFor="notes">Notes</Label>
+                  <Textarea 
+                    id="notes"
+                    name="notes"
+                    placeholder="Add any additional notes or observations about the applicant"
+                    rows={6}
+                  />
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Buttons */}
+        <div className="flex justify-end space-x-4">
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={() => navigate('/applicants')}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" disabled={loading}>
+            <Save className="h-4 w-4 mr-2" />
+            {isEditing ? 'Update Applicant' : 'Save Applicant'}
+          </Button>
+        </div>
+      </form>
     </div>
   );
 };
