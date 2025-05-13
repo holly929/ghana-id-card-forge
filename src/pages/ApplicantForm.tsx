@@ -1,13 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Save, Upload, Trash, Camera } from 'lucide-react';
+import { ArrowLeft, Save } from 'lucide-react';
 import { toast } from "sonner";
 import { generateUniqueId } from '@/lib/utils';
 
@@ -20,19 +16,19 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Initialize form data including phoneNumber
+  // Initialize form data, including phoneNumber
   const [formData, setFormData] = useState({
     id: '',
     fullName: '',
     nationality: '',
-    area: '',   // Location
+    area: '',
     dateOfBirth: '',
     visaType: 'NONE',
     occupation: '',
     status: 'pending',
     idCardApproved: false,
     dateCreated: new Date().toISOString().split('T')[0],
-    phoneNumber: '', // NEW FIELD
+    phoneNumber: '',
   });
 
   const [photo, setPhoto] = useState<string | null>(null);
@@ -52,9 +48,9 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
               id: applicant.id,
               fullName: applicant.fullName || '',
               nationality: applicant.nationality || '',
-              area: applicant.area || applicant.passportNumber || '',
+              area: applicant.area || '',
               dateOfBirth: applicant.dateOfBirth || '',
-              visaType: applicant.visaType || 'None',
+              visaType: applicant.visaType || 'NONE',
               occupation: applicant.occupation || '',
               status: applicant.status || 'pending',
               idCardApproved: applicant.idCardApproved || false,
@@ -78,7 +74,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
       // Creating new applicant, generate ID
       setFormData(prev => ({
         ...prev,
-        id: generateUniqueId()
+        id: generateUniqueId(),
       }));
     }
   }, [id, isEditing, navigate]);
@@ -88,27 +84,11 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
-  // Handle select change
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  // Handle checkbox
-  const handleCheckboxChange = (checked: boolean) => {
-    setFormData(prev => ({
-      ...prev,
-      idCardApproved: checked
-    }));
-  };
-
-  // Handle photo upload
+  // Photo upload
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -133,28 +113,10 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
     reader.readAsDataURL(file);
   };
 
-  // Take photo with camera
-  const handleTakePhoto = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.capture = 'user';
-      fileInputRef.current.accept = 'image/*';
-      fileInputRef.current.click();
-    }
-  };
-
-  // Generate print HTML
+  // Print HTML generation
   const generatePrintHTML = () => {
-    if (!formData) return '';
-
     const { fullName, nationality, area, dateOfBirth, visaType, occupation, id, dateCreated, phoneNumber } = formData;
-
     const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString();
-
-    const getExpiryDate = () => {
-      const date = new Date();
-      date.setFullYear(date.getFullYear() + 2);
-      return date.toISOString().split('T')[0];
-    };
 
     const applicantPhoto = photo || '';
 
@@ -191,22 +153,11 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
             box-sizing: border-box;
             position: relative;
           }
-          .logo {
-            text-align: center;
-            margin-bottom: 5mm;
-          }
+          .logo { text-align: center; margin-bottom: 5mm; }
           .photo {
-            width: 70px;
-            height: 85px;
-            border: 2px solid #fff;
-            overflow: hidden;
-            margin: 0 auto 5mm auto;
+            width: 70px; height: 85px; border: 2px solid #fff; overflow: hidden; margin: 0 auto 5mm auto;
           }
-          .photo img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-          }
+          .photo img { width: 100%; height: 100%; object-fit: cover; }
           .red { background: #ce1126; height: 12px; }
           .yellow { background: #fcd116; height: 12px; }
           .green { background: #006b3f; height: 12px; }
@@ -218,12 +169,8 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
         <div class="card">
           <!-- Front -->
           <div class="front">
-            <div class="logo">
-              <!-- Add logo if needed -->
-            </div>
-            <div class="photo">
-              ${applicantPhoto ? `<img src="${applicantPhoto}" />` : '<span>No Photo</span>'}
-            </div>
+            <div class="logo"></div>
+            <div class="photo">${applicantPhoto ? `<img src="${applicantPhoto}" />` : '<span>No Photo</span>'}</div>
             <div style="text-align:center; background:#fcd116; padding:2px 4px; border-radius:2px; font-weight:bold;">${visaType.toUpperCase()}</div>
             <div style="text-align:center;">
               <div style="font-weight:bold;">REPUBLIC OF GHANA</div>
@@ -316,11 +263,11 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
         </Button>
       </div>
 
-      {/* Applicant Details & Form Inputs */}
+      {/* Applicant Details & Inputs */}
       <div className="border p-4 rounded-md space-y-4">
         <h2 className="text-lg font-semibold mb-2">Applicant Details</h2>
 
-        {/* Input: Full Name */}
+        {/* Full Name */}
         <div>
           <Label htmlFor="fullName">Full Name</Label>
           <Input
@@ -332,7 +279,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
           />
         </div>
 
-        {/* Input: Nationality */}
+        {/* Nationality */}
         <div>
           <Label htmlFor="nationality">Nationality</Label>
           <Input
@@ -344,7 +291,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
           />
         </div>
 
-        {/* Input: Location */}
+        {/* Location */}
         <div>
           <Label htmlFor="area">Location</Label>
           <Input
@@ -356,9 +303,9 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
           />
         </div>
 
-        {/* Input: Date of Birth */}
+        {/* Date of Birth */}
         <div>
-          <Label htmlFor="dateOfBirth">Date of Birth</Label>
+          <Label htmlFor="dateOfBirth">Expiry Date</Label>
           <Input
             id="dateOfBirth"
             name="dateOfBirth"
@@ -368,7 +315,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
           />
         </div>
 
-        {/* Input: Phone Number */}
+        {/* Phone Number */}
         <div>
           <Label htmlFor="phoneNumber">Phone Number</Label>
           <Input
@@ -381,12 +328,8 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
           />
         </div>
 
-        {/* Additional fields like visaType, occupation, etc., can be added similarly */}
-        {/* For brevity, only key fields are shown */}
+        {/* Add other fields as needed */}
       </div>
-
-      {/* Visual Preview or other components can go here */}
-
     </div>
   );
 };
