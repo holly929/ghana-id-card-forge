@@ -32,7 +32,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
     status: 'pending',
     idCardApproved: false,
     dateCreated: new Date().toISOString().split('T')[0],
-    phoneNumber: '', // new field
+    phoneNumber: '', // NEW FIELD
   });
 
   const [photo, setPhoto] = useState<string | null>(null);
@@ -316,17 +316,77 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
         </Button>
       </div>
 
-      {/* Applicant Details */}
+      {/* Applicant Details & Form Inputs */}
       <div className="border p-4 rounded-md space-y-4">
         <h2 className="text-lg font-semibold mb-2">Applicant Details</h2>
-        <p><strong>Name:</strong> {fullName}</p>
-        <p><strong>Nationality:</strong> {nationality}</p>
-        <p><strong>Location:</strong> {area}</p>
-        <p><strong>Expiry Date:</strong> {new Date(dateOfBirth).toLocaleDateString()}</p>
-        <p><strong>Phone Number:</strong> {phoneNumber}</p>
-        {/* Add more details as needed */}
-        {/* You can add a visual preview component here if desired */}
+
+        {/* Input: Full Name */}
+        <div>
+          <Label htmlFor="fullName">Full Name</Label>
+          <Input
+            id="fullName"
+            name="fullName"
+            value={formData.fullName}
+            onChange={handleChange}
+            placeholder="Full Name"
+          />
+        </div>
+
+        {/* Input: Nationality */}
+        <div>
+          <Label htmlFor="nationality">Nationality</Label>
+          <Input
+            id="nationality"
+            name="nationality"
+            value={formData.nationality}
+            onChange={handleChange}
+            placeholder="Nationality"
+          />
+        </div>
+
+        {/* Input: Location */}
+        <div>
+          <Label htmlFor="area">Location</Label>
+          <Input
+            id="area"
+            name="area"
+            value={formData.area}
+            onChange={handleChange}
+            placeholder="Location"
+          />
+        </div>
+
+        {/* Input: Date of Birth */}
+        <div>
+          <Label htmlFor="dateOfBirth">Date of Birth</Label>
+          <Input
+            id="dateOfBirth"
+            name="dateOfBirth"
+            type="date"
+            value={formData.dateOfBirth}
+            onChange={handleChange}
+          />
+        </div>
+
+        {/* Input: Phone Number */}
+        <div>
+          <Label htmlFor="phoneNumber">Phone Number</Label>
+          <Input
+            id="phoneNumber"
+            name="phoneNumber"
+            type="tel"
+            value={formData.phoneNumber}
+            onChange={handleChange}
+            placeholder="Enter phone number"
+          />
+        </div>
+
+        {/* Additional fields like visaType, occupation, etc., can be added similarly */}
+        {/* For brevity, only key fields are shown */}
       </div>
+
+      {/* Visual Preview or other components can go here */}
+
     </div>
   );
 };
