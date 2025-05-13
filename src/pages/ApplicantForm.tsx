@@ -33,7 +33,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
     status: 'pending',
     idCardApproved: false,
     dateCreated: new Date().toISOString().split('T')[0],
-    phoneNumber: '', // added
+    phoneNumber: '', // Added phone number
   });
   
   const [photo, setPhoto] = useState<string | null>(null);
@@ -43,11 +43,14 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
   useEffect(() => {
     if (isEditing && id) {
       setLoading(true);
+      
+      // Fetch from localStorage
       const storedApplicants = localStorage.getItem('applicants');
       if (storedApplicants) {
         try {
           const applicants = JSON.parse(storedApplicants);
           const applicant = applicants.find((a: any) => a.id === id);
+          
           if (applicant) {
             setFormData({
               id: applicant.id,
@@ -60,11 +63,16 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
               status: applicant.status || 'pending',
               idCardApproved: applicant.idCardApproved || false,
               dateCreated: applicant.dateCreated || new Date().toISOString().split('T')[0],
-              phoneNumber: applicant.phoneNumber || '', // load phone
+              phoneNumber: applicant.phoneNumber || '', // Load phone number
             });
+            
+            // Check for stored photo
             const storedPhoto = localStorage.getItem(`applicantPhoto_${id}`);
-            if (storedPhoto) setPhoto(storedPhoto);
-            else if (applicant.photo) setPhoto(applicant.photo);
+            if (storedPhoto) {
+              setPhoto(storedPhoto);
+            } else if (applicant.photo) {
+              setPhoto(applicant.photo);
+            }
           } else {
             toast.error('Applicant not found');
             navigate('/applicants');
@@ -74,28 +82,47 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
           toast.error('Error loading applicant data');
         }
       }
+      
       setLoading(false);
     } else {
-      setFormData(prev => ({ ...prev, id: generateUniqueId() }));
+      // Generate unique ID for new applicant
+      setFormData(prev => ({
+        ...prev,
+        id: generateUniqueId()
+      }));
     }
   }, [id, isEditing, navigate]);
-
+  
+  // Handle input change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
-
+  
+  // Handle select change
   const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
-
+  
+  // Handle checkbox change
   const handleCheckboxChange = (checked: boolean) => {
-    setFormData(prev => ({ ...prev, idCardApproved: checked }));
+    setFormData(prev => ({
+      ...prev,
+      idCardApproved: checked
+    }));
   };
-
+  
+  // Handle photo upload
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    
     if (!file.type.startsWith('image/')) {
       toast.error('Please select an image file');
       return;
@@ -116,7 +143,8 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
     };
     reader.readAsDataURL(file);
   };
-
+  
+  // Take photo with camera
   const handleTakePhoto = () => {
     if (fileInputRef.current) {
       fileInputRef.current.capture = 'user';
@@ -124,23 +152,12 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
       fileInputRef.current.click();
     }
   };
-
-  // Simple phone validation regex (basic example)
-  const validatePhoneNumber = (phone: string): boolean => {
-    const phoneRegex = /^\+?\d{7,15}$/; // allows optional +, 7 to 15 digits
-    return phoneRegex.test(phone);
-  };
-
+  
+  // Submit form
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Validate phone number before proceeding
-    if (!validatePhoneNumber(formData.phoneNumber)) {
-      toast.error('Please enter a valid phone number');
-      return;
-    }
-
     setLoading(true);
+    
     const storedApplicants = localStorage.getItem('applicants');
     let applicants = [];
     if (storedApplicants) {
@@ -150,29 +167,40 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
         console.error('Error parsing applicant data:', error);
       }
     }
-
+    
     if (isEditing && id) {
       const index = applicants.findIndex((a: any) => a.id === id);
       if (index !== -1) {
-        applicants[index] = { ...formData };
+        const applicantData = {
+          ...formData
+        };
+        applicants[index] = applicantData;
         localStorage.setItem('applicants', JSON.stringify(applicants));
-        if (photo) localStorage.setItem(`applicantPhoto_${id}`, photo);
-        else localStorage.removeItem(`applicantPhoto_${id}`);
+        if (photo) {
+          localStorage.setItem(`applicantPhoto_${id}`, photo);
+        } else {
+          localStorage.removeItem(`applicantPhoto_${id}`);
+        }
         toast.success('Applicant updated successfully');
         navigate('/applicants');
       } else {
         toast.error('Failed to update applicant');
       }
     } else {
-      applicants.push({ ...formData });
+      const applicantData = {
+        ...formData
+      };
+      applicants.push(applicantData);
       localStorage.setItem('applicants', JSON.stringify(applicants));
-      if (photo && formData.id) localStorage.setItem(`applicantPhoto_${formData.id}`, photo);
+      if (photo && formData.id) {
+        localStorage.setItem(`applicantPhoto_${formData.id}`, photo);
+      }
       toast.success('Applicant created successfully');
       navigate('/applicants');
     }
     setLoading(false);
   };
-
+  
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -266,7 +294,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
                   <SelectContent>
                     <SelectItem value="Tourist">Tourist</SelectItem>
                     <SelectItem value="Business">Business</SelectItem>
-                    <SelectItem value="None">None</SelectItem>
+                    <SelectItem value="None">Diplomatic</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -281,23 +309,6 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
                 />
               </div>
             </div>
-
-            {/* Phone Number immediately after Occupation */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-              <div className="space-y-2">
-                <Label htmlFor="phoneNumber">Phone Number</Label>
-                <Input
-                  id="phoneNumber"
-                  name="phoneNumber"
-                  type="tel"
-                  value={formData.phoneNumber}
-                  onChange={handleChange}
-                  required
-                  placeholder="Enter phone number"
-                />
-              </div>
-            </div>
-
             {/* Status and ID */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -345,10 +356,23 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
             <p className="text-xs text-gray-500">
               Check this box to approve this applicant for ID card generation, even if status is pending
             </p>
-            
+            {/* Phone Number */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div className="space-y-2">
+                <Label htmlFor="phoneNumber">Phone Number</Label>
+                <Input
+                  id="phoneNumber"
+                  name="phoneNumber"
+                  type="tel"
+                  value={formData.phoneNumber}
+                  onChange={handleChange}
+                  required
+                  placeholder="Enter phone number"
+                />
+              </div>
+            </div>
           </CardContent>
         </Card>
-
         {/* Photo Upload Card */}
         <Card>
           <CardHeader>
@@ -431,7 +455,6 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
             </div>
           </CardContent>
         </Card>
-
         {/* Buttons */}
         <div className="flex justify-end space-x-4">
           <Button 
