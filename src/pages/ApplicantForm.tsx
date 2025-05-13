@@ -294,7 +294,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
                   <SelectContent>
                     <SelectItem value="Tourist">Tourist</SelectItem>
                     <SelectItem value="Business">Business</SelectItem>
-                    <SelectItem value="None">Diplomatic</SelectItem>
+                    <SelectItem value="None">None</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
