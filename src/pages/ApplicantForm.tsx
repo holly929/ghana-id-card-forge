@@ -1,9 +1,15 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Save } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ArrowLeft, Save, Upload, Trash, Camera } from 'lucide-react';
 import { toast } from "sonner";
 import { generateUniqueId } from '@/lib/utils';
 
@@ -15,51 +21,57 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Initialize form data, including phoneNumber
+  
+  // Form state
   const [formData, setFormData] = useState({
     id: '',
     fullName: '',
     nationality: '',
-    area: '',
+    area: '',   // Changed from passportNumber to area
     dateOfBirth: '',
-    visaType: 'NONE',
+    visaType: 'Tourist',
     occupation: '',
     status: 'pending',
-    idCardApproved: false,
+    idCardApproved: false,  // New field for ID card approval
     dateCreated: new Date().toISOString().split('T')[0],
-    phoneNumber: '',
   });
-
+  
   const [photo, setPhoto] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-
+  
   // Load applicant data if editing
   useEffect(() => {
     if (isEditing && id) {
       setLoading(true);
+      
+      // Fetch from localStorage
       const storedApplicants = localStorage.getItem('applicants');
       if (storedApplicants) {
         try {
           const applicants = JSON.parse(storedApplicants);
           const applicant = applicants.find((a: any) => a.id === id);
+          
           if (applicant) {
             setFormData({
               id: applicant.id,
               fullName: applicant.fullName || '',
               nationality: applicant.nationality || '',
-              area: applicant.area || '',
+              area: applicant.area || applicant.passportNumber || '',  // Support both old and new field names
               dateOfBirth: applicant.dateOfBirth || '',
-              visaType: applicant.visaType || 'NONE',
+              visaType: applicant.visaType || 'Tourist',
               occupation: applicant.occupation || '',
               status: applicant.status || 'pending',
-              idCardApproved: applicant.idCardApproved || false,
+              idCardApproved: applicant.idCardApproved || false,  // Load ID card approval status
               dateCreated: applicant.dateCreated || new Date().toISOString().split('T')[0],
-              phoneNumber: applicant.phoneNumber || '',
             });
-            const savedPhoto = localStorage.getItem(`applicantPhoto_${id}`);
-            if (savedPhoto) setPhoto(savedPhoto);
-            else if (applicant.photo) setPhoto(applicant.photo);
+            
+            // Check for stored photo
+            const storedPhoto = localStorage.getItem(`applicantPhoto_${id}`);
+            if (storedPhoto) {
+              setPhoto(storedPhoto);
+            } else if (applicant.photo) {
+              setPhoto(applicant.photo);
+            }
           } else {
             toast.error('Applicant not found');
             navigate('/applicants');
@@ -69,41 +81,63 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
           toast.error('Error loading applicant data');
         }
       }
+      
       setLoading(false);
     } else {
-      // Creating new applicant, generate ID
+      // Generate unique ID for new applicant
       setFormData(prev => ({
         ...prev,
-        id: generateUniqueId(),
+        id: generateUniqueId()
       }));
     }
   }, [id, isEditing, navigate]);
-
-  // Handle input change
+  
+  // Handle form input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value,
+      [name]: value
     }));
   };
-
-  // Photo upload
+  
+  // Handle select changes
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+  
+  // Handle checkbox change
+  const handleCheckboxChange = (checked: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      idCardApproved: checked
+    }));
+  };
+  
+  // Handle photo upload
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    
+    // Validate file type
     if (!file.type.startsWith('image/')) {
       toast.error('Please select an image file');
       return;
     }
+    
+    // Validate file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
       toast.error('Image size should be less than 2MB');
       return;
     }
+    
     const reader = new FileReader();
-    reader.onload = () => {
-      if (reader.result) {
-        setPhoto(reader.result as string);
+    reader.onload = (event) => {
+      if (event.target?.result) {
+        setPhoto(event.target.result as string);
         toast.success('Photo uploaded successfully');
       }
     };
@@ -112,224 +146,345 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
     };
     reader.readAsDataURL(file);
   };
-
-  // Print HTML generation
-  const generatePrintHTML = () => {
-    const { fullName, nationality, area, dateOfBirth, visaType, occupation, id, dateCreated, phoneNumber } = formData;
-    const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString();
-
-    const applicantPhoto = photo || '';
-
-    return `
-    <html>
-    <head>
-      <style>
-        @media print {
-          body {
-            margin: 0;
-            padding: 10mm;
-            font-family: Arial, sans-serif;
-          }
-          .card {
-            width: 180mm;
-            height: 54mm;
-            background: linear-gradient(to right, #006b3f, #006b3f99);
-            color: white;
-            border-radius: 8px;
-            padding: 10px;
-            box-sizing: border-box;
-            display: flex;
-            flex-direction: row;
-            margin-bottom: 10mm;
-            page-break-inside: avoid;
-          }
-          .front, .back {
-            width: 50%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            padding: 5mm;
-            box-sizing: border-box;
-            position: relative;
-          }
-          .logo { text-align: center; margin-bottom: 5mm; }
-          .photo {
-            width: 70px; height: 85px; border: 2px solid #fff; overflow: hidden; margin: 0 auto 5mm auto;
-          }
-          .photo img { width: 100%; height: 100%; object-fit: cover; }
-          .red { background: #ce1126; height: 12px; }
-          .yellow { background: #fcd116; height: 12px; }
-          .green { background: #006b3f; height: 12px; }
-        }
-      </style>
-    </head>
-    <body>
-      <div style="transform: scale(1); transform-origin: top left;">
-        <div class="card">
-          <!-- Front -->
-          <div class="front">
-            <div class="logo"></div>
-            <div class="photo">${applicantPhoto ? `<img src="${applicantPhoto}" />` : '<span>No Photo</span>'}</div>
-            <div style="text-align:center; background:#fcd116; padding:2px 4px; border-radius:2px; font-weight:bold;">${visaType.toUpperCase()}</div>
-            <div style="text-align:center;">
-              <div style="font-weight:bold;">REPUBLIC OF GHANA</div>
-              <div>NON-CITIZEN IDENTITY CARD</div>
-            </div>
-            <div>
-              <div><strong>Name:</strong> ${fullName}</div>
-              <div><strong>Nationality:</strong> ${nationality}</div>
-              <div><strong>ID No:</strong> ${id}</div>
-              <div><strong>Expiry Date:</strong> ${formatDate(dateOfBirth)}</div>
-              <div><strong>Issue Date:</strong> ${formatDate(dateCreated)}</div>
-              <div><strong>Phone:</strong> ${phoneNumber}</div>
-            </div>
-            <div class="red"></div>
-            <div class="yellow"></div>
-            <div class="green"></div>
-          </div>
-          <!-- Back -->
-          <div class="back" style="margin-top:10px;">
-            <div style="text-align:center;">
-              <div style="font-weight:bold;">GHANA IMMIGRATION SERVICE-KWAHU EAST</div>
-              <div>This card remains the property of the Ghana Immigration Service</div>
-            </div>
-            <div>
-              <div><strong>Occupation:</strong> ${occupation || 'N/A'}</div>
-              <div><strong>Date of Issue:</strong> ${formatDate(new Date().toISOString())}</div>
-            </div>
-            <div style="border-top:1px solid rgba(255,255,255,0.3); margin-top:10px; padding-top:10px;">
-              <div style="text-align:center; font-size:8px;">If found, please return to the nearest Ghana Immigration Service office</div>
-            </div>
-            <div style="display:flex; justify-content: space-between; margin-top:10px;">
-              <div style="border-top:1px solid rgba(255,255,255,0.5); width:70px; text-align:center; font-size:7px;">Holder's Signature</div>
-              <div style="border-top:1px solid rgba(255,255,255,0.5); width:70px; text-align:center; font-size:7px;">Issuing Officer</div>
-            </div>
-            <div class="red"></div>
-            <div class="yellow"></div>
-            <div class="green"></div>
-          </div>
-        </div>
-      </div>
-    </body>
-    </html>
-    `;
-  };
-
-  const handlePrint = () => {
-    const printWindow = window.open('', '_blank', 'width=900,height=700');
-    if (!printWindow) {
-      toast.error('Pop-up blocked. Please allow pop-ups.');
-      return;
+  
+  // Take photo using camera
+  const handleTakePhoto = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.capture = 'user';
+      fileInputRef.current.accept = 'image/*';
+      fileInputRef.current.click();
     }
-    const htmlContent = generatePrintHTML();
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
-    printWindow.onload = () => {
-      printWindow.focus();
-      printWindow.print();
-      setTimeout(() => printWindow.close(), 500);
-    };
   };
-
-  if (loading) return <div>Loading...</div>;
-
-  if (!formData) {
-    return (
-      <div>
-        <h2>Applicant not found</h2>
-        <Button onClick={() => navigate('/applicants')}>Back to Applicants</Button>
-      </div>
-    );
-  }
-
-  const { fullName, nationality, area, dateOfBirth, visaType, occupation, id, dateCreated, phoneNumber } = formData;
-
+  
+  // Submit form
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    // Retrieve existing applicants
+    const storedApplicants = localStorage.getItem('applicants');
+    let applicants = [];
+    
+    if (storedApplicants) {
+      try {
+        applicants = JSON.parse(storedApplicants);
+      } catch (error) {
+        console.error('Error parsing applicant data:', error);
+      }
+    }
+    
+    // Update existing or add new
+    if (isEditing && id) {
+      const index = applicants.findIndex((a: any) => a.id === id);
+      
+      if (index !== -1) {
+        // Keep only essential data in the main applicant object
+        const applicantData = {
+          ...formData
+        };
+        
+        applicants[index] = applicantData;
+        
+        // Save applicant data
+        localStorage.setItem('applicants', JSON.stringify(applicants));
+        
+        // Save photo separately for easier access
+        if (photo) {
+          localStorage.setItem(`applicantPhoto_${id}`, photo);
+        } else {
+          // Remove photo if it was deleted
+          localStorage.removeItem(`applicantPhoto_${id}`);
+        }
+        
+        toast.success('Applicant updated successfully');
+        navigate('/applicants');
+      } else {
+        toast.error('Failed to update applicant');
+      }
+    } else {
+      // Add new applicant
+      const applicantData = {
+        ...formData
+      };
+      
+      applicants.push(applicantData);
+      
+      // Save applicant data
+      localStorage.setItem('applicants', JSON.stringify(applicants));
+      
+      // Save photo separately for easier access
+      if (photo && formData.id) {
+        localStorage.setItem(`applicantPhoto_${formData.id}`, photo);
+      }
+      
+      toast.success('Applicant created successfully');
+      navigate('/applicants');
+    }
+    
+    setLoading(false);
+  };
+  
+  // Render form
   return (
     <div className="space-y-6">
-      {/* Top Navigation */}
-      <div className="flex items-center mb-4">
-        <Button variant="ghost" onClick={() => navigate('/applicants')}>
+      <div className="flex items-center gap-2">
+        <Button 
+          variant="ghost" 
+          size="icon"
+          onClick={() => navigate('/applicants')}
+        >
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <h1 className="ml-2 text-xl font-semibold">Preview & Print ID Card</h1>
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-800">
+            {isEditing ? 'Edit Applicant' : 'New Applicant'}
+          </h1>
+          <p className="text-gray-600">
+            {isEditing ? 'Update applicant information' : 'Create a new applicant record'}
+          </p>
+        </div>
       </div>
-
-      {/* Print Button */}
-      <div className="mb-4">
-        <Button onClick={handlePrint} className="flex items-center gap-2">
-          <Save className="h-4 w-4" />
-          Print ID Card
-        </Button>
-      </div>
-
-      {/* Applicant Details & Inputs */}
-      <div className="border p-4 rounded-md space-y-4">
-        <h2 className="text-lg font-semibold mb-2">Applicant Details</h2>
-
-        {/* Full Name */}
-        <div>
-          <Label htmlFor="fullName">Full Name</Label>
-          <Input
-            id="fullName"
-            name="fullName"
-            value={formData.fullName}
-            onChange={handleChange}
-            placeholder="Full Name"
-          />
+      
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Personal Information</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="fullName">Full Name</Label>
+                <Input 
+                  id="fullName"
+                  name="fullName"
+                  value={formData.fullName}
+                  onChange={handleChange}
+                  required
+                  placeholder="Enter full name"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="nationality">Nationality</Label>
+                <Input 
+                  id="nationality"
+                  name="nationality"
+                  value={formData.nationality}
+                  onChange={handleChange}
+                  required
+                  placeholder="Enter nationality"
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="area">Area</Label>
+                <Input 
+                  id="area"
+                  name="area"
+                  value={formData.area}
+                  onChange={handleChange}
+                  required
+                  placeholder="Enter residential area"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                <Input 
+                  id="dateOfBirth"
+                  name="dateOfBirth"
+                  type="date"
+                  value={formData.dateOfBirth}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="visaType">Visa Type</Label>
+                <Select 
+                  value={formData.visaType} 
+                  onValueChange={(value) => handleSelectChange('visaType', value)}
+                >
+                  <SelectTrigger id="visaType">
+                    <SelectValue placeholder="Select visa type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Tourist">Tourist</SelectItem>
+                    <SelectItem value="Business">Business</SelectItem>
+                    <SelectItem value="Student">Student</SelectItem>
+                    <SelectItem value="Work">Work</SelectItem>
+                    <SelectItem value="Transit">Transit</SelectItem>
+                    <SelectItem value="Diplomatic">Diplomatic</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="occupation">Occupation</Label>
+                <Input 
+                  id="occupation"
+                  name="occupation"
+                  value={formData.occupation}
+                  onChange={handleChange}
+                  placeholder="Enter occupation"
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="status">Status</Label>
+                <Select 
+                  value={formData.status} 
+                  onValueChange={(value) => handleSelectChange('status', value)}
+                >
+                  <SelectTrigger id="status">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="approved">Approved</SelectItem>
+                    <SelectItem value="rejected">Rejected</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {/* ID display (readonly for editing) */}
+              <div className="space-y-2">
+                <Label htmlFor="id">ID Number</Label>
+                <Input 
+                  id="id"
+                  name="id"
+                  value={formData.id}
+                  readOnly
+                  className="bg-gray-50"
+                />
+              </div>
+            </div>
+            
+            {/* ID Card Approval Checkbox */}
+            <div className="flex items-center space-x-2 pt-2">
+              <Checkbox 
+                id="idCardApproved" 
+                checked={formData.idCardApproved} 
+                onCheckedChange={handleCheckboxChange}
+              />
+              <Label 
+                htmlFor="idCardApproved" 
+                className="font-medium text-sm cursor-pointer"
+              >
+                Approve for ID Card issuance
+              </Label>
+            </div>
+            <p className="text-xs text-gray-500">
+              Check this box to approve this applicant for ID card generation, even if status is pending
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Applicant Photo</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col md:flex-row gap-6">
+              <div className="flex-1">
+                <div className="border rounded-md p-4 flex flex-col items-center justify-center">
+                  {photo ? (
+                    <div className="relative">
+                      <img 
+                        src={photo} 
+                        alt="Applicant" 
+                        className="w-32 h-40 object-cover border"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute -top-2 -right-2 h-6 w-6"
+                        onClick={() => setPhoto(null)}
+                      >
+                        <Trash className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="w-32 h-40 border flex flex-col items-center justify-center text-gray-400">
+                      <p className="text-xs text-center">No photo uploaded</p>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="mt-4 space-y-2">
+                  <input 
+                    ref={fileInputRef}
+                    type="file" 
+                    className="hidden" 
+                    accept="image/*"
+                    onChange={handlePhotoUpload}
+                  />
+                  
+                  <div className="flex gap-2">
+                    <Button 
+                      type="button"
+                      variant="outline" 
+                      className="w-full cursor-pointer"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      Upload Photo
+                    </Button>
+                    
+                    <Button 
+                      type="button"
+                      variant="outline" 
+                      className="w-full cursor-pointer"
+                      onClick={handleTakePhoto}
+                    >
+                      <Camera className="h-4 w-4 mr-2" />
+                      Take Photo
+                    </Button>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Recommended: Passport-style photo, front-facing on white background
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex-1">
+                <div className="space-y-2">
+                  <Label htmlFor="notes">Notes</Label>
+                  <Textarea 
+                    id="notes"
+                    name="notes"
+                    placeholder="Add any additional notes or observations about the applicant"
+                    rows={6}
+                  />
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <div className="flex justify-end space-x-4">
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={() => navigate('/applicants')}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" disabled={loading}>
+            <Save className="h-4 w-4 mr-2" />
+            {isEditing ? 'Update Applicant' : 'Save Applicant'}
+          </Button>
         </div>
-
-        {/* Nationality */}
-        <div>
-          <Label htmlFor="nationality">Nationality</Label>
-          <Input
-            id="nationality"
-            name="nationality"
-            value={formData.nationality}
-            onChange={handleChange}
-            placeholder="Nationality"
-          />
-        </div>
-
-        {/* Location */}
-        <div>
-          <Label htmlFor="area">Location</Label>
-          <Input
-            id="area"
-            name="area"
-            value={formData.area}
-            onChange={handleChange}
-            placeholder="Location"
-          />
-        </div>
-
-        {/* Date of Birth */}
-        <div>
-          <Label htmlFor="dateOfBirth">Expiry Date</Label>
-          <Input
-            id="dateOfBirth"
-            name="dateOfBirth"
-            type="date"
-            value={formData.dateOfBirth}
-            onChange={handleChange}
-          />
-        </div>
-
-        {/* Phone Number */}
-        <div>
-          <Label htmlFor="phoneNumber">Phone Number</Label>
-          <Input
-            id="phoneNumber"
-            name="phoneNumber"
-            type="tel"
-            value={formData.phoneNumber}
-            onChange={handleChange}
-            placeholder="Enter phone number"
-          />
-        </div>
-
-        {/* Add other fields as needed */}
-      </div>
+      </form>
     </div>
   );
 };
