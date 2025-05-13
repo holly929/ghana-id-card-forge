@@ -498,7 +498,7 @@ const IDCards: React.FC = () => {
                   <TableRow>
                     <TableHead>Full Name</TableHead>
                     <TableHead>Nationality</TableHead>
-                    <TableHead>Area</TableHead>
+                    <TableHead>Location</TableHead>
                     <TableHead>Visa Type</TableHead>
                     <TableHead>ID Card Status</TableHead>
                     <TableHead className="w-[280px]">Actions</TableHead>
