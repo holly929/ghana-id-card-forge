@@ -56,7 +56,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
               nationality: applicant.nationality || '',
               area: applicant.area || applicant.passportNumber || '',
               dateOfBirth: applicant.dateOfBirth || '',
-              visaType: applicant.visaType || 'None',
+              visaType: applicant.visaType || '',
               phoneNumber: applicant.phoneNumber || '',
               occupation: applicant.occupation || '',
               status: applicant.status || 'pending',
