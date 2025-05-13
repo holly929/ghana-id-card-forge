@@ -33,7 +33,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
     status: 'pending',
     idCardApproved: false,
     dateCreated: new Date().toISOString().split('T')[0],
-    phoneNumber: '', // Added phone number
+    
   });
   
   const [photo, setPhoto] = useState<string | null>(null);
@@ -63,7 +63,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
               status: applicant.status || 'pending',
               idCardApproved: applicant.idCardApproved || false,
               dateCreated: applicant.dateCreated || new Date().toISOString().split('T')[0],
-              phoneNumber: applicant.phoneNumber || '', // Load phone number
+              
             });
             
             // Check for stored photo
@@ -280,24 +280,21 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
                 />
               </div>
             </div>
-            {/* Visa Type and Occupation */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="visaType">Visa Type</Label>
-                <Select 
-                  value={formData.visaType} 
-                  onValueChange={(value) => handleSelectChange('visaType', value)}
-                >
-                  <SelectTrigger id="visaType">
-                    <SelectValue placeholder="Select visa type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Tourist">Tourist</SelectItem>
-                    <SelectItem value="Business">Business</SelectItem>
-                    <SelectItem value="None">Diplomatic</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            {/* Inside your form */}
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+  {/* Other fields... */}
+  <div className="space-y-2">
+    <Label htmlFor="visaType">Phone Number</Label>
+    <Input
+      id="visaType"
+      name="visaType"
+      placeholder="Enter phone number"
+      value={formData.visaType}
+      onChange={handleChange}
+    />
+  </div>
+  {/* Other fields... */}
+</div>
               <div className="space-y-2">
                 <Label htmlFor="occupation">Occupation</Label>
                 <Input 
@@ -356,20 +353,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
             <p className="text-xs text-gray-500">
               Check this box to approve this applicant for ID card generation, even if status is pending
             </p>
-            {/* Phone Number */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-              <div className="space-y-2">
-                <Label htmlFor="phoneNumber">Phone Number</Label>
-                <Input
-                  id="phoneNumber"
-                  name="phoneNumber"
-                  type="tel"
-                  value={formData.phoneNumber}
-                  onChange={handleChange}
-                  required
-                  placeholder="Enter phone number"
-                />
-              </div>
+            
             </div>
           </CardContent>
         </Card>
