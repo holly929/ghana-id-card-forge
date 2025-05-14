@@ -63,7 +63,7 @@ const mockApplicants = [
     nationality: 'Egyptian',
     passportNumber: 'A12345678',
     dateOfBirth: '1985-03-15',
-    visaType: 'Work',
+    
     status: 'approved',
     dateCreated: '2023-07-10',
   },
@@ -73,7 +73,7 @@ const mockApplicants = [
     nationality: 'Mexican',
     passportNumber: 'B87654321',
     dateOfBirth: '1990-11-22',
-    visaType: 'Student',
+    
     status: 'pending',
     dateCreated: '2023-08-05',
   },
@@ -83,7 +83,7 @@ const mockApplicants = [
     nationality: 'American',
     passportNumber: 'C45678912',
     dateOfBirth: '1978-06-30',
-    visaType: 'Tourist',
+    
     status: 'rejected',
     dateCreated: '2023-08-15',
   },
@@ -93,7 +93,6 @@ const mockApplicants = [
     nationality: 'Chinese',
     passportNumber: 'D98765432',
     dateOfBirth: '1992-09-18',
-    visaType: 'Business',
     status: 'approved',
     dateCreated: '2023-08-20',
   },
@@ -103,7 +102,6 @@ const mockApplicants = [
     nationality: 'Indian',
     passportNumber: 'E12378945',
     dateOfBirth: '1983-12-10',
-    visaType: 'Work',
     status: 'pending',
     dateCreated: '2023-08-25',
   },
