@@ -199,13 +199,15 @@ const IDCardPreviewPage: React.FC = () => {
                   <p>{new Date(applicant?.dateOfBirth).toLocaleDateString()}</p>
                 </div>
                 <div>
-                  
+                  <h3 className="text-sm font-medium text-gray-500">Passport Number</h3>
+                  <p>{applicant?.passportNumber || "Not provided"}</p>
                 </div>
               </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  >
+                  <h3 className="text-sm font-medium text-gray-500">Visa Type</h3>
+                  <p>{applicant?.visaType}</p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Occupation</h3>

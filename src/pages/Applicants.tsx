@@ -207,7 +207,6 @@ const Applicants: React.FC = () => {
                   <TableHead>Visa Type</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>ID Card</TableHead>
-                  <TableHead>Phone Number</TableHead>
                   <TableHead className="w-[100px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
