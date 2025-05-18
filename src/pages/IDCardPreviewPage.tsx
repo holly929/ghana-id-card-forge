@@ -15,7 +15,7 @@ const defaultApplicants = [
     nationality: 'Egyptian',
     passportNumber: 'A12345678',
     dateOfBirth: '1985-03-15',
-   
+    visaType: 'Work',
     status: 'approved',
     dateCreated: '2023-07-10',
     occupation: 'Engineer',
@@ -27,7 +27,7 @@ const defaultApplicants = [
     nationality: 'Mexican',
     passportNumber: 'B87654321',
     dateOfBirth: '1990-11-22',
-   
+    visaType: 'Student',
     status: 'pending',
     dateCreated: '2023-08-05',
     occupation: 'Student',
@@ -39,7 +39,7 @@ const defaultApplicants = [
     nationality: 'American',
     passportNumber: 'C45678912',
     dateOfBirth: '1978-06-30',
-    
+    visaType: 'Tourist',
     status: 'rejected',
     dateCreated: '2023-08-15',
     occupation: 'Consultant',
@@ -51,7 +51,7 @@ const defaultApplicants = [
     nationality: 'Chinese',
     passportNumber: 'D98765432',
     dateOfBirth: '1992-09-18',
-    
+    visaType: 'Business',
     status: 'approved',
     dateCreated: '2023-08-20',
     occupation: 'Business Owner',
@@ -63,7 +63,7 @@ const defaultApplicants = [
     nationality: 'Indian',
     passportNumber: 'E12378945',
     dateOfBirth: '1983-12-10',
-    
+    visaType: 'Work',
     status: 'pending',
     dateCreated: '2023-08-25',
     occupation: 'Software Developer',
@@ -198,7 +198,11 @@ const IDCardPreviewPage: React.FC = () => {
                   <h3 className="text-sm font-medium text-gray-500">Date of Birth</h3>
                   <p>{new Date(applicant?.dateOfBirth).toLocaleDateString()}</p>
                 </div>
-                
+                <div>
+                  
+                </div>
+              </div>
+              
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   >
