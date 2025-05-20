@@ -292,7 +292,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                <Label htmlFor="dateOfBirth">Expiry Date</Label>
                 <Input 
                   id="dateOfBirth"
                   name="dateOfBirth"
