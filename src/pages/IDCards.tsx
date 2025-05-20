@@ -291,8 +291,8 @@ const IDCards: React.FC = () => {
                     <div><strong>Nationality:</strong> ${applicant.nationality}</div>
                     <div><strong>Date of Birth:</strong> ${new Date(applicant.dateOfBirth).toLocaleDateString()}</div>
                     <div><strong>ID No:</strong> ${applicant.id}</div>
-                    <div><strong>Phone Number No:</strong> ${applicant.passportNumber || 'Not provided'}</div>
-                    
+                    <div><strong>Passport No:</strong> ${applicant.passportNumber || 'Not provided'}</div>
+                    <div><strong>Expiry Date:</strong> ${new Date(new Date().setFullYear(new Date().getFullYear() + 2)).toLocaleDateString()}</div>
                   </div>
                 </div>
               </div>
@@ -451,8 +451,8 @@ const IDCards: React.FC = () => {
                         <div>
                           <h3 className="font-medium">{applicant.fullName}</h3>
                           <p className="text-sm text-gray-500">{applicant.nationality}</p>
-                          
-                        
+                          <p className="text-sm">Passport: {applicant.passportNumber || 'Not provided'}</p>
+                          <p className="text-sm">Visa: {applicant.visaType}</p>
                         </div>
                         
                         <Badge className="bg-ghana-green text-white hover:bg-ghana-green/80">
