@@ -38,10 +38,10 @@ const defaultApplicants = [
     fullName: 'John Smith',
     nationality: 'American',
     passportNumber: 'C45678912',
-    dateOfBirth: '1978-06-30',
+    OfBirth: '1978-06-30',
     visaType: 'Tourist',
     status: 'rejected',
-    dateCreated: '2023-08-15',
+    Created: '2023-08-15',
     occupation: 'Consultant',
     photo: null,
   },
@@ -50,10 +50,10 @@ const defaultApplicants = [
     fullName: 'Li Wei',
     nationality: 'Chinese',
     passportNumber: 'D98765432',
-    dateOfBirth: '1992-09-18',
+    OfBirth: '1992-09-18',
     visaType: 'Business',
     status: 'approved',
-    dateCreated: '2023-08-20',
+    Created: '2023-08-20',
     occupation: 'Business Owner',
     photo: null,
   },
@@ -195,12 +195,11 @@ const IDCardPreviewPage: React.FC = () => {
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500">Date of Birth</h3>
+                  <h3 className="text-sm font-medium text-gray-500">Expiry Date</h3>
                   <p>{new Date(applicant?.dateOfBirth).toLocaleDateString()}</p>
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500">Passport Number</h3>
-                  <p>{applicant?.passportNumber || "Not provided"}</p>
+                 
                 </div>
               </div>
               
