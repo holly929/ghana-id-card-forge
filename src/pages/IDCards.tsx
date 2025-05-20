@@ -218,14 +218,7 @@ const IDCards: React.FC = () => {
                     <div style="font-size: 10px;">NON-CITIZEN IDENTITY CARD</div>
                   </div>
                   <div style="font-size: 10px;">
-                    <div><strong>Name:</strong> ${applicant.fullName}</div>
-                    <div><strong>Nationality:</strong> ${applicant.nationality}</div>
-                    <!-- Removed the system-generated "Expiry Date" label -->
-                    <!-- If you have a correct expiry date field, replace the next line accordingly -->
-                    <!-- Example if `applicant.expiryDate` exists: -->
-                    <!-- <div><strong>Expiry Date:</strong> ${new Date(applicant.expiryDate).toLocaleDateString()}</div> -->
-                    
-                    <!-- Since you want to remove the system-generated label, omit this line entirely -->
+                   
                     
                     <div><strong>ID No:</strong> ${applicant.id}</div>
                   </div>
