@@ -55,10 +55,7 @@ import {
 import BulkPrintSelector from '@/components/BulkPrintSelector';
 import BulkPrintModal from '@/components/BulkPrintModal';
 
-// Default mock data (unchanged)
-const mockApplicants = [
-  // ... your mock data remains unchanged
-];
+// Mock data omitted for brevity...
 
 const IDCards: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -71,41 +68,31 @@ const IDCards: React.FC = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [applicantToDelete, setApplicantToDelete] = useState<any>(null);
   const navigate = useNavigate();
-  
-  // Load applicants from localStorage (unchanged)
+
+  // Load applicants...
   useEffect(() => {
-    // ... code unchanged
+    // ... your existing code
   }, []);
-  
-  // Filter applicants based on search term (unchanged)
+
   const filteredApplicants = applicants.filter(applicant => 
     applicant.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     applicant.nationality.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (applicant.passportNumber && applicant.passportNumber.toLowerCase().includes(searchTerm.toLowerCase()))
   );
-  
-  // Only show approved applicants for ID cards (unchanged)
+
   const approvedApplicants = filteredApplicants.filter(applicant => 
     applicant.status === 'approved'
   );
 
-  // Handle printing with different formats
   const handlePrint = (applicant: any) => {
     const logo = localStorage.getItem('systemLogo');
     const photo = localStorage.getItem(`applicantPhoto_${applicant.id}`) || applicant.photo;
 
     let scale = 1;
-    switch(printFormat) {
-      case 'small':
-        scale = 0.7;
-        break;
-      case 'large':
-        scale = 1.5;
-        break;
-      case 'standard':
-      default:
-        scale = 1;
-        break;
+    switch (printFormat) {
+      case 'small': scale = 0.7; break;
+      case 'large': scale = 1.5; break;
+      default: scale = 1; break;
     }
 
     const printWindow = window.open('', '_blank', 'width=800,height=600');
@@ -218,8 +205,11 @@ const IDCards: React.FC = () => {
                     <div style="font-size: 10px;">NON-CITIZEN IDENTITY CARD</div>
                   </div>
                   <div style="font-size: 10px;">
-                   
-                    
+                    <div><strong>Name:</strong> ${applicant.fullName}</div>
+                    <div><strong>Nationality:</strong> ${applicant.nationality}</div>
+                    <!-- Removed the system-generated "Expiry Date" line -->
+                    <!-- If you have a specific expiry date, replace the below comment with the actual line, e.g.: -->
+                    <!-- <div><strong>Expiry Date:</strong> ${new Date(applicant.expiryDate).toLocaleDateString()}</div> -->
                     <div><strong>ID No:</strong> ${applicant.id}</div>
                   </div>
                 </div>
@@ -240,13 +230,11 @@ const IDCards: React.FC = () => {
         </body>
       </html>
     `);
-    
-    printWindow.document.close();
     toast.success(`Printing ID card for ${applicant.fullName} in ${printFormat} format`);
   };
 
   // ... rest of your component remains unchanged
-  // (handlers, JSX rendering, etc.)
+  // (handlers, JSX, etc.)
 
   return (
     // ... your existing JSX
