@@ -353,7 +353,7 @@ const IDCardPrintPage: React.FC = () => {
                           <div><strong>Date of Birth:</strong> ${formatDate(applicant.dateOfBirth)}</div>
                           <div><strong>ID No:</strong> ${applicant.id}</div>
                           <div><strong>Area:</strong> ${applicant.area || 'Not provided'}</div>
-                          <div><strong>Expiry Date:</strong> ${formatDate(getExpiryDate())}</div>
+                         
                         </div>
                       </div>
                     </div>
