@@ -152,7 +152,12 @@ const IDCardPrintPage: React.FC = () => {
     });
   };
   
-  
+  // Calculate expiry date (2 years from now)
+  const getExpiryDate = () => {
+    const date = new Date();
+    date.setFullYear(date.getFullYear() + 2);
+    return date.toISOString().split('T')[0];
+  };
   
   // Handle printing all cards
   const handlePrintAllCards = () => {
