@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -22,7 +21,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  // Form state
+  // Initialize form state with phoneNumber
   const [formData, setFormData] = useState({
     id: '',
     fullName: '',
@@ -34,6 +33,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
     status: 'pending',
     idCardApproved: false,  // New field for ID card approval
     dateCreated: new Date().toISOString().split('T')[0],
+    phoneNumber: '', // Added phoneNumber field
   });
   
   const [photo, setPhoto] = useState<string | null>(null);
@@ -44,7 +44,6 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
     if (isEditing && id) {
       setLoading(true);
       
-      // Fetch from localStorage
       const storedApplicants = localStorage.getItem('applicants');
       if (storedApplicants) {
         try {
@@ -56,16 +55,15 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
               id: applicant.id,
               fullName: applicant.fullName || '',
               nationality: applicant.nationality || '',
-              area: applicant.area || applicant.passportNumber || '',  // Support both old and new field names
+              area: applicant.area || applicant.passportNumber || '',
               dateOfBirth: applicant.dateOfBirth || '',
               visaType: applicant.visaType || 'Tourist',
               occupation: applicant.occupation || '',
               status: applicant.status || 'pending',
-              idCardApproved: applicant.idCardApproved || false,  // Load ID card approval status
+              idCardApproved: applicant.idCardApproved || false,
               dateCreated: applicant.dateCreated || new Date().toISOString().split('T')[0],
+              phoneNumber: applicant.phoneNumber || '', // Load phone number
             });
-            
-            // Check for stored photo
             const storedPhoto = localStorage.getItem(`applicantPhoto_${id}`);
             if (storedPhoto) {
               setPhoto(storedPhoto);
@@ -81,59 +79,37 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
           toast.error('Error loading applicant data');
         }
       }
-      
       setLoading(false);
     } else {
-      // Generate unique ID for new applicant
-      setFormData(prev => ({
-        ...prev,
-        id: generateUniqueId()
-      }));
+      // Generate new ID for new applicant
+      setFormData(prev => ({ ...prev, id: generateUniqueId() }));
     }
   }, [id, isEditing, navigate]);
   
-  // Handle form input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
-  
-  // Handle select changes
+
   const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
-  
-  // Handle checkbox change
+
   const handleCheckboxChange = (checked: boolean) => {
-    setFormData(prev => ({
-      ...prev,
-      idCardApproved: checked
-    }));
+    setFormData(prev => ({ ...prev, idCardApproved: checked }));
   };
-  
-  // Handle photo upload
+
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       toast.error('Please select an image file');
       return;
     }
-    
-    // Validate file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
       toast.error('Image size should be less than 2MB');
       return;
     }
-    
     const reader = new FileReader();
     reader.onload = (event) => {
       if (event.target?.result) {
@@ -146,8 +122,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
     };
     reader.readAsDataURL(file);
   };
-  
-  // Take photo using camera
+
   const handleTakePhoto = () => {
     if (fileInputRef.current) {
       fileInputRef.current.capture = 'user';
@@ -155,16 +130,12 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
       fileInputRef.current.click();
     }
   };
-  
-  // Submit form
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
-    // Retrieve existing applicants
     const storedApplicants = localStorage.getItem('applicants');
     let applicants = [];
-    
     if (storedApplicants) {
       try {
         applicants = JSON.parse(storedApplicants);
@@ -172,148 +143,87 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
         console.error('Error parsing applicant data:', error);
       }
     }
-    
-    // Update existing or add new
+
     if (isEditing && id) {
       const index = applicants.findIndex((a: any) => a.id === id);
-      
       if (index !== -1) {
-        // Keep only essential data in the main applicant object
         const applicantData = {
           ...formData
         };
-        
         applicants[index] = applicantData;
-        
-        // Save applicant data
         localStorage.setItem('applicants', JSON.stringify(applicants));
-        
-        // Save photo separately for easier access
         if (photo) {
           localStorage.setItem(`applicantPhoto_${id}`, photo);
         } else {
-          // Remove photo if it was deleted
           localStorage.removeItem(`applicantPhoto_${id}`);
         }
-        
         toast.success('Applicant updated successfully');
         navigate('/applicants');
       } else {
         toast.error('Failed to update applicant');
       }
     } else {
-      // Add new applicant
-      const applicantData = {
-        ...formData
-      };
-      
+      // New applicant
+      const applicantData = { ...formData };
       applicants.push(applicantData);
-      
-      // Save applicant data
       localStorage.setItem('applicants', JSON.stringify(applicants));
-      
-      // Save photo separately for easier access
       if (photo && formData.id) {
         localStorage.setItem(`applicantPhoto_${formData.id}`, photo);
       }
-      
       toast.success('Applicant created successfully');
       navigate('/applicants');
     }
-    
     setLoading(false);
   };
-  
-  // Render form
+
   return (
     <div className="space-y-6">
+      {/* Header and navigation */}
       <div className="flex items-center gap-2">
-        <Button 
-          variant="ghost" 
-          size="icon"
-          onClick={() => navigate('/applicants')}
-        >
+        <Button variant="ghost" size="icon" onClick={() => navigate('/applicants')}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-2xl font-semibold text-gray-800">
-            {isEditing ? 'Edit Applicant' : 'New Applicant'}
-          </h1>
-          <p className="text-gray-600">
-            {isEditing ? 'Update applicant information' : 'Create a new applicant record'}
-          </p>
+          <h1 className="text-2xl font-semibold text-gray-800">{isEditing ? 'Edit Applicant' : 'New Applicant'}</h1>
+          <p className="text-gray-600">{isEditing ? 'Update applicant information' : 'Create a new applicant record'}</p>
         </div>
       </div>
-      
+
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Personal Info Card */}
         <Card>
-          <CardHeader>
-            <CardTitle>Personal Information</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle>Personal Information</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            
+            {/* Name & Nationality */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="fullName">Full Name</Label>
-                <Input 
-                  id="fullName"
-                  name="fullName"
-                  value={formData.fullName}
-                  onChange={handleChange}
-                  required
-                  placeholder="Enter full name"
-                />
+                <Input id="fullName" name="fullName" value={formData.fullName} onChange={handleChange} required placeholder="Enter full name" />
               </div>
-              
               <div className="space-y-2">
                 <Label htmlFor="nationality">Nationality</Label>
-                <Input 
-                  id="nationality"
-                  name="nationality"
-                  value={formData.nationality}
-                  onChange={handleChange}
-                  required
-                  placeholder="Enter nationality"
-                />
+                <Input id="nationality" name="nationality" value={formData.nationality} onChange={handleChange} required placeholder="Enter nationality" />
               </div>
             </div>
-            
+
+            {/* Area & Expiry Date */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="area">Area</Label>
-                <Input 
-                  id="area"
-                  name="area"
-                  value={formData.area}
-                  onChange={handleChange}
-                  required
-                  placeholder="Enter residential area"
-                />
+                <Input id="area" name="area" value={formData.area} onChange={handleChange} required placeholder="Enter residential area" />
               </div>
-              
               <div className="space-y-2">
                 <Label htmlFor="dateOfBirth">Expiry Date</Label>
-                <Input 
-                  id="dateOfBirth"
-                  name="dateOfBirth"
-                  type="date"
-                  value={formData.dateOfBirth}
-                  onChange={handleChange}
-                  required
-                />
+                <Input id="dateOfBirth" name="dateOfBirth" type="date" value={formData.dateOfBirth} onChange={handleChange} required />
               </div>
             </div>
-            
+
+            {/* Visa Type & Occupation */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="visaType">Visa Type</Label>
-                <Select 
-                  value={formData.visaType} 
-                  onValueChange={(value) => handleSelectChange('visaType', value)}
-                >
-                  <SelectTrigger id="visaType">
-                    <SelectValue placeholder="Select visa type" />
-                  </SelectTrigger>
+                <Select value={formData.visaType} onValueChange={(value) => handleSelectChange('visaType', value)}>
+                  <SelectTrigger id="visaType"><SelectValue placeholder="Select visa type" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Tourist">Tourist</SelectItem>
                     <SelectItem value="Business">Business</SelectItem>
@@ -324,29 +234,18 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
                   </SelectContent>
                 </Select>
               </div>
-              
               <div className="space-y-2">
                 <Label htmlFor="occupation">Occupation</Label>
-                <Input 
-                  id="occupation"
-                  name="occupation"
-                  value={formData.occupation}
-                  onChange={handleChange}
-                  placeholder="Enter occupation"
-                />
+                <Input id="occupation" name="occupation" value={formData.occupation} onChange={handleChange} placeholder="Enter occupation" />
               </div>
             </div>
-            
+
+            {/* Status & ID */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
-                <Select 
-                  value={formData.status} 
-                  onValueChange={(value) => handleSelectChange('status', value)}
-                >
-                  <SelectTrigger id="status">
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
+                <Select value={formData.status} onValueChange={(value) => handleSelectChange('status', value)}>
+                  <SelectTrigger id="status"><SelectValue placeholder="Select status" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="pending">Pending</SelectItem>
                     <SelectItem value="approved">Approved</SelectItem>
@@ -354,55 +253,49 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
                   </SelectContent>
                 </Select>
               </div>
-              
-              {/* ID display (readonly for editing) */}
               <div className="space-y-2">
                 <Label htmlFor="id">ID Number</Label>
-                <Input 
-                  id="id"
-                  name="id"
-                  value={formData.id}
-                  readOnly
-                  className="bg-gray-50"
-                />
+                <Input id="id" name="id" value={formData.id} readOnly className="bg-gray-50" />
               </div>
             </div>
-            
-            {/* ID Card Approval Checkbox */}
+
+            {/* ID Card Approval */}
             <div className="flex items-center space-x-2 pt-2">
-              <Checkbox 
-                id="idCardApproved" 
-                checked={formData.idCardApproved} 
-                onCheckedChange={handleCheckboxChange}
-              />
-              <Label 
-                htmlFor="idCardApproved" 
-                className="font-medium text-sm cursor-pointer"
-              >
+              <Checkbox id="idCardApproved" checked={formData.idCardApproved} onCheckedChange={handleCheckboxChange} />
+              <Label htmlFor="idCardApproved" className="font-medium text-sm cursor-pointer">
                 Approve for ID Card issuance
               </Label>
             </div>
             <p className="text-xs text-gray-500">
               Check this box to approve this applicant for ID card generation, even if status is pending
             </p>
+
+            {/* Phone Number */}
+            <div className="space-y-2">
+              <Label htmlFor="phoneNumber">Phone Number</Label>
+              <Input
+                id="phoneNumber"
+                name="phoneNumber"
+                value={formData.phoneNumber}
+                onChange={handleChange}
+                required
+                placeholder="Enter phone number"
+                type="tel"
+              />
+            </div>
           </CardContent>
         </Card>
-        
+
+        {/* Photo Upload */}
         <Card>
-          <CardHeader>
-            <CardTitle>Applicant Photo</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle>Applicant Photo</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-col md:flex-row gap-6">
               <div className="flex-1">
                 <div className="border rounded-md p-4 flex flex-col items-center justify-center">
                   {photo ? (
                     <div className="relative">
-                      <img 
-                        src={photo} 
-                        alt="Applicant" 
-                        className="w-32 h-40 object-cover border"
-                      />
+                      <img src={photo} alt="Applicant" className="w-32 h-40 object-cover border" />
                       <Button
                         type="button"
                         variant="destructive"
@@ -419,35 +312,14 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
                     </div>
                   )}
                 </div>
-                
                 <div className="mt-4 space-y-2">
-                  <input 
-                    ref={fileInputRef}
-                    type="file" 
-                    className="hidden" 
-                    accept="image/*"
-                    onChange={handlePhotoUpload}
-                  />
-                  
+                  <input ref={fileInputRef} type="file" className="hidden" accept="image/*" onChange={handlePhotoUpload} />
                   <div className="flex gap-2">
-                    <Button 
-                      type="button"
-                      variant="outline" 
-                      className="w-full cursor-pointer"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      <Upload className="h-4 w-4 mr-2" />
-                      Upload Photo
+                    <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
+                      <Upload className="h-4 w-4 mr-2" /> Upload Photo
                     </Button>
-                    
-                    <Button 
-                      type="button"
-                      variant="outline" 
-                      className="w-full cursor-pointer"
-                      onClick={handleTakePhoto}
-                    >
-                      <Camera className="h-4 w-4 mr-2" />
-                      Take Photo
+                    <Button type="button" variant="outline" onClick={handleTakePhoto}>
+                      <Camera className="h-4 w-4 mr-2" /> Take Photo
                     </Button>
                   </div>
                   <p className="text-xs text-gray-500 mt-2">
@@ -455,28 +327,20 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
                   </p>
                 </div>
               </div>
-              
+              {/* Optional Notes */}
               <div className="flex-1">
                 <div className="space-y-2">
                   <Label htmlFor="notes">Notes</Label>
-                  <Textarea 
-                    id="notes"
-                    name="notes"
-                    placeholder="Add any additional notes or observations about the applicant"
-                    rows={6}
-                  />
+                  <Textarea id="notes" name="notes" placeholder="Add any additional notes or observations about the applicant" rows={6} />
                 </div>
               </div>
             </div>
           </CardContent>
         </Card>
-        
+
+        {/* Submit Buttons */}
         <div className="flex justify-end space-x-4">
-          <Button 
-            type="button" 
-            variant="outline" 
-            onClick={() => navigate('/applicants')}
-          >
+          <Button type="button" variant="outline" onClick={() => navigate('/applicants')}>
             Cancel
           </Button>
           <Button type="submit" disabled={loading}>
