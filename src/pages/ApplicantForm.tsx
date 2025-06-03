@@ -196,12 +196,6 @@ const ApplicantForm: React.FC = () => {
           (applicants.find((app: any) => app.id === id)?.dateCreated || new Date().toISOString().split('T')[0]) : 
           new Date().toISOString().split('T')[0],
         idCardApproved: false,
-        // Ensure expiry date is set
-        expiryDate: formData.expiryDate || (() => {
-          const defaultDate = new Date();
-          defaultDate.setFullYear(defaultDate.getFullYear() + 2);
-          return defaultDate.toISOString().split('T')[0];
-        })(),
       };
 
       // Save photo separately in localStorage if it exists
@@ -391,9 +385,6 @@ const ApplicantForm: React.FC = () => {
                   onChange={(e) => handleInputChange('expiryDate', e.target.value)}
                   placeholder="ID expiry date"
                 />
-                <p className="text-xs text-gray-500">
-                  Leave empty to auto-set to 2 years from today
-                </p>
               </div>
 
               <div className="space-y-2">
