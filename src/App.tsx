@@ -20,7 +20,7 @@ import DashboardLayout from "./components/layout/DashboardLayout";
 import Dashboard from "./pages/Dashboard";
 import Applicants from "./pages/Applicants";
 import ApplicantForm from "./pages/ApplicantForm";
-import ApplicantDetails from "./pages/ApplicantDetails"; // Add this import
+import ApplicantDetails from "./pages/ApplicantDetails";
 import IDCardPreviewPage from "./pages/IDCardPreviewPage";
 import IDCards from "./pages/IDCards";
 import Users from "./pages/Users";
@@ -78,7 +78,7 @@ const App = () => (
             <Route path="/applicants/:id/edit" element={
               <ProtectedRoute allowedRoles={[UserRole.ADMIN, UserRole.DATA_ENTRY]}>
                 <DashboardLayout>
-                  <ApplicantForm isEditing={true} />
+                  <ApplicantForm />
                 </DashboardLayout>
               </ProtectedRoute>
             } />
