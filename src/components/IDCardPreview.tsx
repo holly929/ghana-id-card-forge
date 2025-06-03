@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -21,6 +22,7 @@ interface IDCardPreviewProps {
     nationality: string;
     passportNumber?: string;
     dateOfBirth: string;
+    expiryDate?: string; // Make expiry date optional but available
     visaType: string;
     occupation?: string;
     photo?: string | null;
@@ -139,8 +141,11 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
     }
   };
   
-  // Calculate expiry date (2 years from now)
+  // Calculate expiry date (2 years from now) - fallback if not provided
   const getExpiryDate = () => {
+    if (applicant.expiryDate) {
+      return applicant.expiryDate;
+    }
     const date = new Date();
     date.setFullYear(date.getFullYear() + 2);
     return date.toISOString().split('T')[0];

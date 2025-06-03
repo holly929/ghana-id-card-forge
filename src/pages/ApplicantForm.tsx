@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -21,13 +22,14 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  // Initialize form state with phoneNumber
+  // Initialize form state with phoneNumber and expiryDate
   const [formData, setFormData] = useState({
     id: '',
     fullName: '',
     nationality: '',
     area: '',   // Changed from passportNumber to area
     dateOfBirth: '',
+    expiryDate: '', // New editable expiry date field
     visaType: 'Tourist',
     occupation: '',
     status: 'pending',
@@ -57,6 +59,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
               nationality: applicant.nationality || '',
               area: applicant.area || applicant.passportNumber || '',
               dateOfBirth: applicant.dateOfBirth || '',
+              expiryDate: applicant.expiryDate || '', // Load expiry date
               visaType: applicant.visaType || 'Tourist',
               occupation: applicant.occupation || '',
               status: applicant.status || 'pending',
@@ -81,8 +84,14 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
       }
       setLoading(false);
     } else {
-      // Generate new ID for new applicant
-      setFormData(prev => ({ ...prev, id: generateUniqueId() }));
+      // Generate new ID for new applicant and set default expiry date (2 years from now)
+      const defaultExpiryDate = new Date();
+      defaultExpiryDate.setFullYear(defaultExpiryDate.getFullYear() + 2);
+      setFormData(prev => ({ 
+        ...prev, 
+        id: generateUniqueId(),
+        expiryDate: defaultExpiryDate.toISOString().split('T')[0]
+      }));
     }
   }, [id, isEditing, navigate]);
   
@@ -213,8 +222,28 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
                 <Input id="area" name="area" value={formData.area} onChange={handleChange} required placeholder="Enter residential area" />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="dateOfBirth">Expiry Date</Label>
+                <Label htmlFor="expiryDate">Expiry Date</Label>
+                <Input id="expiryDate" name="expiryDate" type="date" value={formData.expiryDate} onChange={handleChange} required />
+              </div>
+            </div>
+
+            {/* Date of Birth & Phone Number */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="dateOfBirth">Date of Birth</Label>
                 <Input id="dateOfBirth" name="dateOfBirth" type="date" value={formData.dateOfBirth} onChange={handleChange} required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phoneNumber">Phone Number</Label>
+                <Input
+                  id="phoneNumber"
+                  name="phoneNumber"
+                  value={formData.phoneNumber}
+                  onChange={handleChange}
+                  required
+                  placeholder="Enter phone number"
+                  type="tel"
+                />
               </div>
             </div>
 
@@ -269,20 +298,6 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({ isEditing = false }) => {
             <p className="text-xs text-gray-500">
               Check this box to approve this applicant for ID card generation, even if status is pending
             </p>
-
-            {/* Phone Number */}
-            <div className="space-y-2">
-              <Label htmlFor="phoneNumber">Phone Number</Label>
-              <Input
-                id="phoneNumber"
-                name="phoneNumber"
-                value={formData.phoneNumber}
-                onChange={handleChange}
-                required
-                placeholder="Enter phone number"
-                type="tel"
-              />
-            </div>
           </CardContent>
         </Card>
 
