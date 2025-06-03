@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -28,8 +29,14 @@ const defaultApplicants = [
     occupation: 'Engineer',
     photo: null,
   },
-  // ... other default applicants
 ];
+
+interface CustomField {
+  id: string;
+  label: string;
+  value: string;
+  position: 'front' | 'back';
+}
 
 const IDCardPrintPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -43,12 +50,64 @@ const IDCardPrintPage: React.FC = () => {
   const [singleSidedPrint, setSingleSidedPrint] = useState(true);
   const [printFormat, setPrintFormat] = useState('standard');
   
+  // Add state for customization settings
+  const [cardLabels, setCardLabels] = useState({
+    title: 'REPUBLIC OF GHANA',
+    subtitle: 'NON-CITIZEN IDENTITY CARD',
+    name: 'Name:',
+    nationality: 'Nationality:',
+    dateOfBirth: 'Date of Birth:',
+    idNo: 'ID No:',
+    expiryDate: 'Expiry Date:',
+    occupation: 'Occupation:',
+    issueDate: 'Date of Issue:',
+    holderSignature: 'Holder\'s Signature',
+    issuingOfficer: 'Issuing Officer',
+  });
+
+  const [footerSettings, setFooterSettings] = useState({
+    mainFooter: 'If found, please return to the nearest Ghana Immigration Service office',
+    backFooter: 'This card remains the property of the Ghana Immigration Service',
+    showMainFooter: true,
+    showBackFooter: true
+  });
+
+  const [customFields, setCustomFields] = useState<CustomField[]>([]);
+  
   // Load applicants from localStorage
   useEffect(() => {
     setLoading(true);
     const savedLogo = localStorage.getItem('systemLogo');
     if (savedLogo) {
       setLogo(savedLogo);
+    }
+
+    // Load customization settings
+    const savedLabels = localStorage.getItem('cardLabels');
+    if (savedLabels) {
+      try {
+        setCardLabels(JSON.parse(savedLabels));
+      } catch (e) {
+        console.error("Error parsing card labels:", e);
+      }
+    }
+
+    const savedFooterSettings = localStorage.getItem('footerSettings');
+    if (savedFooterSettings) {
+      try {
+        setFooterSettings(JSON.parse(savedFooterSettings));
+      } catch (e) {
+        console.error("Error parsing footer settings:", e);
+      }
+    }
+
+    const savedCustomFields = localStorage.getItem('customFields');
+    if (savedCustomFields) {
+      try {
+        setCustomFields(JSON.parse(savedCustomFields));
+      } catch (e) {
+        console.error("Error parsing custom fields:", e);
+      }
     }
     
     // First check if we have selected applicants for bulk printing
@@ -162,255 +221,276 @@ const IDCardPrintPage: React.FC = () => {
     return date.toISOString().split('T')[0];
   };
   
-  // Handle printing all cards
+  // Handle printing all cards - FIXED with new customization settings
   const handlePrintAllCards = () => {
     if (selectedApplicants.length === 0) {
       toast.error("No approved applicants to print");
       return;
     }
     
-    // Create a new window for printing
-    const printWindow = window.open('', '_blank', 'width=800,height=600');
-    if (!printWindow) {
-      toast.error("Pop-up blocked. Please allow pop-ups to print.");
-      return;
-    }
-    
-    // Get scale based on the print format
-    let scale = 1;
-    switch(printFormat) {
-      case 'small':
-        scale = 0.8;
-        break;
-      case 'large':
-        scale = 1.2;
-        break;
-      case 'standard':
-      default:
-        scale = 1;
-        break;
-    }
-    
-    // Add CSS and content to the new window
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>ID Cards - Bulk Print</title>
-          <style>
-            @media print {
-              body {
-                margin: 0;
-                padding: 10px;
-                font-family: Arial, sans-serif;
+    try {
+      // Create a new window for printing
+      const printWindow = window.open('', '_blank', 'width=800,height=600');
+      if (!printWindow) {
+        toast.error("Pop-up blocked. Please allow pop-ups to print.");
+        return;
+      }
+      
+      // Get scale based on the print format
+      let scale = 1;
+      switch(printFormat) {
+        case 'small':
+          scale = 0.8;
+          break;
+        case 'large':
+          scale = 1.2;
+          break;
+        case 'standard':
+        default:
+          scale = 1;
+          break;
+      }
+
+      // Get front and back custom fields
+      const frontCustomFields = customFields.filter(field => field.position === 'front');
+      const backCustomFields = customFields.filter(field => field.position === 'back');
+      
+      // Add CSS and content to the new window
+      const htmlContent = `
+        <html>
+          <head>
+            <title>ID Cards - Bulk Print</title>
+            <style>
+              @media print {
+                body {
+                  margin: 0;
+                  padding: 10px;
+                  font-family: Arial, sans-serif;
+                }
+                .page-container {
+                  display: flex;
+                  flex-wrap: wrap;
+                  gap: 10px;
+                  justify-content: center;
+                }
+                .card-container {
+                  display: flex;
+                  flex-direction: ${singleSidedPrint ? 'row' : 'column'};
+                  width: ${singleSidedPrint ? '180mm' : '85.6mm'};
+                  margin-bottom: 5mm;
+                  page-break-inside: avoid;
+                  gap: 5px;
+                }
+                .card-front, .card-back {
+                  width: 85.6mm;
+                  height: 53.98mm;
+                  background: linear-gradient(to right, #006b3f, #006b3f99);
+                  color: white;
+                  padding: 10px;
+                  border-radius: 8px;
+                  margin-bottom: ${singleSidedPrint ? '0' : '5px'};
+                  position: relative;
+                  overflow: hidden;
+                  box-sizing: border-box;
+                }
+                .logo-container {
+                  text-align: center;
+                  margin-bottom: 5px;
+                }
+                .logo-image {
+                  max-height: 30px;
+                  max-width: 80px;
+                }
+                .photo-container {
+                  width: 70px;
+                  height: 85px;
+                  border: 2px solid white;
+                  overflow: hidden;
+                  margin: 5px auto;
+                }
+                .photo-image {
+                  width: 100%;
+                  height: 100%;
+                  object-fit: cover;
+                }
+                .color-band {
+                  position: absolute;
+                  bottom: 0;
+                  left: 0;
+                  right: 0;
+                  height: 12px;
+                  display: flex;
+                }
+                .color-band div {
+                  flex: 1;
+                }
+                .red-band {
+                  background-color: #ce1126;
+                }
+                .yellow-band {
+                  background-color: #fcd116;
+                }
+                .green-band {
+                  background-color: #006b3f;
+                }
+                @page {
+                  size: auto;
+                  margin: 10mm;
+                }
+                .card-content {
+                  display: flex;
+                  height: calc(100% - 12px);
+                }
+                .left-side {
+                  width: 33%;
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  justify-content: space-between;
+                }
+                .right-side {
+                  width: 67%;
+                  padding-left: 5px;
+                  font-size: 9px;
+                }
+                .card-title {
+                  text-align: center;
+                  margin-bottom: 5px;
+                }
+                .card-title div:first-child {
+                  font-weight: bold;
+                  font-size: 10px;
+                }
+                .card-title div:last-child {
+                  font-size: 8px;
+                }
+                .visa-type {
+                  background: #fcd116;
+                  color: black;
+                  padding: 2px 6px;
+                  border-radius: 2px;
+                  font-weight: bold;
+                  font-size: 8px;
+                  text-align: center;
+                }
+                .card-info div {
+                  margin-bottom: 2px;
+                  line-height: 1.2;
+                }
+                .card-info strong {
+                  font-weight: bold;
+                }
+                .scale-container {
+                  transform: scale(${scale});
+                  transform-origin: top left;
+                  margin-bottom: ${scale > 1 ? '20mm' : '0'};
+                  margin-right: ${scale > 1 ? '20mm' : '0'};
+                }
               }
-              .page-container {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 10px;
-                justify-content: center;
-              }
-              .card-container {
-                display: flex;
-                flex-direction: ${singleSidedPrint ? 'row' : 'column'};
-                width: ${singleSidedPrint ? '180mm' : '85.6mm'};
-                margin-bottom: 5mm;
-                page-break-inside: avoid;
-                gap: 5px;
-              }
-              .card-front, .card-back {
-                width: 85.6mm;
-                height: 53.98mm;
-                background: linear-gradient(to right, #006b3f, #006b3f99);
-                color: white;
-                padding: 10px;
-                border-radius: 8px;
-                margin-bottom: ${singleSidedPrint ? '0' : '5px'};
-                position: relative;
-                overflow: hidden;
-                box-sizing: border-box;
-              }
-              .logo-container {
-                text-align: center;
-                margin-bottom: 5px;
-              }
-              .logo-image {
-                max-height: 30px;
-                max-width: 80px;
-              }
-              .photo-container {
-                width: 70px;
-                height: 85px;
-                border: 2px solid white;
-                overflow: hidden;
-                margin: 5px auto;
-              }
-              .photo-image {
-                width: 100%;
-                height: 100%;
-                object-fit: cover;
-              }
-              .color-band {
-                position: absolute;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                height: 12px;
-                display: flex;
-              }
-              .color-band div {
-                flex: 1;
-              }
-              .red-band {
-                background-color: #ce1126;
-              }
-              .yellow-band {
-                background-color: #fcd116;
-              }
-              .green-band {
-                background-color: #006b3f;
-              }
-              @page {
-                size: auto;
-                margin: 10mm;
-              }
-              .card-content {
-                display: flex;
-                height: calc(100% - 12px);
-              }
-              .left-side {
-                width: 33%;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: space-between;
-              }
-              .right-side {
-                width: 67%;
-                padding-left: 5px;
-                font-size: 9px;
-              }
-              .card-title {
-                text-align: center;
-                margin-bottom: 5px;
-              }
-              .card-title div:first-child {
-                font-weight: bold;
-                font-size: 10px;
-              }
-              .card-title div:last-child {
-                font-size: 8px;
-              }
-              .visa-type {
-                background: #fcd116;
-                color: black;
-                padding: 2px 6px;
-                border-radius: 2px;
-                font-weight: bold;
-                font-size: 8px;
-                text-align: center;
-              }
-              .card-info div {
-                margin-bottom: 2px;
-              }
-              .card-info strong {
-                font-weight: bold;
-              }
-              .scale-container {
-                transform: scale(${scale});
-                transform-origin: top left;
-                margin-bottom: ${scale > 1 ? '20mm' : '0'};
-                margin-right: ${scale > 1 ? '20mm' : '0'};
-              }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="page-container">
-            ${selectedApplicants.map(applicant => `
-              <div class="scale-container">
-                <div class="card-container">
-                  <!-- Front of ID Card -->
-                  <div class="card-front">
-                    <div class="card-content">
-                      <div class="left-side">
-                        <div class="logo-container">
-                          ${logo ? `<img src="${logo}" alt="Logo" class="logo-image" />` : ''}
+            </style>
+          </head>
+          <body>
+            <div class="page-container">
+              ${selectedApplicants.map(applicant => `
+                <div class="scale-container">
+                  <div class="card-container">
+                    <!-- Front of ID Card -->
+                    <div class="card-front">
+                      <div class="card-content">
+                        <div class="left-side">
+                          <div class="logo-container">
+                            ${logo ? `<img src="${logo}" alt="Logo" class="logo-image" />` : ''}
+                          </div>
+                          <div class="photo-container">
+                            ${applicant.photo ? `<img src="${applicant.photo}" alt="Applicant" class="photo-image" />` : ''}
+                          </div>
+                          <div style="margin-top: 3px;">
+                            <div class="visa-type">
+                              ${(applicant.visaType || 'NONE').toUpperCase()}
+                            </div>
+                          </div>
                         </div>
-                        <div class="photo-container">
-                          ${applicant.photo ? `<img src="${applicant.photo}" alt="Applicant" class="photo-image" />` : ''}
-                        </div>
-                        <div style="margin-top: 3px;">
-                          <div class="visa-type">
-                            ${(applicant.visaType || 'NONE').toUpperCase()}
+                        <div class="right-side">
+                          <div class="card-title">
+                            <div>${cardLabels.title}</div>
+                            <div>${cardLabels.subtitle}</div>
+                          </div>
+                          <div class="card-info">
+                            <div><strong>${cardLabels.name}</strong> ${applicant.fullName || 'Not provided'}</div>
+                            <div><strong>${cardLabels.nationality}</strong> ${applicant.nationality || 'Not provided'}</div>
+                            <div><strong>${cardLabels.dateOfBirth}</strong> ${formatDate(applicant.dateOfBirth)}</div>
+                            <div><strong>Phone:</strong> ${applicant.phoneNumber || 'Not provided'}</div>
+                            <div><strong>${cardLabels.idNo}</strong> ${applicant.id || 'Not provided'}</div>
+                            <div><strong>${cardLabels.expiryDate}</strong> ${formatDate(getExpiryDate(applicant))}</div>
+                            ${frontCustomFields.map(field => `<div><strong>${field.label}:</strong> ${field.value}</div>`).join('')}
                           </div>
                         </div>
                       </div>
-                      <div class="right-side">
-                        <div class="card-title">
-                          <div>REPUBLIC OF GHANA</div>
-                          <div>NON-CITIZEN IDENTITY CARD</div>
+                      <div class="color-band">
+                        <div class="red-band"></div>
+                        <div class="yellow-band"></div>
+                        <div class="green-band"></div>
+                      </div>
+                    </div>
+                    
+                    <!-- Back of ID Card -->
+                    <div class="card-back">
+                      <div class="card-content">
+                        <div style="width: 100%;">
+                          <div class="card-title">
+                            <div>${cardLabels.title}</div>
+                            ${footerSettings.showBackFooter ? `<div style="font-size: 8px;">${footerSettings.backFooter}</div>` : ''}
+                          </div>
+                          <div class="card-info">
+                            <div><strong>${cardLabels.occupation}</strong> ${applicant.occupation || 'Not specified'}</div>
+                            <div><strong>Area:</strong> ${applicant.area || 'Not provided'}</div>
+                            <div><strong>${cardLabels.issueDate}</strong> ${formatDate(new Date().toISOString().split('T')[0])}</div>
+                            ${backCustomFields.map(field => `<div><strong>${field.label}:</strong> ${field.value}</div>`).join('')}
+                          </div>
+                          ${footerSettings.showMainFooter ? `
+                            <div style="border-top: 1px solid rgba(255,255,255,0.3); padding-top: 4px; margin-top: 8px;">
+                              <div style="text-align: center; font-size: 8px;">${footerSettings.mainFooter}</div>
+                            </div>
+                          ` : ''}
+                          <div style="display: flex; justify-content: space-between; margin-top: auto; position: absolute; bottom: 20px; left: 10px; right: 10px;">
+                            <div style="width: 70px; border-top: 1px solid rgba(255,255,255,0.5); text-align: center; font-size: 7px; padding-top: 2px;">
+                              ${cardLabels.holderSignature}
+                            </div>
+                            <div style="width: 70px; border-top: 1px solid rgba(255,255,255,0.5); text-align: center; font-size: 7px; padding-top: 2px;">
+                              ${cardLabels.issuingOfficer}
+                            </div>
+                          </div>
                         </div>
-                        <div class="card-info">
-                          <div><strong>Name:</strong> ${applicant.fullName || 'Not provided'}</div>
-                          <div><strong>Nationality:</strong> ${applicant.nationality || 'Not provided'}</div>
-                          <div><strong>Date of Birth:</strong> ${formatDate(applicant.dateOfBirth)}</div>
-                          <div><strong>Phone:</strong> ${applicant.phoneNumber || 'Not provided'}</div>
-                          <div><strong>ID No:</strong> ${applicant.id || 'Not provided'}</div>
-                          <div><strong>Expiry Date:</strong> ${formatDate(getExpiryDate(applicant))}</div>
-                        </div>
                       </div>
-                    </div>
-                    <div class="color-band">
-                      <div class="red-band"></div>
-                      <div class="yellow-band"></div>
-                      <div class="green-band"></div>
-                    </div>
-                  </div>
-                  
-                  <!-- Back of ID Card -->
-                  <div class="card-back">
-                    <div style="text-align: center; margin-bottom: 8px;">
-                      <div style="font-weight: bold; font-size: 10px;">REPUBLIC OF GHANA</div>
-                      <div style="font-size: 8px;">This card remains the property of the Ghana Immigration Service</div>
-                    </div>
-                    <div style="font-size: 9px; margin-bottom: 8px;">
-                      <div><strong>Occupation:</strong> ${applicant.occupation || 'Not specified'}</div>
-                      <div><strong>Area:</strong> ${applicant.area || 'Not provided'}</div>
-                      <div><strong>Date of Issue:</strong> ${formatDate(new Date().toISOString().split('T')[0])}</div>
-                    </div>
-                    <div style="border-top: 1px solid rgba(255,255,255,0.3); padding-top: 4px; margin-top: 8px;">
-                      <div style="text-align: center; font-size: 8px;">If found, please return to the nearest Ghana Immigration Service office</div>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-top: auto; position: absolute; bottom: 20px; left: 10px; right: 10px;">
-                      <div style="width: 70px; border-top: 1px solid rgba(255,255,255,0.5); text-align: center; font-size: 7px; padding-top: 2px;">
-                        Holder's Signature
+                      <div class="color-band">
+                        <div class="red-band"></div>
+                        <div class="yellow-band"></div>
+                        <div class="green-band"></div>
                       </div>
-                      <div style="width: 70px; border-top: 1px solid rgba(255,255,255,0.5); text-align: center; font-size: 7px; padding-top: 2px;">
-                        Issuing Officer
-                      </div>
-                    </div>
-                    <div class="color-band">
-                      <div class="red-band"></div>
-                      <div class="yellow-band"></div>
-                      <div class="green-band"></div>
                     </div>
                   </div>
                 </div>
-              </div>
-            `).join('')}
-          </div>
-          <script>
-            window.onload = function() {
-              window.print();
-              setTimeout(function() { window.close(); }, 500);
-            };
-          </script>
-        </body>
-      </html>
-    `);
-    
-    printWindow.document.close();
-    toast.success(`Printing ${selectedApplicants.length} ID cards${singleSidedPrint ? ' on single-sided layout' : ''}`);
+              `).join('')}
+            </div>
+            <script>
+              window.onload = function() {
+                setTimeout(function() {
+                  window.print();
+                  setTimeout(function() { window.close(); }, 1000);
+                }, 500);
+              };
+            </script>
+          </body>
+        </html>
+      `;
+      
+      printWindow.document.write(htmlContent);
+      printWindow.document.close();
+      toast.success(`Printing ${selectedApplicants.length} ID cards${singleSidedPrint ? ' on single-sided layout' : ''}`);
+    } catch (error) {
+      console.error('Print error:', error);
+      toast.error('Failed to open print dialog');
+    }
   };
   
   // Handle duplicate printing - print multiple copies

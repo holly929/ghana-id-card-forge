@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Shield, Printer, Download, Upload, Camera, Edit, Save, Archive, Files } from 'lucide-react';
+import { Shield, Printer, Download, Upload, Camera, Edit, Save, Archive, Files, Plus, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from "sonner";
@@ -14,6 +13,7 @@ import {
   SelectTrigger, 
   SelectValue
 } from "@/components/ui/select";
+import { Label } from '@/components/ui/label';
 
 interface IDCardPreviewProps {
   applicant: {
@@ -29,6 +29,13 @@ interface IDCardPreviewProps {
     phoneNumber?: string;
     area?: string;
   };
+}
+
+interface CustomField {
+  id: string;
+  label: string;
+  value: string;
+  position: 'front' | 'back';
 }
 
 const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
@@ -52,8 +59,21 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
     issuingOfficer: 'Issuing Officer',
   });
 
-  // State for editable footer
-  const [footer, setFooter] = useState('If found, please return to the nearest Ghana Immigration Service office');
+  // State for custom fields
+  const [customFields, setCustomFields] = useState<CustomField[]>([]);
+  const [newCustomField, setNewCustomField] = useState({
+    label: '',
+    value: '',
+    position: 'front' as 'front' | 'back'
+  });
+
+  // State for footer settings
+  const [footerSettings, setFooterSettings] = useState({
+    mainFooter: 'If found, please return to the nearest Ghana Immigration Service office',
+    backFooter: 'This card remains the property of the Ghana Immigration Service',
+    showMainFooter: true,
+    showBackFooter: true
+  });
   
   // State for editing mode
   const [isEditing, setIsEditing] = useState(false);
@@ -87,19 +107,34 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
       }
     }
     
-    const savedFooter = localStorage.getItem('cardFooter');
-    if (savedFooter) {
-      setFooter(savedFooter);
+    // Load footer settings
+    const savedFooterSettings = localStorage.getItem('footerSettings');
+    if (savedFooterSettings) {
+      try {
+        const parsedFooterSettings = JSON.parse(savedFooterSettings);
+        setFooterSettings(parsedFooterSettings);
+      } catch (e) {
+        console.error("Error parsing footer settings:", e);
+      }
+    }
+    
+    // Load custom fields
+    const savedCustomFields = localStorage.getItem('customFields');
+    if (savedCustomFields) {
+      try {
+        const parsedCustomFields = JSON.parse(savedCustomFields);
+        setCustomFields(parsedCustomFields);
+      } catch (e) {
+        console.error("Error parsing custom fields:", e);
+      }
     }
     
     // Load applicant photo if available
     if (applicant && applicant.id) {
-      // Try loading from localStorage
       const savedPhoto = localStorage.getItem(`applicantPhoto_${applicant.id}`);
       if (savedPhoto) {
         setPhoto(savedPhoto);
       } else if (applicant.photo) {
-        // If not in localStorage but provided in props
         setPhoto(applicant.photo);
       }
     }
@@ -108,16 +143,41 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
   // Save settings to localStorage
   const saveSettings = () => {
     localStorage.setItem('cardLabels', JSON.stringify(cardLabels));
-    localStorage.setItem('cardFooter', footer);
+    localStorage.setItem('footerSettings', JSON.stringify(footerSettings));
+    localStorage.setItem('customFields', JSON.stringify(customFields));
     setIsEditing(false);
     toast.success("Card customizations saved successfully");
+  };
+
+  // Add custom field
+  const addCustomField = () => {
+    if (newCustomField.label.trim() && newCustomField.value.trim()) {
+      const newField: CustomField = {
+        id: Date.now().toString(),
+        label: newCustomField.label.trim(),
+        value: newCustomField.value.trim(),
+        position: newCustomField.position
+      };
+      setCustomFields([...customFields, newField]);
+      setNewCustomField({ label: '', value: '', position: 'front' });
+      toast.success("Custom field added");
+    } else {
+      toast.error("Please fill in both label and value");
+    }
+  };
+
+  // Remove custom field
+  const removeCustomField = (id: string) => {
+    setCustomFields(customFields.filter(field => field.id !== id));
+    toast.success("Custom field removed");
   };
 
   // Backup current settings
   const backupSettings = () => {
     const backup = {
       cardLabels,
-      footer,
+      footerSettings,
+      customFields,
       timestamp: new Date().toISOString()
     };
     localStorage.setItem('cardSettingsBackup', JSON.stringify(backup));
@@ -131,9 +191,11 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
       try {
         const backupData = JSON.parse(backup);
         setCardLabels(backupData.cardLabels);
-        setFooter(backupData.footer);
+        setFooterSettings(backupData.footerSettings || footerSettings);
+        setCustomFields(backupData.customFields || []);
         localStorage.setItem('cardLabels', JSON.stringify(backupData.cardLabels));
-        localStorage.setItem('cardFooter', backupData.footer);
+        localStorage.setItem('footerSettings', JSON.stringify(backupData.footerSettings || footerSettings));
+        localStorage.setItem('customFields', JSON.stringify(backupData.customFields || []));
         toast.success("Settings restored successfully");
       } catch (e) {
         toast.error("Failed to restore settings");
@@ -170,7 +232,6 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
   
   // Handle photo upload - Fixed for reliability
   const handlePhotoUpload = async () => {
-    // Fix: Manually trigger the file input click
     if (photoInputRef.current) {
       photoInputRef.current.click();
     }
@@ -189,13 +250,9 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
         file,
         async (result) => {
           try {
-            // Optimize image before saving
             const optimized = await optimizeImage(result);
-            
             setPhoto(optimized);
-            // Save photo for this specific applicant
             localStorage.setItem(`applicantPhoto_${applicant.id}`, optimized);
-            // Update the applicant data in localStorage too
             updateApplicantPhotoInStorage(applicant.id, optimized);
             toast.success("Photo uploaded successfully");
           } catch (error) {
@@ -206,7 +263,7 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
             toast.success("Photo uploaded successfully");
           }
         },
-        { maxSizeMB: 1 }  // Smaller size limit for ID photos
+        { maxSizeMB: 1 }
       );
     } catch (error) {
       if (error instanceof Error) {
@@ -216,7 +273,6 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
       }
     }
     
-    // Reset the input value to allow selecting the same file again
     if (photoInputRef.current) {
       photoInputRef.current.value = '';
     }
@@ -241,203 +297,263 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
     }
   };
   
-  // Handle printing with different formats and single/double page option
+  // Handle printing with different formats and single/double page option - FIXED
   const handlePrint = () => {
-    // Create a new window for printing
-    const printWindow = window.open('', '_blank', 'width=800,height=600');
-    if (!printWindow) {
-      toast.error("Pop-up blocked. Please allow pop-ups to print.");
-      return;
-    }
-    
-    // Get scale based on the print format
-    let scale = 1;
-    switch(printFormat) {
-      case 'small':
-        scale = 0.7;
-        break;
-      case 'large':
-        scale = 1.5;
-        break;
-      case 'standard':
-      default:
-        scale = 1;
-        break;
-    }
-    
-    // Add CSS and content to the new window
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>ID Card Print</title>
-          <style>
-            @media print {
-              body {
-                margin: 0;
-                padding: 20px;
+    try {
+      const printWindow = window.open('', '_blank', 'width=800,height=600');
+      if (!printWindow) {
+        toast.error("Pop-up blocked. Please allow pop-ups to print.");
+        return;
+      }
+      
+      let scale = 1;
+      switch(printFormat) {
+        case 'small':
+          scale = 0.7;
+          break;
+        case 'large':
+          scale = 1.5;
+          break;
+        case 'standard':
+        default:
+          scale = 1;
+          break;
+      }
+
+      // Get front and back custom fields
+      const frontCustomFields = customFields.filter(field => field.position === 'front');
+      const backCustomFields = customFields.filter(field => field.position === 'back');
+      
+      const htmlContent = `
+        <html>
+          <head>
+            <title>ID Card Print - ${applicant.fullName}</title>
+            <style>
+              @media print {
+                body {
+                  margin: 0;
+                  padding: 20px;
+                  font-family: Arial, sans-serif;
+                }
+                .card-container {
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  transform: scale(${scale});
+                  transform-origin: top center;
+                  margin-bottom: ${scale > 1 ? '100px' : '20px'};
+                }
+                .card-front, .card-back {
+                  width: 85.6mm;
+                  height: 53.98mm;
+                  background: linear-gradient(to right, #006b3f, #006b3f99);
+                  color: white;
+                  padding: 10px;
+                  border-radius: 8px;
+                  position: relative;
+                  overflow: hidden;
+                  box-sizing: border-box;
+                  page-break-inside: avoid;
+                }
+                .card-front {
+                  margin-bottom: ${singlePagePrint ? '5px' : '20px'};
+                }
+                .card-layout {
+                  display: ${singlePagePrint ? 'flex' : 'block'};
+                  flex-direction: ${singlePagePrint ? 'row' : 'column'};
+                  gap: ${singlePagePrint ? '10px' : '0'};
+                  justify-content: ${singlePagePrint ? 'center' : 'flex-start'};
+                }
+                .logo-container {
+                  text-align: center;
+                  margin-bottom: 8px;
+                }
+                .logo-image {
+                  max-height: 30px;
+                  max-width: 80px;
+                }
+                .photo-container {
+                  width: 60px;
+                  height: 75px;
+                  border: 2px solid white;
+                  overflow: hidden;
+                  margin: 5px auto;
+                }
+                .photo-image {
+                  width: 100%;
+                  height: 100%;
+                  object-fit: cover;
+                }
+                .color-band {
+                  position: absolute;
+                  bottom: 0;
+                  left: 0;
+                  right: 0;
+                  height: 12px;
+                  display: flex;
+                }
+                .color-band div {
+                  flex: 1;
+                }
+                .red-band {
+                  background-color: #ce1126;
+                }
+                .yellow-band {
+                  background-color: #fcd116;
+                }
+                .green-band {
+                  background-color: #006b3f;
+                }
+                .page-break {
+                  ${singlePagePrint ? 'display: none;' : 'page-break-after: always;'}
+                }
+                @page {
+                  size: auto;
+                  margin: 10mm;
+                }
+                .card-content {
+                  display: flex;
+                  height: calc(100% - 12px);
+                }
+                .left-side {
+                  width: 33%;
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  justify-content: space-between;
+                }
+                .right-side {
+                  width: 67%;
+                  padding-left: 8px;
+                  font-size: 9px;
+                }
+                .visa-type {
+                  background: #fcd116;
+                  color: black;
+                  padding: 2px 6px;
+                  border-radius: 2px;
+                  font-weight: bold;
+                  font-size: 8px;
+                  text-align: center;
+                }
+                .card-info div {
+                  margin-bottom: 1px;
+                  line-height: 1.2;
+                }
+                .card-info strong {
+                  font-weight: bold;
+                }
+                .card-title {
+                  text-align: center;
+                  margin-bottom: 8px;
+                }
+                .card-title div:first-child {
+                  font-weight: bold;
+                  font-size: 10px;
+                }
+                .card-title div:last-child {
+                  font-size: 8px;
+                }
               }
-              .card-container {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                transform: scale(${scale});
-                transform-origin: top center;
-                margin-bottom: ${scale > 1 ? '100px' : '20px'};
-              }
-              .card-front, .card-back {
-                width: 85.6mm;
-                height: 53.98mm;
-                background: linear-gradient(to right, #006b3f, #006b3f99);
-                color: white;
-                padding: 16px;
-                border-radius: 8px;
-                position: relative;
-                overflow: hidden;
-                box-sizing: border-box;
-              }
-              .card-front {
-                margin-bottom: ${singlePagePrint ? '5px' : '20px'};
-              }
-              .card-layout {
-                display: ${singlePagePrint ? 'flex' : 'block'};
-                flex-direction: ${singlePagePrint ? 'row' : 'column'};
-                gap: ${singlePagePrint ? '10px' : '0'};
-                justify-content: ${singlePagePrint ? 'center' : 'flex-start'};
-              }
-              .logo-container {
-                text-align: center;
-                margin-bottom: 10px;
-              }
-              .logo-image {
-                max-height: 40px;
-                max-width: 100px;
-              }
-              .photo-container {
-                width: 80px;
-                height: 100px;
-                border: 2px solid white;
-                overflow: hidden;
-                margin: 5px auto;
-              }
-              .photo-image {
-                width: 100%;
-                height: 100%;
-                object-fit: cover;
-              }
-              .color-band {
-                position: absolute;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                height: 16px;
-                display: flex;
-              }
-              .color-band div {
-                flex: 1;
-              }
-              .red-band {
-                background-color: #ce1126;
-              }
-              .yellow-band {
-                background-color: #fcd116;
-              }
-              .green-band {
-                background-color: #006b3f;
-              }
-              .page-break {
-                ${singlePagePrint ? 'display: none;' : 'page-break-after: always;'}
-              }
-              @page {
-                size: auto;
-                margin: 10mm;
-              }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="card-container">
-            <h2 style="text-align:center;margin-bottom:20px;">${applicant.fullName} - ID Card</h2>
-            <div class="card-layout">
-              <div class="card-front">
-                <!-- Front card content with photo and logo -->
-                <div style="display: flex; height: 100%;">
-                  <div style="width: 33%; display: flex; flex-direction: column; align-items: center; justify-content: space-between;">
-                    <div class="logo-container">
-                      ${logo ? `<img src="${logo}" alt="Logo" class="logo-image" />` : ''}
+            </style>
+          </head>
+          <body>
+            <div class="card-container">
+              <h2 style="text-align:center;margin-bottom:20px;">${applicant.fullName} - ID Card</h2>
+              <div class="card-layout">
+                <div class="card-front">
+                  <div class="card-content">
+                    <div class="left-side">
+                      <div class="logo-container">
+                        ${logo ? `<img src="${logo}" alt="Logo" class="logo-image" />` : ''}
+                      </div>
+                      <div class="photo-container">
+                        ${photo ? `<img src="${photo}" alt="Applicant" class="photo-image" />` : ''}
+                      </div>
+                      <div style="margin-top: 3px;">
+                        <div class="visa-type">
+                          ${getVisaType().toUpperCase()}
+                        </div>
+                      </div>
                     </div>
-                    <div class="photo-container">
-                      ${photo ? `<img src="${photo}" alt="Applicant" class="photo-image" />` : ''}
-                    </div>
-                    <div style="margin-top: 5px; text-align: center;">
-                      <div style="background: #fcd116; color: black; padding: 3px 8px; border-radius: 2px; font-weight: bold; font-size: 10px;">
-                        ${getVisaType().toUpperCase()}
+                    <div class="right-side">
+                      <div class="card-title">
+                        <div>${cardLabels.title}</div>
+                        <div>${cardLabels.subtitle}</div>
+                      </div>
+                      <div class="card-info">
+                        <div><strong>${cardLabels.name}</strong> ${applicant.fullName}</div>
+                        <div><strong>${cardLabels.nationality}</strong> ${applicant.nationality}</div>
+                        <div><strong>${cardLabels.dateOfBirth}</strong> ${formatDate(applicant.dateOfBirth)}</div>
+                        <div><strong>Phone:</strong> ${applicant.phoneNumber || 'Not provided'}</div>
+                        <div><strong>${cardLabels.idNo}</strong> ${applicant.id}</div>
+                        <div><strong>${cardLabels.expiryDate}</strong> ${formatDate(getExpiryDate())}</div>
+                        ${frontCustomFields.map(field => `<div><strong>${field.label}:</strong> ${field.value}</div>`).join('')}
                       </div>
                     </div>
                   </div>
-                  <div style="width: 67%; padding-left: 10px;">
-                    <div style="text-align: center; margin-bottom: 10px;">
-                      <div style="font-weight: bold; font-size: 12px;">${cardLabels.title}</div>
-                      <div style="font-size: 10px;">${cardLabels.subtitle}</div>
+                  <div class="color-band">
+                    <div class="red-band"></div>
+                    <div class="yellow-band"></div>
+                    <div class="green-band"></div>
+                  </div>
+                </div>
+                <div class="page-break"></div>
+                <div class="card-back">
+                  <div class="card-content">
+                    <div style="width: 100%;">
+                      <div class="card-title">
+                        <div>${cardLabels.title}</div>
+                        ${footerSettings.showBackFooter ? `<div style="font-size: 8px;">${footerSettings.backFooter}</div>` : ''}
+                      </div>
+                      <div class="card-info">
+                        <div><strong>${cardLabels.occupation}</strong> ${applicant.occupation || 'Not specified'}</div>
+                        <div><strong>Area:</strong> ${applicant.area || 'Not provided'}</div>
+                        <div><strong>${cardLabels.issueDate}</strong> ${formatDate(new Date().toISOString().split('T')[0])}</div>
+                        ${backCustomFields.map(field => `<div><strong>${field.label}:</strong> ${field.value}</div>`).join('')}
+                      </div>
+                      ${footerSettings.showMainFooter ? `
+                        <div style="border-top: 1px solid rgba(255,255,255,0.3); padding-top: 4px; margin-top: 8px;">
+                          <div style="text-align: center; font-size: 8px;">${footerSettings.mainFooter}</div>
+                        </div>
+                      ` : ''}
+                      <div style="display: flex; justify-content: space-between; margin-top: auto; position: absolute; bottom: 20px; left: 10px; right: 10px;">
+                        <div style="width: 70px; border-top: 1px solid rgba(255,255,255,0.5); text-align: center; font-size: 7px; padding-top: 2px;">
+                          ${cardLabels.holderSignature}
+                        </div>
+                        <div style="width: 70px; border-top: 1px solid rgba(255,255,255,0.5); text-align: center; font-size: 7px; padding-top: 2px;">
+                          ${cardLabels.issuingOfficer}
+                        </div>
+                      </div>
                     </div>
-                    <div style="font-size: 10px;">
-                      <div><strong>${cardLabels.name}</strong> ${applicant.fullName}</div>
-                      <div><strong>${cardLabels.nationality}</strong> ${applicant.nationality}</div>
-                      <div><strong>${cardLabels.dateOfBirth}</strong> ${formatDate(applicant.dateOfBirth)}</div>
-                      <div><strong>Phone:</strong> ${applicant.phoneNumber || 'Not provided'}</div>
-                      <div><strong>${cardLabels.idNo}</strong> ${applicant.id}</div>
-                      <div><strong>${cardLabels.expiryDate}</strong> ${formatDate(getExpiryDate())}</div>
-                    </div>
                   </div>
-                </div>
-                <div class="color-band">
-                  <div class="red-band"></div>
-                  <div class="yellow-band"></div>
-                  <div class="green-band"></div>
-                </div>
-              </div>
-              <div class="page-break"></div>
-              <div class="card-back">
-                <!-- Back card content -->
-                <div style="text-align: center; margin-bottom: 10px;">
-                  <div style="font-weight: bold; font-size: 12px;">${cardLabels.title}</div>
-                  <div style="font-size: 9px;">This card remains the property of the Ghana Immigration Service</div>
-                </div>
-                <div style="font-size: 10px; margin-bottom: 10px;">
-                  <div><strong>${cardLabels.occupation}</strong> ${applicant.occupation || 'Not specified'}</div>
-                  <div><strong>Area:</strong> ${applicant.area || 'Not provided'}</div>
-                  <div><strong>${cardLabels.issueDate}</strong> ${formatDate(new Date().toISOString().split('T')[0])}</div>
-                </div>
-                <div style="border-top: 1px solid rgba(255,255,255,0.3); padding-top: 5px; margin-top: 10px;">
-                  <div style="text-align: center; font-size: 9px;">${footer}</div>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-top: auto; position: absolute; bottom: 25px; left: 10px; right: 10px;">
-                  <div style="width: 80px; border-top: 1px solid rgba(255,255,255,0.5); text-align: center; font-size: 8px; padding-top: 2px;">
-                    ${cardLabels.holderSignature}
+                  <div class="color-band">
+                    <div class="red-band"></div>
+                    <div class="yellow-band"></div>
+                    <div class="green-band"></div>
                   </div>
-                  <div style="width: 80px; border-top: 1px solid rgba(255,255,255,0.5); text-align: center; font-size: 8px; padding-top: 2px;">
-                    ${cardLabels.issuingOfficer}
-                  </div>
-                </div>
-                <div class="color-band">
-                  <div class="red-band"></div>
-                  <div class="yellow-band"></div>
-                  <div class="green-band"></div>
                 </div>
               </div>
             </div>
-          </div>
-          <script>
-            window.onload = function() {
-              window.print();
-              setTimeout(function() { window.close(); }, 500);
-            };
-          </script>
-        </body>
-      </html>
-    `);
-    
-    printWindow.document.close();
-    toast.success(`Printing ID card in ${printFormat} format${singlePagePrint ? ' on single page' : ''}`);
+            <script>
+              window.onload = function() {
+                setTimeout(function() {
+                  window.print();
+                  setTimeout(function() { window.close(); }, 1000);
+                }, 500);
+              };
+            </script>
+          </body>
+        </html>
+      `;
+      
+      printWindow.document.write(htmlContent);
+      printWindow.document.close();
+      toast.success(`Printing ID card in ${printFormat} format${singlePagePrint ? ' on single page' : ''}`);
+    } catch (error) {
+      console.error('Print error:', error);
+      toast.error('Failed to open print dialog');
+    }
   };
   
   // Fixed version of download PDF functionality
@@ -445,6 +561,10 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
     toast.info("Preparing PDF for download...");
     handlePrint();
   };
+
+  // Get front and back custom fields for preview
+  const frontCustomFields = customFields.filter(field => field.position === 'front');
+  const backCustomFields = customFields.filter(field => field.position === 'back');
   
   return (
     <div className="flex flex-col items-center">
@@ -550,109 +670,194 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
       </div>
       
       {isEditing && (
-        <div className="mb-6 p-4 border rounded-lg w-full max-w-xl">
-          <h3 className="font-medium mb-3">Customize Card Labels</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs text-gray-500">Title</label>
-              <Input 
-                value={cardLabels.title}
-                onChange={(e) => setCardLabels({...cardLabels, title: e.target.value})}
-                className="mb-2"
-              />
+        <div className="mb-6 p-4 border rounded-lg w-full max-w-4xl">
+          <h3 className="font-medium mb-4">Customize Card Settings</h3>
+          
+          {/* Card Labels Section */}
+          <div className="mb-6">
+            <h4 className="font-medium mb-3">Card Labels</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs text-gray-500">Title</Label>
+                <Input 
+                  value={cardLabels.title}
+                  onChange={(e) => setCardLabels({...cardLabels, title: e.target.value})}
+                  className="mb-2"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-gray-500">Subtitle</Label>
+                <Input 
+                  value={cardLabels.subtitle}
+                  onChange={(e) => setCardLabels({...cardLabels, subtitle: e.target.value})}
+                  className="mb-2"
+                />
+              </div>
+              
+              <div>
+                <Label className="text-xs text-gray-500">Name Label</Label>
+                <Input 
+                  value={cardLabels.name}
+                  onChange={(e) => setCardLabels({...cardLabels, name: e.target.value})}
+                  className="mb-2"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-gray-500">Nationality Label</Label>
+                <Input 
+                  value={cardLabels.nationality}
+                  onChange={(e) => setCardLabels({...cardLabels, nationality: e.target.value})}
+                  className="mb-2"
+                />
+              </div>
+              
+              <div>
+                <Label className="text-xs text-gray-500">DOB Label</Label>
+                <Input 
+                  value={cardLabels.dateOfBirth}
+                  onChange={(e) => setCardLabels({...cardLabels, dateOfBirth: e.target.value})}
+                  className="mb-2"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-gray-500">ID Number Label</Label>
+                <Input 
+                  value={cardLabels.idNo}
+                  onChange={(e) => setCardLabels({...cardLabels, idNo: e.target.value})}
+                  className="mb-2"
+                />
+              </div>
+              
+              <div>
+                <Label className="text-xs text-gray-500">Occupation Label</Label>
+                <Input 
+                  value={cardLabels.occupation}
+                  onChange={(e) => setCardLabels({...cardLabels, occupation: e.target.value})}
+                  className="mb-2"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-gray-500">Issue Date Label</Label>
+                <Input 
+                  value={cardLabels.issueDate}
+                  onChange={(e) => setCardLabels({...cardLabels, issueDate: e.target.value})}
+                  className="mb-2"
+                />
+              </div>
             </div>
-            <div>
-              <label className="text-xs text-gray-500">Subtitle</label>
-              <Input 
-                value={cardLabels.subtitle}
-                onChange={(e) => setCardLabels({...cardLabels, subtitle: e.target.value})}
-                className="mb-2"
-              />
+          </div>
+
+          {/* Footer Settings Section */}
+          <div className="mb-6">
+            <h4 className="font-medium mb-3">Footer Settings</h4>
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="showMainFooter"
+                  checked={footerSettings.showMainFooter}
+                  onChange={(e) => setFooterSettings({...footerSettings, showMainFooter: e.target.checked})}
+                />
+                <Label htmlFor="showMainFooter">Show main footer</Label>
+              </div>
+              {footerSettings.showMainFooter && (
+                <div>
+                  <Label className="text-xs text-gray-500">Main Footer Text</Label>
+                  <Input 
+                    value={footerSettings.mainFooter}
+                    onChange={(e) => setFooterSettings({...footerSettings, mainFooter: e.target.value})}
+                    className="mb-2"
+                  />
+                </div>
+              )}
+              
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="showBackFooter"
+                  checked={footerSettings.showBackFooter}
+                  onChange={(e) => setFooterSettings({...footerSettings, showBackFooter: e.target.checked})}
+                />
+                <Label htmlFor="showBackFooter">Show back header footer</Label>
+              </div>
+              {footerSettings.showBackFooter && (
+                <div>
+                  <Label className="text-xs text-gray-500">Back Header Footer Text</Label>
+                  <Input 
+                    value={footerSettings.backFooter}
+                    onChange={(e) => setFooterSettings({...footerSettings, backFooter: e.target.value})}
+                    className="mb-2"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Custom Fields Section */}
+          <div className="mb-6">
+            <h4 className="font-medium mb-3">Custom Fields</h4>
+            
+            {/* Add new custom field */}
+            <div className="border rounded p-3 mb-4">
+              <h5 className="text-sm font-medium mb-2">Add New Custom Field</h5>
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                <Input
+                  placeholder="Field label"
+                  value={newCustomField.label}
+                  onChange={(e) => setNewCustomField({...newCustomField, label: e.target.value})}
+                />
+                <Input
+                  placeholder="Field value"
+                  value={newCustomField.value}
+                  onChange={(e) => setNewCustomField({...newCustomField, value: e.target.value})}
+                />
+                <Select
+                  value={newCustomField.position}
+                  onValueChange={(value) => setNewCustomField({...newCustomField, position: value as 'front' | 'back'})}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="front">Front</SelectItem>
+                    <SelectItem value="back">Back</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button onClick={addCustomField} size="sm">
+                  <Plus className="mr-1 h-3 w-3" />
+                  Add
+                </Button>
+              </div>
             </div>
             
-            <div>
-              <label className="text-xs text-gray-500">Name Label</label>
-              <Input 
-                value={cardLabels.name}
-                onChange={(e) => setCardLabels({...cardLabels, name: e.target.value})}
-                className="mb-2"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-gray-500">Nationality Label</label>
-              <Input 
-                value={cardLabels.nationality}
-                onChange={(e) => setCardLabels({...cardLabels, nationality: e.target.value})}
-                className="mb-2"
-              />
-            </div>
-            
-            <div>
-              <label className="text-xs text-gray-500">DOB Label</label>
-              <Input 
-                value={cardLabels.dateOfBirth}
-                onChange={(e) => setCardLabels({...cardLabels, dateOfBirth: e.target.value})}
-                className="mb-2"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-gray-500">ID Number Label</label>
-              <Input 
-                value={cardLabels.idNo}
-                onChange={(e) => setCardLabels({...cardLabels, idNo: e.target.value})}
-                className="mb-2"
-              />
-            </div>
-            
-            <div>
-              <label className="text-xs text-gray-500">Passport Label</label>
-              <Input 
-                value={cardLabels.passportNo}
-                onChange={(e) => setCardLabels({...cardLabels, passportNo: e.target.value})}
-                className="mb-2"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-gray-500">Expiry Date Label</label>
-              <Input 
-                value={cardLabels.expiryDate}
-                onChange={(e) => setCardLabels({...cardLabels, expiryDate: e.target.value})}
-                className="mb-2"
-              />
-            </div>
-            
-            <div>
-              <label className="text-xs text-gray-500">Occupation Label</label>
-              <Input 
-                value={cardLabels.occupation}
-                onChange={(e) => setCardLabels({...cardLabels, occupation: e.target.value})}
-                className="mb-2"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-gray-500">Issue Date Label</label>
-              <Input 
-                value={cardLabels.issueDate}
-                onChange={(e) => setCardLabels({...cardLabels, issueDate: e.target.value})}
-                className="mb-2"
-              />
-            </div>
-            
-            <div className="col-span-1 sm:col-span-2">
-              <label className="text-xs text-gray-500">Footer Text</label>
-              <Input 
-                value={footer}
-                onChange={(e) => setFooter(e.target.value)}
-                className="mb-2"
-              />
-            </div>
-            
-            <div className="col-span-1 sm:col-span-2">
-              <Button onClick={saveSettings} className="w-full">
-                <Save className="mr-2 h-4 w-4" />
-                Save Customizations
-              </Button>
-            </div>
+            {/* Existing custom fields */}
+            {customFields.length > 0 && (
+              <div className="space-y-2">
+                <h5 className="text-sm font-medium">Existing Custom Fields</h5>
+                {customFields.map((field) => (
+                  <div key={field.id} className="flex items-center gap-2 p-2 border rounded">
+                    <div className="flex-1">
+                      <span className="font-medium text-sm">{field.label}:</span> {field.value}
+                      <span className="text-xs text-gray-500 ml-2">({field.position})</span>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => removeCustomField(field.id)}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          
+          <div className="col-span-1 sm:col-span-2">
+            <Button onClick={saveSettings} className="w-full">
+              <Save className="mr-2 h-4 w-4" />
+              Save All Customizations
+            </Button>
           </div>
         </div>
       )}
@@ -742,6 +947,14 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
                   <span className="font-semibold text-white">{cardLabels.expiryDate}</span>
                   <span className="col-span-2">{formatDate(getExpiryDate())}</span>
                 </div>
+
+                {/* Display front custom fields */}
+                {frontCustomFields.map((field) => (
+                  <div key={field.id} className="grid grid-cols-3 gap-1">
+                    <span className="font-semibold text-white">{field.label}:</span>
+                    <span className="col-span-2">{field.value}</span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -778,7 +991,9 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
           <div className="relative z-10 flex flex-col h-full">
             <div className="text-center mb-4">
               <h3 className="text-sm font-bold text-white">{cardLabels.title}</h3>
-              <p className="text-xs">This card remains the property of the Ghana Immigration Service</p>
+              {footerSettings.showBackFooter && (
+                <p className="text-xs">{footerSettings.backFooter}</p>
+              )}
             </div>
             
             <div className="space-y-1 text-xs">
@@ -796,11 +1011,21 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
                 <span className="font-semibold text-white">{cardLabels.issueDate}</span>
                 <span className="col-span-2">{formatDate(new Date().toISOString().split('T')[0])}</span>
               </div>
+
+              {/* Display back custom fields */}
+              {backCustomFields.map((field) => (
+                <div key={field.id} className="grid grid-cols-3 gap-1">
+                  <span className="font-semibold text-white">{field.label}:</span>
+                  <span className="col-span-2">{field.value}</span>
+                </div>
+              ))}
             </div>
             
-            <div className="mt-4 border-t border-white/20 pt-2">
-              <p className="text-xs text-center">{footer}</p>
-            </div>
+            {footerSettings.showMainFooter && (
+              <div className="mt-4 border-t border-white/20 pt-2">
+                <p className="text-xs text-center">{footerSettings.mainFooter}</p>
+              </div>
+            )}
             
             <div className="mt-auto flex justify-between items-end">
               <div className="w-1/3 border-t border-white/40 pt-1 text-center">
