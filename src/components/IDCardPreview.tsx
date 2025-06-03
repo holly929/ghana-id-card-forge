@@ -23,7 +23,7 @@ interface IDCardPreviewProps {
     passportNumber?: string;
     dateOfBirth: string;
     expiryDate?: string; // Make expiry date optional but available
-    visaType: string;
+    visaType?: string; // Make visaType optional to handle missing values
     occupation?: string;
     photo?: string | null;
   };
@@ -149,6 +149,11 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
     const date = new Date();
     date.setFullYear(date.getFullYear() + 2);
     return date.toISOString().split('T')[0];
+  };
+  
+  // Get visa type with fallback
+  const getVisaType = () => {
+    return applicant.visaType || 'None';
   };
   
   const formatDate = (dateString: string) => {
@@ -363,7 +368,7 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
                     </div>
                     <div style="margin-top: 5px; text-align: center;">
                       <div style="background: #fcd116; color: black; padding: 3px 8px; border-radius: 2px; font-weight: bold; font-size: 10px;">
-                        ${applicant.visaType.toUpperCase()}
+                        ${getVisaType().toUpperCase()}
                       </div>
                     </div>
                   </div>
@@ -691,7 +696,7 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
               <div className="mt-2 flex flex-col items-center">
                 <div className="w-20 h-8 bg-ghana-yellow flex items-center justify-center rounded-sm">
                   <div className="text-xs font-bold text-ghana-black">
-                    {applicant.visaType.toUpperCase()}
+                    {getVisaType().toUpperCase()}
                   </div>
                 </div>
               </div>
