@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -52,13 +53,6 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
-import BulkPrintSelector from '@/components/BulkPrintSelector';
-import BulkPrintModal from '@/components/BulkPrintModal';
-
-// Mock data remains unchanged...
-const mockApplicants = [
-  // Your mock data here
-];
 
 const IDCards: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -66,30 +60,45 @@ const IDCards: React.FC = () => {
   const isMobile = useIsMobile();
   const [applicants, setApplicants] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showBulkPrintModal, setShowBulkPrintModal] = useState(false);
-  const [showBulkSelector, setShowBulkSelector] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [applicantToDelete, setApplicantToDelete] = useState<any>(null);
   const navigate = useNavigate();
 
-  // Load applicants from localStorage (or your data source)
+  // Load applicants from localStorage
   useEffect(() => {
     const storedApplicants = localStorage.getItem('applicants');
     if (storedApplicants) {
-      setApplicants(JSON.parse(storedApplicants));
+      try {
+        const parsedApplicants = JSON.parse(storedApplicants);
+        setApplicants(parsedApplicants);
+      } catch (error) {
+        console.error('Error parsing applicants:', error);
+        toast.error('Failed to load applicants data');
+      }
     }
     setLoading(false);
   }, []);
 
   const filteredApplicants = applicants.filter(applicant => 
-    applicant.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    applicant.nationality.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (applicant.passportNumber && applicant.passportNumber.toLowerCase().includes(searchTerm.toLowerCase()))
+    applicant.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    applicant.nationality?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (applicant.phoneNumber && applicant.phoneNumber.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (applicant.id && applicant.id.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const approvedApplicants = filteredApplicants.filter(applicant => 
     applicant.status === 'approved'
   );
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return 'Not provided';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+  };
 
   const handlePrint = (applicant: any) => {
     const logo = localStorage.getItem('systemLogo');
@@ -195,7 +204,7 @@ const IDCards: React.FC = () => {
                   </div>
                   <div style="margin-top: 5px; text-align: center;">
                     <div style="background: #fcd116; color: black; padding: 3px 8px; border-radius: 2px; font-weight: bold; font-size: 10px;">
-                      ${applicant.visaType.toUpperCase()}
+                      ${(applicant.visaType || 'NONE').toUpperCase()}
                     </div>
                   </div>
                 </div>
@@ -205,12 +214,12 @@ const IDCards: React.FC = () => {
                     <div style="font-size: 10px;">NON-CITIZEN IDENTITY CARD</div>
                   </div>
                   <div style="font-size: 10px;">
-                    <div><strong>Name:</strong> ${applicant.fullName}</div>
-                    <div><strong>Nationality:</strong> ${applicant.nationality}</div>
-                    <!-- Removed Expiry Date -->
-                    <!-- Replaced Passport Number with Phone Number -->
-                    <div><strong>Phone Number:</strong> ${applicant.phoneNumber}</div>
-                    <div><strong>ID No:</strong> ${applicant.id}</div>
+                    <div><strong>Name:</strong> ${applicant.fullName || 'Not provided'}</div>
+                    <div><strong>Nationality:</strong> ${applicant.nationality || 'Not provided'}</div>
+                    <div><strong>Date of Birth:</strong> ${formatDate(applicant.dateOfBirth)}</div>
+                    <div><strong>Phone Number:</strong> ${applicant.phoneNumber || 'Not provided'}</div>
+                    <div><strong>ID No:</strong> ${applicant.id || 'Not provided'}</div>
+                    <div><strong>Expiry Date:</strong> ${formatDate(applicant.expiryDate)}</div>
                   </div>
                 </div>
               </div>
@@ -230,14 +239,243 @@ const IDCards: React.FC = () => {
         </body>
       </html>
     `);
+    
+    printWindow.document.close();
     toast.success(`Printing ID card for ${applicant.fullName} in ${printFormat} format`);
   };
 
-  // JSX rendering (your existing components and UI)
+  const handleDelete = (applicant: any) => {
+    setApplicantToDelete(applicant);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (applicantToDelete) {
+      const updatedApplicants = applicants.filter(app => app.id !== applicantToDelete.id);
+      setApplicants(updatedApplicants);
+      localStorage.setItem('applicants', JSON.stringify(updatedApplicants));
+      
+      // Also remove the photo
+      localStorage.removeItem(`applicantPhoto_${applicantToDelete.id}`);
+      
+      toast.success(`Deleted ${applicantToDelete.fullName}'s record`);
+      setDeleteDialogOpen(false);
+      setApplicantToDelete(null);
+    }
+  };
+
+  const handleBulkPrint = () => {
+    if (approvedApplicants.length === 0) {
+      toast.error("No approved applicants to print");
+      return;
+    }
+    
+    // Store selected applicants for bulk printing
+    localStorage.setItem('selectedApplicantsForPrint', JSON.stringify(approvedApplicants));
+    navigate('/id-cards/bulk-print');
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-center">
+          <h2 className="text-xl font-medium mb-2">Loading ID cards...</h2>
+          <p>Please wait</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div>
-      {/* Your existing UI code, search, buttons, table, etc. */}
-      {/* For brevity, not included here, but ensure your component renders the list of applicants and triggers handlePrint */}
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-800">ID Cards</h1>
+          <p className="text-gray-600">
+            Manage and print ID cards for approved applicants
+          </p>
+        </div>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileImage className="h-5 w-5" />
+            ID Card Management
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row gap-4 mb-6">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Search by name, nationality, phone, or ID..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            
+            <div className="flex gap-2">
+              <Select
+                value={printFormat}
+                onValueChange={setPrintFormat}
+              >
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue placeholder="Print Size" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="small">Small</SelectItem>
+                  <SelectItem value="standard">Standard</SelectItem>
+                  <SelectItem value="large">Large</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <Button onClick={handleBulkPrint} className="flex items-center gap-2">
+                <Files className="h-4 w-4" />
+                Print All ({approvedApplicants.length})
+              </Button>
+            </div>
+          </div>
+
+          {isMobile ? (
+            <div className="space-y-4">
+              {approvedApplicants.map((applicant) => (
+                <Card key={applicant.id} className="p-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-medium">{applicant.fullName}</h3>
+                      <Badge variant="secondary">{applicant.status}</Badge>
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      <p><strong>ID:</strong> {applicant.id}</p>
+                      <p><strong>Nationality:</strong> {applicant.nationality}</p>
+                      <p><strong>Phone:</strong> {applicant.phoneNumber || 'Not provided'}</p>
+                      <p><strong>Expiry:</strong> {formatDate(applicant.expiryDate)}</p>
+                    </div>
+                    <div className="flex gap-2 pt-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => navigate(`/id-cards/${applicant.id}/preview`)}
+                        className="flex items-center gap-1"
+                      >
+                        <Eye className="h-3 w-3" />
+                        Preview
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => handlePrint(applicant)}
+                        className="flex items-center gap-1"
+                      >
+                        <Printer className="h-3 w-3" />
+                        Print
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleDelete(applicant)}
+                        className="flex items-center gap-1"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>ID Number</TableHead>
+                  <TableHead>Nationality</TableHead>
+                  <TableHead>Phone</TableHead>
+                  <TableHead>Expiry Date</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {approvedApplicants.map((applicant) => (
+                  <TableRow key={applicant.id}>
+                    <TableCell className="font-medium">{applicant.fullName}</TableCell>
+                    <TableCell>{applicant.id}</TableCell>
+                    <TableCell>{applicant.nationality}</TableCell>
+                    <TableCell>{applicant.phoneNumber || 'Not provided'}</TableCell>
+                    <TableCell>{formatDate(applicant.expiryDate)}</TableCell>
+                    <TableCell>
+                      <Badge variant="secondary">{applicant.status}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => navigate(`/id-cards/${applicant.id}/preview`)}
+                          className="flex items-center gap-1"
+                        >
+                          <Eye className="h-3 w-3" />
+                          Preview
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => handlePrint(applicant)}
+                          className="flex items-center gap-1"
+                        >
+                          <Printer className="h-3 w-3" />
+                          Print
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleDelete(applicant)}
+                          className="flex items-center gap-1"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                          Delete
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+
+          {approvedApplicants.length === 0 && (
+            <div className="text-center py-8">
+              <p className="text-gray-500">No approved applicants found.</p>
+              {searchTerm && (
+                <Button
+                  variant="outline"
+                  onClick={() => setSearchTerm('')}
+                  className="mt-2"
+                >
+                  Clear search
+                </Button>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Applicant</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete {applicantToDelete?.fullName}? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

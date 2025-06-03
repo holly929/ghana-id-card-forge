@@ -143,7 +143,7 @@ const IDCardPrintPage: React.FC = () => {
   
   // Format date helper function
   const formatDate = (dateString: string) => {
-    if (!dateString) return '';
+    if (!dateString) return 'Not provided';
     const date = new Date(dateString);
     return date.toLocaleDateString('en-GB', {
       day: '2-digit',
@@ -153,7 +153,10 @@ const IDCardPrintPage: React.FC = () => {
   };
   
   // Calculate expiry date (2 years from now)
-  const getExpiryDate = () => {
+  const getExpiryDate = (applicant: any) => {
+    if (applicant.expiryDate) {
+      return applicant.expiryDate;
+    }
     const date = new Date();
     date.setFullYear(date.getFullYear() + 2);
     return date.toISOString().split('T')[0];
@@ -338,7 +341,7 @@ const IDCardPrintPage: React.FC = () => {
                         </div>
                         <div style="margin-top: 3px;">
                           <div class="visa-type">
-                            ${applicant.visaType.toUpperCase()}
+                            ${(applicant.visaType || 'NONE').toUpperCase()}
                           </div>
                         </div>
                       </div>
@@ -348,12 +351,12 @@ const IDCardPrintPage: React.FC = () => {
                           <div>NON-CITIZEN IDENTITY CARD</div>
                         </div>
                         <div class="card-info">
-                          <div><strong>Name:</strong> ${applicant.fullName}</div>
-                          <div><strong>Nationality:</strong> ${applicant.nationality}</div>
+                          <div><strong>Name:</strong> ${applicant.fullName || 'Not provided'}</div>
+                          <div><strong>Nationality:</strong> ${applicant.nationality || 'Not provided'}</div>
                           <div><strong>Date of Birth:</strong> ${formatDate(applicant.dateOfBirth)}</div>
-                          <div><strong>ID No:</strong> ${applicant.id}</div>
-                          <div><strong>Area:</strong> ${applicant.area || 'Not provided'}</div>
-                         
+                          <div><strong>Phone:</strong> ${applicant.phoneNumber || 'Not provided'}</div>
+                          <div><strong>ID No:</strong> ${applicant.id || 'Not provided'}</div>
+                          <div><strong>Expiry Date:</strong> ${formatDate(getExpiryDate(applicant))}</div>
                         </div>
                       </div>
                     </div>
@@ -372,6 +375,7 @@ const IDCardPrintPage: React.FC = () => {
                     </div>
                     <div style="font-size: 9px; margin-bottom: 8px;">
                       <div><strong>Occupation:</strong> ${applicant.occupation || 'Not specified'}</div>
+                      <div><strong>Area:</strong> ${applicant.area || 'Not provided'}</div>
                       <div><strong>Date of Issue:</strong> ${formatDate(new Date().toISOString().split('T')[0])}</div>
                     </div>
                     <div style="border-top: 1px solid rgba(255,255,255,0.3); padding-top: 4px; margin-top: 8px;">
@@ -575,6 +579,7 @@ const IDCardPrintPage: React.FC = () => {
               <div className="flex-1 truncate">
                 <div className="font-medium text-sm">{applicant.fullName}</div>
                 <div className="text-xs text-gray-500">{applicant.nationality} • {applicant.area || 'No area'}</div>
+                <div className="text-xs text-gray-400">Expires: {formatDate(getExpiryDate(applicant))}</div>
               </div>
             </div>
           ))}

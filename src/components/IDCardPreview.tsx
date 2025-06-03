@@ -22,10 +22,12 @@ interface IDCardPreviewProps {
     nationality: string;
     passportNumber?: string;
     dateOfBirth: string;
-    expiryDate?: string; // Make expiry date optional but available
-    visaType?: string; // Make visaType optional to handle missing values
+    expiryDate?: string;
+    visaType?: string;
     occupation?: string;
     photo?: string | null;
+    phoneNumber?: string;
+    area?: string;
   };
 }
 
@@ -381,8 +383,8 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
                       <div><strong>${cardLabels.name}</strong> ${applicant.fullName}</div>
                       <div><strong>${cardLabels.nationality}</strong> ${applicant.nationality}</div>
                       <div><strong>${cardLabels.dateOfBirth}</strong> ${formatDate(applicant.dateOfBirth)}</div>
+                      <div><strong>Phone:</strong> ${applicant.phoneNumber || 'Not provided'}</div>
                       <div><strong>${cardLabels.idNo}</strong> ${applicant.id}</div>
-                      <div><strong>${cardLabels.passportNo}</strong> ${applicant.passportNumber || 'Not provided'}</div>
                       <div><strong>${cardLabels.expiryDate}</strong> ${formatDate(getExpiryDate())}</div>
                     </div>
                   </div>
@@ -402,6 +404,7 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
                 </div>
                 <div style="font-size: 10px; margin-bottom: 10px;">
                   <div><strong>${cardLabels.occupation}</strong> ${applicant.occupation || 'Not specified'}</div>
+                  <div><strong>Area:</strong> ${applicant.area || 'Not provided'}</div>
                   <div><strong>${cardLabels.issueDate}</strong> ${formatDate(new Date().toISOString().split('T')[0])}</div>
                 </div>
                 <div style="border-top: 1px solid rgba(255,255,255,0.3); padding-top: 5px; margin-top: 10px;">
@@ -726,13 +729,13 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
                 </div>
                 
                 <div className="grid grid-cols-3 gap-1">
-                  <span className="font-semibold text-white">{cardLabels.idNo}</span>
-                  <span className="col-span-2">{applicant.id}</span>
+                  <span className="font-semibold text-white">Phone:</span>
+                  <span className="col-span-2">{applicant.phoneNumber || 'Not provided'}</span>
                 </div>
                 
                 <div className="grid grid-cols-3 gap-1">
-                  <span className="font-semibold text-white">{cardLabels.passportNo}</span>
-                  <span className="col-span-2">{applicant.passportNumber || 'Not provided'}</span>
+                  <span className="font-semibold text-white">{cardLabels.idNo}</span>
+                  <span className="col-span-2">{applicant.id}</span>
                 </div>
                 
                 <div className="grid grid-cols-3 gap-1">
@@ -782,6 +785,11 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
               <div className="grid grid-cols-3 gap-1">
                 <span className="font-semibold text-white">{cardLabels.occupation}</span>
                 <span className="col-span-2">{applicant.occupation || 'Not specified'}</span>
+              </div>
+              
+              <div className="grid grid-cols-3 gap-1">
+                <span className="font-semibold text-white">Area:</span>
+                <span className="col-span-2">{applicant.area || 'Not provided'}</span>
               </div>
               
               <div className="grid grid-cols-3 gap-1">
