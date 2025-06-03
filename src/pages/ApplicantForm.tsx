@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,13 +11,15 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Camera, Upload } from 'lucide-react';
 import { toast } from "sonner";
+import { handleImageUpload, optimizeImage } from '@/lib/utils';
 
 const ApplicantForm: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditing = Boolean(id);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -30,6 +31,7 @@ const ApplicantForm: React.FC = () => {
     occupation: '',
     phoneNumber: '',
     status: 'pending' as 'pending' | 'approved' | 'rejected',
+    photo: null as string | null,
   });
 
   const [loading, setLoading] = useState(false);
@@ -59,6 +61,9 @@ const ApplicantForm: React.FC = () => {
           const applicant = applicants.find((app: any) => app.id === id);
           
           if (applicant) {
+            // Load saved photo from localStorage if available
+            const savedPhoto = localStorage.getItem(`applicantPhoto_${id}`);
+            
             setFormData({
               fullName: applicant.fullName || '',
               nationality: applicant.nationality || '',
@@ -69,6 +74,7 @@ const ApplicantForm: React.FC = () => {
               occupation: applicant.occupation || '',
               phoneNumber: applicant.phoneNumber || '',
               status: applicant.status || 'pending',
+              photo: savedPhoto || applicant.photo || null,
             });
           } else {
             toast.error('Applicant not found');
@@ -90,6 +96,63 @@ const ApplicantForm: React.FC = () => {
     }));
   };
 
+  const handlePhotoUpload = () => {
+    if (photoInputRef.current) {
+      photoInputRef.current.click();
+    }
+  };
+
+  const handlePhotoFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      toast.error("No file selected");
+      return;
+    }
+    
+    try {
+      handleImageUpload(
+        file,
+        async (result) => {
+          try {
+            const optimized = await optimizeImage(result);
+            setFormData(prev => ({
+              ...prev,
+              photo: optimized
+            }));
+            toast.success("Photo uploaded successfully");
+          } catch (error) {
+            console.error("Error optimizing image:", error);
+            setFormData(prev => ({
+              ...prev,
+              photo: result
+            }));
+            toast.success("Photo uploaded successfully");
+          }
+        },
+        { maxSizeMB: 1 }
+      );
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("Failed to upload photo");
+      }
+    }
+    
+    if (photoInputRef.current) {
+      photoInputRef.current.value = '';
+    }
+  };
+
+  const removePhoto = () => {
+    setFormData(prev => ({
+      ...prev,
+      photo: null
+    }));
+    toast.success("Photo removed");
+  };
+
+  // Generate a unique applicant ID
   const generateApplicantId = () => {
     const timestamp = Date.now();
     const random = Math.floor(Math.random() * 1000);
@@ -140,6 +203,11 @@ const ApplicantForm: React.FC = () => {
           return defaultDate.toISOString().split('T')[0];
         })(),
       };
+
+      // Save photo separately in localStorage if it exists
+      if (formData.photo && applicantData.id) {
+        localStorage.setItem(`applicantPhoto_${applicantData.id}`, formData.photo);
+      }
 
       let updatedApplicants;
       
@@ -202,6 +270,63 @@ const ApplicantForm: React.FC = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Photo Upload Section */}
+            <div className="space-y-4">
+              <Label>Applicant Photo</Label>
+              <div className="flex items-center gap-4">
+                {formData.photo ? (
+                  <div className="relative">
+                    <div className="w-32 h-40 border-2 border-gray-300 rounded-lg overflow-hidden">
+                      <img 
+                        src={formData.photo} 
+                        alt="Applicant" 
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="absolute -top-2 -right-2"
+                      onClick={removePhoto}
+                    >
+                      ×
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="w-32 h-40 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
+                    <div className="text-center">
+                      <Camera className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                      <p className="text-sm text-gray-500">No photo</p>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="flex flex-col gap-2">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={handlePhotoUpload}
+                    className="flex items-center gap-2"
+                  >
+                    <Upload className="h-4 w-4" />
+                    Upload Photo
+                  </Button>
+                  <p className="text-xs text-gray-500">
+                    Max size: 1MB. Formats: JPG, PNG
+                  </p>
+                </div>
+                
+                <Input 
+                  type="file" 
+                  ref={photoInputRef}
+                  accept="image/*" 
+                  className="hidden" 
+                  onChange={handlePhotoFileSelected}
+                />
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="fullName">Full Name *</Label>
