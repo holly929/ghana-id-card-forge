@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -26,6 +25,7 @@ import IDCards from "./pages/IDCards";
 import Users from "./pages/Users";
 import Settings from "./pages/Settings";
 import IDCardPrintPage from './pages/IDCardPrintPage';
+import BulkPrintPage from './pages/BulkPrintPage';
 
 const queryClient = new QueryClient();
 
@@ -95,6 +95,7 @@ const App = () => (
             <Route path="/id-cards/:id/preview" element={<ProtectedRoute><IDCardPreviewPage /></ProtectedRoute>} />
             <Route path="/id-cards/:id/print" element={<ProtectedRoute><IDCardPrintPage /></ProtectedRoute>} />
             <Route path="/id-cards/print" element={<ProtectedRoute><IDCardPrintPage /></ProtectedRoute>} />
+            <Route path="/id-cards/bulk-print" element={<ProtectedRoute><BulkPrintPage /></ProtectedRoute>} />
             
             {/* User Management Route */}
             <Route path="/users" element={
