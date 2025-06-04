@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -53,6 +52,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
+import BulkPrintModal from '@/components/BulkPrintModal';
 
 const IDCards: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -62,6 +62,7 @@ const IDCards: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [applicantToDelete, setApplicantToDelete] = useState<any>(null);
+  const [bulkPrintModalOpen, setBulkPrintModalOpen] = useState(false);
   const navigate = useNavigate();
 
   // Load applicants from localStorage
@@ -269,10 +270,7 @@ const IDCards: React.FC = () => {
       toast.error("No approved applicants to print");
       return;
     }
-    
-    // Store selected applicants for bulk printing
-    localStorage.setItem('selectedApplicantsForPrint', JSON.stringify(approvedApplicants));
-    navigate('/id-cards/bulk-print');
+    setBulkPrintModalOpen(true);
   };
 
   if (loading) {
@@ -333,7 +331,7 @@ const IDCards: React.FC = () => {
               
               <Button onClick={handleBulkPrint} className="flex items-center gap-2">
                 <Files className="h-4 w-4" />
-                Print All ({approvedApplicants.length})
+                Bulk Print
               </Button>
             </div>
           </div>
@@ -476,6 +474,12 @@ const IDCards: React.FC = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <BulkPrintModal 
+        open={bulkPrintModalOpen}
+        onClose={() => setBulkPrintModalOpen(false)}
+        applicants={approvedApplicants}
+      />
     </div>
   );
 };
