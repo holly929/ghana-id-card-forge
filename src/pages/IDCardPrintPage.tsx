@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -221,16 +220,18 @@ const IDCardPrintPage: React.FC = () => {
     return date.toISOString().split('T')[0];
   };
   
-  // Handle printing all cards - FIXED with new customization settings
+  // Handle printing all cards - FIXED with improved error handling
   const handlePrintAllCards = () => {
     if (selectedApplicants.length === 0) {
       toast.error("No approved applicants to print");
       return;
     }
     
+    console.log('Starting print process with applicants:', selectedApplicants.length);
+    
     try {
-      // Create a new window for printing
-      const printWindow = window.open('', '_blank', 'width=800,height=600');
+      // Create a new window for printing with better dimensions
+      const printWindow = window.open('', '_blank', 'width=1200,height=800,scrollbars=yes');
       if (!printWindow) {
         toast.error("Pop-up blocked. Please allow pop-ups to print.");
         return;
@@ -255,241 +256,379 @@ const IDCardPrintPage: React.FC = () => {
       const frontCustomFields = customFields.filter(field => field.position === 'front');
       const backCustomFields = customFields.filter(field => field.position === 'back');
       
-      // Add CSS and content to the new window
+      // Simplified and more reliable HTML content
       const htmlContent = `
+        <!DOCTYPE html>
         <html>
           <head>
             <title>ID Cards - Bulk Print</title>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
             <style>
+              * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+              }
+              
+              body {
+                font-family: Arial, sans-serif;
+                background: white;
+                padding: 10px;
+              }
+              
               @media print {
                 body {
                   margin: 0;
                   padding: 10px;
-                  font-family: Arial, sans-serif;
                 }
-                .page-container {
-                  display: flex;
-                  flex-wrap: wrap;
-                  gap: 10px;
-                  justify-content: center;
+                
+                .no-print {
+                  display: none !important;
                 }
-                .card-container {
-                  display: flex;
-                  flex-direction: ${singleSidedPrint ? 'row' : 'column'};
-                  width: ${singleSidedPrint ? '180mm' : '85.6mm'};
-                  margin-bottom: 5mm;
-                  page-break-inside: avoid;
-                  gap: 5px;
-                }
-                .card-front, .card-back {
-                  width: 85.6mm;
-                  height: 53.98mm;
-                  background: linear-gradient(to right, #006b3f, #006b3f99);
-                  color: white;
-                  padding: 10px;
-                  border-radius: 8px;
-                  margin-bottom: ${singleSidedPrint ? '0' : '5px'};
-                  position: relative;
-                  overflow: hidden;
-                  box-sizing: border-box;
-                }
-                .logo-container {
-                  text-align: center;
-                  margin-bottom: 5px;
-                }
-                .logo-image {
-                  max-height: 30px;
-                  max-width: 80px;
-                }
-                .photo-container {
-                  width: 70px;
-                  height: 85px;
-                  border: 2px solid white;
-                  overflow: hidden;
-                  margin: 5px auto;
-                }
-                .photo-image {
-                  width: 100%;
-                  height: 100%;
-                  object-fit: cover;
-                }
-                .color-band {
-                  position: absolute;
-                  bottom: 0;
-                  left: 0;
-                  right: 0;
-                  height: 12px;
-                  display: flex;
-                }
-                .color-band div {
-                  flex: 1;
-                }
-                .red-band {
-                  background-color: #ce1126;
-                }
-                .yellow-band {
-                  background-color: #fcd116;
-                }
-                .green-band {
-                  background-color: #006b3f;
-                }
+                
                 @page {
                   size: auto;
                   margin: 10mm;
                 }
-                .card-content {
-                  display: flex;
-                  height: calc(100% - 12px);
-                }
-                .left-side {
-                  width: 33%;
-                  display: flex;
-                  flex-direction: column;
-                  align-items: center;
-                  justify-content: space-between;
-                }
-                .right-side {
-                  width: 67%;
-                  padding-left: 5px;
-                  font-size: 9px;
-                }
-                .card-title {
-                  text-align: center;
-                  margin-bottom: 5px;
-                }
-                .card-title div:first-child {
-                  font-weight: bold;
-                  font-size: 10px;
-                }
-                .card-title div:last-child {
-                  font-size: 8px;
-                }
-                .visa-type {
-                  background: #fcd116;
-                  color: black;
-                  padding: 2px 6px;
-                  border-radius: 2px;
-                  font-weight: bold;
-                  font-size: 8px;
-                  text-align: center;
-                }
-                .card-info div {
-                  margin-bottom: 2px;
-                  line-height: 1.2;
-                }
-                .card-info strong {
-                  font-weight: bold;
-                }
-                .scale-container {
-                  transform: scale(${scale});
-                  transform-origin: top left;
-                  margin-bottom: ${scale > 1 ? '20mm' : '0'};
-                  margin-right: ${scale > 1 ? '20mm' : '0'};
-                }
+              }
+              
+              .page-container {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                justify-content: center;
+                max-width: 100%;
+              }
+              
+              .card-container {
+                display: flex;
+                flex-direction: ${singleSidedPrint ? 'row' : 'column'};
+                width: ${singleSidedPrint ? 'auto' : '90mm'};
+                margin-bottom: 10mm;
+                page-break-inside: avoid;
+                gap: 5px;
+                transform: scale(${scale});
+                transform-origin: top left;
+              }
+              
+              .card-front, .card-back {
+                width: 85.6mm;
+                height: 53.98mm;
+                background: linear-gradient(135deg, #006b3f 0%, #004d2e 100%);
+                color: white;
+                padding: 8px;
+                border-radius: 6px;
+                position: relative;
+                overflow: hidden;
+                box-sizing: border-box;
+                border: 1px solid #003d26;
+              }
+              
+              .card-content {
+                display: flex;
+                height: calc(100% - 12px);
+                position: relative;
+                z-index: 2;
+              }
+              
+              .left-side {
+                width: 35%;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: flex-start;
+                padding-top: 5px;
+              }
+              
+              .right-side {
+                width: 65%;
+                padding-left: 8px;
+                font-size: 8px;
+                display: flex;
+                flex-direction: column;
+              }
+              
+              .logo-container {
+                text-align: center;
+                margin-bottom: 8px;
+                height: 25px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              }
+              
+              .logo-image {
+                max-height: 25px;
+                max-width: 60px;
+                object-fit: contain;
+              }
+              
+              .photo-container {
+                width: 55px;
+                height: 70px;
+                border: 2px solid white;
+                overflow: hidden;
+                margin: 5px 0;
+                background: rgba(255,255,255,0.1);
+              }
+              
+              .photo-image {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+              }
+              
+              .visa-type {
+                background: #fcd116;
+                color: #000;
+                padding: 2px 4px;
+                border-radius: 2px;
+                font-weight: bold;
+                font-size: 7px;
+                text-align: center;
+                margin-top: 5px;
+                min-width: 50px;
+              }
+              
+              .card-title {
+                text-align: center;
+                margin-bottom: 8px;
+              }
+              
+              .card-title .main-title {
+                font-weight: bold;
+                font-size: 9px;
+                line-height: 1.1;
+              }
+              
+              .card-title .sub-title {
+                font-size: 7px;
+                line-height: 1.1;
+                margin-top: 2px;
+              }
+              
+              .card-info {
+                flex: 1;
+              }
+              
+              .card-info .info-row {
+                margin-bottom: 2px;
+                line-height: 1.2;
+                display: flex;
+                font-size: 7px;
+              }
+              
+              .card-info .label {
+                font-weight: bold;
+                min-width: 35px;
+                margin-right: 2px;
+              }
+              
+              .card-info .value {
+                flex: 1;
+                word-break: break-word;
+              }
+              
+              .color-band {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 12px;
+                display: flex;
+                z-index: 1;
+              }
+              
+              .red-band { background-color: #ce1126; flex: 1; }
+              .yellow-band { background-color: #fcd116; flex: 1; }
+              .green-band { background-color: #006b3f; flex: 1; }
+              
+              .back-content {
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                height: 100%;
+              }
+              
+              .back-footer {
+                border-top: 1px solid rgba(255,255,255,0.3);
+                padding-top: 4px;
+                margin-top: auto;
+                text-align: center;
+                font-size: 6px;
+              }
+              
+              .signature-area {
+                display: flex;
+                justify-content: space-between;
+                margin-top: auto;
+                position: absolute;
+                bottom: 20px;
+                left: 8px;
+                right: 8px;
+              }
+              
+              .signature-box {
+                width: 60px;
+                border-top: 1px solid rgba(255,255,255,0.5);
+                text-align: center;
+                font-size: 6px;
+                padding-top: 2px;
               }
             </style>
           </head>
           <body>
+            <div class="no-print" style="text-align: center; margin-bottom: 20px; padding: 10px; background: #f0f0f0;">
+              <h2>ID Cards Print Preview - ${selectedApplicants.length} cards</h2>
+              <p>Click Print when ready or close this window to cancel</p>
+              <button onclick="window.print()" style="margin: 10px; padding: 10px 20px; font-size: 16px;">Print Cards</button>
+              <button onclick="window.close()" style="margin: 10px; padding: 10px 20px; font-size: 16px;">Cancel</button>
+            </div>
+            
             <div class="page-container">
               ${selectedApplicants.map(applicant => `
-                <div class="scale-container">
-                  <div class="card-container">
-                    <!-- Front of ID Card -->
-                    <div class="card-front">
-                      <div class="card-content">
-                        <div class="left-side">
-                          <div class="logo-container">
-                            ${logo ? `<img src="${logo}" alt="Logo" class="logo-image" />` : ''}
-                          </div>
-                          <div class="photo-container">
-                            ${applicant.photo ? `<img src="${applicant.photo}" alt="Applicant" class="photo-image" />` : ''}
-                          </div>
-                          <div style="margin-top: 3px;">
-                            <div class="visa-type">
-                              ${(applicant.visaType || 'NONE').toUpperCase()}
-                            </div>
-                          </div>
+                <div class="card-container">
+                  <!-- Front of ID Card -->
+                  <div class="card-front">
+                    <div class="card-content">
+                      <div class="left-side">
+                        <div class="logo-container">
+                          ${logo ? `<img src="${logo}" alt="Logo" class="logo-image" />` : '<div style="font-size: 8px; color: rgba(255,255,255,0.7);">LOGO</div>'}
                         </div>
-                        <div class="right-side">
-                          <div class="card-title">
-                            <div>${cardLabels.title}</div>
-                            <div>${cardLabels.subtitle}</div>
-                          </div>
-                          <div class="card-info">
-                            <div><strong>${cardLabels.name}</strong> ${applicant.fullName || 'Not provided'}</div>
-                            <div><strong>${cardLabels.nationality}</strong> ${applicant.nationality || 'Not provided'}</div>
-                            <div><strong>${cardLabels.dateOfBirth}</strong> ${formatDate(applicant.dateOfBirth)}</div>
-                            <div><strong>Phone:</strong> ${applicant.phoneNumber || 'Not provided'}</div>
-                            <div><strong>${cardLabels.idNo}</strong> ${applicant.id || 'Not provided'}</div>
-                            <div><strong>${cardLabels.expiryDate}</strong> ${formatDate(getExpiryDate(applicant))}</div>
-                            ${frontCustomFields.map(field => `<div><strong>${field.label}:</strong> ${field.value}</div>`).join('')}
-                          </div>
+                        <div class="photo-container">
+                          ${applicant.photo ? `<img src="${applicant.photo}" alt="Photo" class="photo-image" />` : '<div style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 6px; color: rgba(255,255,255,0.7);">PHOTO</div>'}
+                        </div>
+                        <div class="visa-type">
+                          ${(applicant.visaType || 'NONE').toUpperCase()}
                         </div>
                       </div>
-                      <div class="color-band">
-                        <div class="red-band"></div>
-                        <div class="yellow-band"></div>
-                        <div class="green-band"></div>
+                      <div class="right-side">
+                        <div class="card-title">
+                          <div class="main-title">${cardLabels.title}</div>
+                          <div class="sub-title">${cardLabels.subtitle}</div>
+                        </div>
+                        <div class="card-info">
+                          <div class="info-row">
+                            <span class="label">${cardLabels.name}</span>
+                            <span class="value">${applicant.fullName || 'Not provided'}</span>
+                          </div>
+                          <div class="info-row">
+                            <span class="label">${cardLabels.nationality}</span>
+                            <span class="value">${applicant.nationality || 'Not provided'}</span>
+                          </div>
+                          <div class="info-row">
+                            <span class="label">${cardLabels.dateOfBirth}</span>
+                            <span class="value">${formatDate(applicant.dateOfBirth)}</span>
+                          </div>
+                          <div class="info-row">
+                            <span class="label">Phone:</span>
+                            <span class="value">${applicant.phoneNumber || 'Not provided'}</span>
+                          </div>
+                          <div class="info-row">
+                            <span class="label">${cardLabels.idNo}</span>
+                            <span class="value">${applicant.id || 'Not provided'}</span>
+                          </div>
+                          <div class="info-row">
+                            <span class="label">${cardLabels.expiryDate}</span>
+                            <span class="value">${formatDate(getExpiryDate(applicant))}</span>
+                          </div>
+                          ${frontCustomFields.map(field => `
+                            <div class="info-row">
+                              <span class="label">${field.label}:</span>
+                              <span class="value">${field.value}</span>
+                            </div>
+                          `).join('')}
+                        </div>
                       </div>
                     </div>
-                    
-                    <!-- Back of ID Card -->
-                    <div class="card-back">
-                      <div class="card-content">
-                        <div style="width: 100%;">
-                          <div class="card-title">
-                            <div>${cardLabels.title}</div>
-                            ${footerSettings.showBackFooter ? `<div style="font-size: 8px;">${footerSettings.backFooter}</div>` : ''}
+                    <div class="color-band">
+                      <div class="red-band"></div>
+                      <div class="yellow-band"></div>
+                      <div class="green-band"></div>
+                    </div>
+                  </div>
+                  
+                  <!-- Back of ID Card -->
+                  <div class="card-back">
+                    <div class="card-content">
+                      <div class="back-content">
+                        <div class="card-title">
+                          <div class="main-title">${cardLabels.title}</div>
+                          ${footerSettings.showBackFooter ? `<div class="sub-title">${footerSettings.backFooter}</div>` : ''}
+                        </div>
+                        <div class="card-info">
+                          <div class="info-row">
+                            <span class="label">${cardLabels.occupation}</span>
+                            <span class="value">${applicant.occupation || 'Not specified'}</span>
                           </div>
-                          <div class="card-info">
-                            <div><strong>${cardLabels.occupation}</strong> ${applicant.occupation || 'Not specified'}</div>
-                            <div><strong>Area:</strong> ${applicant.area || 'Not provided'}</div>
-                            <div><strong>${cardLabels.issueDate}</strong> ${formatDate(new Date().toISOString().split('T')[0])}</div>
-                            ${backCustomFields.map(field => `<div><strong>${field.label}:</strong> ${field.value}</div>`).join('')}
+                          <div class="info-row">
+                            <span class="label">Area:</span>
+                            <span class="value">${applicant.area || 'Not provided'}</span>
                           </div>
-                          ${footerSettings.showMainFooter ? `
-                            <div style="border-top: 1px solid rgba(255,255,255,0.3); padding-top: 4px; margin-top: 8px;">
-                              <div style="text-align: center; font-size: 8px;">${footerSettings.mainFooter}</div>
-                            </div>
-                          ` : ''}
-                          <div style="display: flex; justify-content: space-between; margin-top: auto; position: absolute; bottom: 20px; left: 10px; right: 10px;">
-                            <div style="width: 70px; border-top: 1px solid rgba(255,255,255,0.5); text-align: center; font-size: 7px; padding-top: 2px;">
-                              ${cardLabels.holderSignature}
-                            </div>
-                            <div style="width: 70px; border-top: 1px solid rgba(255,255,255,0.5); text-align: center; font-size: 7px; padding-top: 2px;">
-                              ${cardLabels.issuingOfficer}
-                            </div>
+                          <div class="info-row">
+                            <span class="label">${cardLabels.issueDate}</span>
+                            <span class="value">${formatDate(new Date().toISOString().split('T')[0])}</span>
                           </div>
+                          ${backCustomFields.map(field => `
+                            <div class="info-row">
+                              <span class="label">${field.label}:</span>
+                              <span class="value">${field.value}</span>
+                            </div>
+                          `).join('')}
+                        </div>
+                        ${footerSettings.showMainFooter ? `
+                          <div class="back-footer">
+                            ${footerSettings.mainFooter}
+                          </div>
+                        ` : ''}
+                        <div class="signature-area">
+                          <div class="signature-box">${cardLabels.holderSignature}</div>
+                          <div class="signature-box">${cardLabels.issuingOfficer}</div>
                         </div>
                       </div>
-                      <div class="color-band">
-                        <div class="red-band"></div>
-                        <div class="yellow-band"></div>
-                        <div class="green-band"></div>
-                      </div>
+                    </div>
+                    <div class="color-band">
+                      <div class="red-band"></div>
+                      <div class="yellow-band"></div>
+                      <div class="green-band"></div>
                     </div>
                   </div>
                 </div>
               `).join('')}
             </div>
+            
             <script>
-              window.onload = function() {
-                setTimeout(function() {
-                  window.print();
-                  setTimeout(function() { window.close(); }, 1000);
-                }, 500);
-              };
+              console.log('Print window loaded with ${selectedApplicants.length} cards');
+              
+              // Auto-print after a short delay (optional - can be removed if not desired)
+              setTimeout(function() {
+                // Uncomment the next line to enable auto-print
+                // window.print();
+              }, 1000);
+              
+              // Close window after printing (if auto-print is enabled)
+              window.addEventListener('afterprint', function() {
+                setTimeout(function() { 
+                  window.close(); 
+                }, 1000);
+              });
             </script>
           </body>
         </html>
       `;
       
+      console.log('Writing HTML content to print window');
+      printWindow.document.open();
       printWindow.document.write(htmlContent);
       printWindow.document.close();
-      toast.success(`Printing ${selectedApplicants.length} ID cards${singleSidedPrint ? ' on single-sided layout' : ''}`);
+      
+      console.log('Print window setup complete');
+      toast.success(`Print window opened with ${selectedApplicants.length} ID cards`);
+      
     } catch (error) {
       console.error('Print error:', error);
-      toast.error('Failed to open print dialog');
+      toast.error('Failed to open print dialog. Error: ' + error.message);
     }
   };
   
