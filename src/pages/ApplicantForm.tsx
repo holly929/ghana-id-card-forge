@@ -30,6 +30,7 @@ const ApplicantForm: React.FC = () => {
     visaType: '',
     occupation: '',
     phoneNumber: '',
+    passportNumber: '',
     status: 'pending' as 'pending' | 'approved' | 'rejected',
     photo: null as string | null,
   });
@@ -73,6 +74,7 @@ const ApplicantForm: React.FC = () => {
               visaType: applicant.visaType || '',
               occupation: applicant.occupation || '',
               phoneNumber: applicant.phoneNumber || '',
+              passportNumber: applicant.passportNumber || '',
               status: applicant.status || 'pending',
               photo: savedPhoto || applicant.photo || null,
             });
@@ -181,6 +183,25 @@ const ApplicantForm: React.FC = () => {
     if (!formData.phoneNumber.trim()) {
       toast.error('Phone number is required');
       return;
+    }
+
+    // Validate phone number format (basic validation)
+    const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+    if (!phoneRegex.test(formData.phoneNumber.replace(/[\s\-\(\)]/g, ''))) {
+      toast.error('Please enter a valid phone number');
+      return;
+    }
+
+    // Validate expiry date (should be in the future)
+    if (formData.expiryDate) {
+      const expiryDate = new Date(formData.expiryDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      if (expiryDate <= today) {
+        toast.error('Expiry date must be in the future');
+        return;
+      }
     }
 
     setLoading(true);
@@ -360,8 +381,18 @@ const ApplicantForm: React.FC = () => {
                   id="phoneNumber"
                   value={formData.phoneNumber}
                   onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
-                  placeholder="Enter phone number"
+                  placeholder="Enter phone number (e.g., +233123456789)"
                   required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="passportNumber">Passport Number</Label>
+                <Input
+                  id="passportNumber"
+                  value={formData.passportNumber}
+                  onChange={(e) => handleInputChange('passportNumber', e.target.value)}
+                  placeholder="Enter passport number"
                 />
               </div>
 
@@ -384,7 +415,9 @@ const ApplicantForm: React.FC = () => {
                   value={formData.expiryDate}
                   onChange={(e) => handleInputChange('expiryDate', e.target.value)}
                   placeholder="ID expiry date"
+                  min={new Date().toISOString().split('T')[0]}
                 />
+                <p className="text-xs text-gray-500">Must be a future date</p>
               </div>
 
               <div className="space-y-2">
