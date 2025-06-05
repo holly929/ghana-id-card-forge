@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Card, 
   CardContent, 
@@ -41,6 +41,7 @@ const mockUsersList = [
     role: UserRole.ADMIN,
     lastLogin: '2025-05-06',
     status: 'active',
+    password: 'admin123', // Store password for authentication
   },
   {
     id: '2',
@@ -49,6 +50,7 @@ const mockUsersList = [
     role: UserRole.DATA_ENTRY,
     lastLogin: '2025-05-05',
     status: 'active',
+    password: 'entry123',
   },
   {
     id: '3',
@@ -57,6 +59,7 @@ const mockUsersList = [
     role: UserRole.VIEWER,
     lastLogin: '2025-05-01',
     status: 'active',
+    password: 'viewer123',
   },
   {
     id: '4',
@@ -65,6 +68,7 @@ const mockUsersList = [
     role: UserRole.ADMIN,
     lastLogin: '2025-05-04',
     status: 'inactive',
+    password: 'supervisor123',
   }
 ];
 
@@ -230,8 +234,20 @@ const Users: React.FC = () => {
   // Generate a new password for a user
   const handleGeneratePassword = (userId: string, username: string) => {
     const newPassword = generatePassword();
+    
+    // Update the user's password in the local state
+    setUsers(prev => prev.map(user => 
+      user.id === userId ? { ...user, password: newPassword } : user
+    ));
+    
+    // Update the password in the auth context mock users as well
+    const authContextUsers = JSON.parse(localStorage.getItem('mockUsers') || '[]');
+    const updatedAuthUsers = authContextUsers.map((user: any) => 
+      user.id === userId ? { ...user, password: newPassword } : user
+    );
+    localStorage.setItem('mockUsers', JSON.stringify(updatedAuthUsers));
+    
     toast.success(`New password generated for ${username}: ${newPassword}`);
-    // In a real application, you would save this to the backend
   };
   
   // Open edit dialog
@@ -243,6 +259,14 @@ const Users: React.FC = () => {
   // Save edited user
   const handleSaveUser = (updatedUser: any) => {
     setUsers(prev => prev.map(user => user.id === updatedUser.id ? updatedUser : user));
+    
+    // Update the user in auth context as well
+    const authContextUsers = JSON.parse(localStorage.getItem('mockUsers') || '[]');
+    const updatedAuthUsers = authContextUsers.map((user: any) => 
+      user.id === updatedUser.id ? updatedUser : user
+    );
+    localStorage.setItem('mockUsers', JSON.stringify(updatedAuthUsers));
+    
     setIsEditDialogOpen(false);
     toast.success(`User ${updatedUser.username} has been updated`);
   };
@@ -257,6 +281,12 @@ const Users: React.FC = () => {
   const handleDeleteConfirm = () => {
     if (deleteUser) {
       setUsers(prev => prev.filter(user => user.id !== deleteUser.id));
+      
+      // Remove user from auth context as well
+      const authContextUsers = JSON.parse(localStorage.getItem('mockUsers') || '[]');
+      const updatedAuthUsers = authContextUsers.filter((user: any) => user.id !== deleteUser.id);
+      localStorage.setItem('mockUsers', JSON.stringify(updatedAuthUsers));
+      
       toast.success(`User ${deleteUser.username} has been deleted`);
       setIsDeleteDialogOpen(false);
       setDeleteUser(null);
@@ -270,18 +300,32 @@ const Users: React.FC = () => {
 
   // Save new user
   const handleSaveNewUser = (newUser: any) => {
-    const generatedPassword = generatePassword();
+    // Add to local users state
     setUsers(prev => [...prev, newUser]);
+    
+    // Add to auth context mock users for login capability
+    const authContextUsers = JSON.parse(localStorage.getItem('mockUsers') || '[]');
+    const updatedAuthUsers = [...authContextUsers, newUser];
+    localStorage.setItem('mockUsers', JSON.stringify(updatedAuthUsers));
+    
     setIsAddDialogOpen(false);
-    toast.success(`User ${newUser.username} has been created with password: ${generatedPassword}`);
+    toast.success(`User ${newUser.username} has been created successfully with the specified password and ${newUser.role} access level`);
   };
+
+  // Initialize mock users in localStorage for auth context
+  React.useEffect(() => {
+    const storedUsers = localStorage.getItem('mockUsers');
+    if (!storedUsers) {
+      localStorage.setItem('mockUsers', JSON.stringify(mockUsersList));
+    }
+  }, []);
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-gray-800">User Management</h1>
-          <p className="text-gray-600">Manage system users and permissions</p>
+          <p className="text-gray-600">Manage system users, passwords, and access levels</p>
         </div>
         <Button className="self-start" onClick={handleAddUser}>
           <Plus className="h-4 w-4 mr-2" /> Add New User

@@ -28,14 +28,16 @@ interface AuthContextType {
 // Create the auth context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock users for demo purposes
-const mockUsers = [
+// Initial mock users for demo purposes
+const initialMockUsers = [
   {
     id: '1',
     username: 'admin',
     password: 'admin123',
     role: UserRole.ADMIN,
     name: 'Admin User',
+    status: 'active',
+    lastLogin: '2025-05-06',
   },
   {
     id: '2',
@@ -43,6 +45,8 @@ const mockUsers = [
     password: 'entry123',
     role: UserRole.DATA_ENTRY,
     name: 'Data Entry Staff',
+    status: 'active',
+    lastLogin: '2025-05-05',
   },
   {
     id: '3',
@@ -50,6 +54,8 @@ const mockUsers = [
     password: 'viewer123',
     role: UserRole.VIEWER,
     name: 'View Only Staff',
+    status: 'active',
+    lastLogin: '2025-05-01',
   },
 ];
 
@@ -67,6 +73,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Initialize mock users in localStorage if not exists
+  useEffect(() => {
+    const storedUsers = localStorage.getItem('mockUsers');
+    if (!storedUsers) {
+      localStorage.setItem('mockUsers', JSON.stringify(initialMockUsers));
+    }
+  }, []);
+
   // Check if user is already logged in
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -83,18 +97,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1000));
       
+      // Get current users from localStorage (includes newly created users)
+      const storedUsers = localStorage.getItem('mockUsers');
+      const mockUsers = storedUsers ? JSON.parse(storedUsers) : initialMockUsers;
+      
       const foundUser = mockUsers.find(
-        u => u.username === username && u.password === password
+        (u: any) => u.username === username && u.password === password && u.status === 'active'
       );
       
       if (foundUser) {
         // Remove password from stored user
-        const { password, ...userWithoutPassword } = foundUser;
+        const { password, status, lastLogin, ...userWithoutPassword } = foundUser;
         setUser(userWithoutPassword);
         localStorage.setItem('user', JSON.stringify(userWithoutPassword));
+        
+        // Update last login for the user
+        const updatedUsers = mockUsers.map((u: any) => 
+          u.id === foundUser.id ? { ...u, lastLogin: new Date().toISOString().split('T')[0] } : u
+        );
+        localStorage.setItem('mockUsers', JSON.stringify(updatedUsers));
+        
         toast.success(`Welcome back, ${userWithoutPassword.name}`);
       } else {
-        toast.error('Invalid username or password');
+        toast.error('Invalid username or password, or account is inactive');
         throw new Error('Invalid credentials');
       }
     } catch (error) {
