@@ -9,13 +9,116 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      applicants: {
+        Row: {
+          area: string | null
+          created_at: string | null
+          date_created: string
+          date_of_birth: string
+          expiry_date: string | null
+          full_name: string
+          id: string
+          id_card_approved: boolean | null
+          nationality: string
+          occupation: string | null
+          passport_number: string | null
+          phone_number: string
+          photo: string | null
+          status: string
+          updated_at: string | null
+          visa_type: string | null
+        }
+        Insert: {
+          area?: string | null
+          created_at?: string | null
+          date_created?: string
+          date_of_birth: string
+          expiry_date?: string | null
+          full_name: string
+          id: string
+          id_card_approved?: boolean | null
+          nationality: string
+          occupation?: string | null
+          passport_number?: string | null
+          phone_number: string
+          photo?: string | null
+          status?: string
+          updated_at?: string | null
+          visa_type?: string | null
+        }
+        Update: {
+          area?: string | null
+          created_at?: string | null
+          date_created?: string
+          date_of_birth?: string
+          expiry_date?: string | null
+          full_name?: string
+          id?: string
+          id_card_approved?: boolean | null
+          nationality?: string
+          occupation?: string | null
+          passport_number?: string | null
+          phone_number?: string
+          photo?: string | null
+          status?: string
+          updated_at?: string | null
+          visa_type?: string | null
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          applicant_id: string | null
+          created_at: string | null
+          id: string
+          message: string
+          notification_type: string
+          phone_number: string
+          retry_count: number | null
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          applicant_id?: string | null
+          created_at?: string | null
+          id?: string
+          message: string
+          notification_type: string
+          phone_number: string
+          retry_count?: number | null
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          applicant_id?: string | null
+          created_at?: string | null
+          id?: string
+          message?: string
+          notification_type?: string
+          phone_number?: string
+          retry_count?: number | null
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_applicant_id_fkey"
+            columns: ["applicant_id"]
+            isOneToOne: false
+            referencedRelation: "applicants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      check_expiring_cards: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

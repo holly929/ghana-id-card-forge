@@ -3,16 +3,19 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Upload, Save, Archive } from 'lucide-react';
+import { Upload, Save, Archive, RefreshCw, Database } from 'lucide-react';
 import { toast } from "sonner";
 import { handleImageUpload, backupSystem, restoreSystem } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import ConnectionStatus from '@/components/ConnectionStatus';
+import { dataSyncService } from '@/services/dataSync';
 
 const Settings: React.FC = () => {
   const [logo, setLogo] = useState<string | null>(null);
   const [companyName, setCompanyName] = useState('Ghana Immigration Service');
   const [isBackupDialogOpen, setIsBackupDialogOpen] = useState(false);
   const [backupData, setBackupData] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const backupFileInputRef = useRef<HTMLInputElement>(null);
   
@@ -133,15 +136,68 @@ const Settings: React.FC = () => {
       backupFileInputRef.current.click();
     }
   };
+
+  // New function to manually sync data
+  const handleManualSync = async () => {
+    setSyncing(true);
+    try {
+      await dataSyncService.syncData();
+      toast.success('Data synchronized successfully');
+    } catch (error) {
+      toast.error('Failed to sync data');
+    } finally {
+      setSyncing(false);
+    }
+  };
   
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-gray-800">Settings</h1>
-        <p className="text-gray-600">Manage application settings</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-800">Settings</h1>
+          <p className="text-gray-600">Manage application settings</p>
+        </div>
+        <ConnectionStatus />
       </div>
       
       <div className="grid gap-6 md:grid-cols-2">
+        {/* New Sync Management Card */}
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Database className="h-5 w-5" />
+              Data Synchronization
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600">
+                This system works both online and offline. When online, data is automatically synced with the cloud database. 
+                When offline, changes are stored locally and will sync when connection is restored.
+              </p>
+              
+              <div className="flex items-center gap-4">
+                <Button 
+                  onClick={handleManualSync} 
+                  disabled={syncing || !dataSyncService.getConnectionStatus()}
+                  className="flex items-center gap-2"
+                >
+                  <RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
+                  {syncing ? 'Syncing...' : 'Manual Sync'}
+                </Button>
+                
+                <div className="text-sm text-gray-600">
+                  Status: {dataSyncService.getConnectionStatus() ? (
+                    <span className="text-green-600 font-medium">Online</span>
+                  ) : (
+                    <span className="text-orange-600 font-medium">Offline</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle>System Logo</CardTitle>

@@ -4,125 +4,55 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Printer } from 'lucide-react';
 import IDCardPreview from '@/components/IDCardPreview';
+import ConnectionStatus from '@/components/ConnectionStatus';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from 'sonner';
-
-// Default mock data (used as a fallback)
-const defaultApplicants = [
-  {
-    id: 'GIS-123456789',
-    fullName: 'Ahmed Mohammed',
-    nationality: 'Egyptian',
-    passportNumber: 'A12345678',
-    dateOfBirth: '1985-03-15',
-    visaType: 'Work',
-    status: 'approved',
-    dateCreated: '2023-07-10',
-    occupation: 'Engineer',
-    photo: null,
-  },
-  {
-    id: 'GIS-234567890',
-    fullName: 'Maria Sanchez',
-    nationality: 'Mexican',
-    passportNumber: 'B87654321',
-    dateOfBirth: '1990-11-22',
-    visaType: 'Student',
-    status: 'pending',
-    dateCreated: '2023-08-05',
-    occupation: 'Student',
-    photo: null,
-  },
-  {
-    id: '3',
-    fullName: 'John Smith',
-    nationality: 'American',
-    passportNumber: 'C45678912',
-    OfBirth: '1978-06-30',
-    visaType: 'Tourist',
-    status: 'rejected',
-    Created: '2023-08-15',
-    occupation: 'Consultant',
-    photo: null,
-  },
-  {
-    id: '4',
-    fullName: 'Li Wei',
-    nationality: 'Chinese',
-    passportNumber: 'D98765432',
-    OfBirth: '1992-09-18',
-    visaType: 'Business',
-    status: 'approved',
-    Created: '2023-08-20',
-    occupation: 'Business Owner',
-    photo: null,
-  },
-  {
-    id: '5',
-    fullName: 'Amit Patel',
-    nationality: 'Indian',
-    passportNumber: 'E12378945',
-    dateOfBirth: '1983-12-10',
-    visaType: 'Work',
-    status: 'pending',
-    dateCreated: '2023-08-25',
-    occupation: 'Software Developer',
-    photo: null,
-  },
-];
+import { dataSyncService } from '@/services/dataSync';
 
 const IDCardPreviewPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   
-  const [applicants, setApplicants] = useState<any[]>([]);
   const [applicant, setApplicant] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   
-  // Load applicants from localStorage
+  // Load applicant data using sync service
   useEffect(() => {
-    setLoading(true);
-    const storedApplicants = localStorage.getItem('applicants');
-    if (storedApplicants) {
+    const loadApplicant = async () => {
+      setLoading(true);
       try {
-        const parsedApplicants = JSON.parse(storedApplicants);
-        console.log('Loaded applicants from storage:', parsedApplicants);
-        setApplicants(parsedApplicants);
-      } catch (error) {
-        console.error('Error parsing applicants data:', error);
-        setApplicants(defaultApplicants);
-        toast.error('Failed to load applicant data');
-      }
-    } else {
-      console.log('No stored applicants found, using default data');
-      setApplicants(defaultApplicants);
-    }
-    setLoading(false);
-  }, []);
-  
-  // Find applicant by ID after applicants are loaded
-  useEffect(() => {
-    if (applicants.length > 0 && id) {
-      const found = applicants.find(a => a.id === id);
-      if (found) {
-        console.log('Found applicant:', found);
+        const applicants = await dataSyncService.getApplicants();
+        const found = applicants.find(a => a.id === id);
         
-        // Load saved photo from localStorage if not already in the applicant data
-        if (!found.photo) {
-          const savedPhoto = localStorage.getItem(`applicantPhoto_${id}`);
-          if (savedPhoto) {
-            found.photo = savedPhoto;
+        if (found) {
+          console.log('Found applicant:', found);
+          
+          // Load saved photo from localStorage if not already in the applicant data
+          if (!found.photo) {
+            const savedPhoto = localStorage.getItem(`applicantPhoto_${id}`);
+            if (savedPhoto) {
+              found.photo = savedPhoto;
+            }
           }
+          
+          setApplicant({...found});
+        } else {
+          console.log('Applicant not found with ID:', id);
+          toast.error(`Applicant with ID ${id} not found`);
         }
-        
-        setApplicant({...found});
-      } else {
-        console.log('Applicant not found with ID:', id);
-        toast.error(`Applicant with ID ${id} not found`);
+      } catch (error) {
+        console.error('Error loading applicant:', error);
+        toast.error('Failed to load applicant data');
+      } finally {
+        setLoading(false);
       }
+    };
+
+    if (id) {
+      loadApplicant();
     }
-  }, [applicants, id]);
+  }, [id]);
   
   if (loading) {
     return (
@@ -149,20 +79,23 @@ const IDCardPreviewPage: React.FC = () => {
   
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2">
-        <Button 
-          variant="ghost" 
-          size="icon"
-          onClick={() => navigate('/id-cards')}
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-800">ID Card Preview</h1>
-          <p className="text-gray-600">
-            Preview the ID card for {applicant?.fullName}
-          </p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={() => navigate('/id-cards')}
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-semibold text-gray-800">ID Card Preview</h1>
+            <p className="text-gray-600">
+              Preview the ID card for {applicant?.full_name}
+            </p>
+          </div>
         </div>
+        <ConnectionStatus />
       </div>
       
       {/* Add Print Page Button */}
@@ -175,6 +108,7 @@ const IDCardPreviewPage: React.FC = () => {
         </Button>
       </div>
       
+      {/* grid with applicant information and ID card preview */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <Card className="xl:order-2">
           <CardHeader>
@@ -185,7 +119,7 @@ const IDCardPreviewPage: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Full Name</h3>
-                  <p>{applicant?.fullName}</p>
+                  <p>{applicant?.full_name}</p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Nationality</h3>
@@ -196,18 +130,18 @@ const IDCardPreviewPage: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Passport Number</h3>
-                  <p>{applicant?.passportNumber || "Not provided"}</p>
+                  <p>{applicant?.passport_number || "Not provided"}</p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Date of Birth</h3>
-                  <p>{applicant?.dateOfBirth ? new Date(applicant.dateOfBirth).toLocaleDateString() : "Not provided"}</p>
+                  <p>{applicant?.date_of_birth ? new Date(applicant.date_of_birth).toLocaleDateString() : "Not provided"}</p>
                 </div>
               </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Visa Type</h3>
-                  <p>{applicant?.visaType}</p>
+                  <p>{applicant?.visa_type}</p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Occupation</h3>
@@ -229,18 +163,18 @@ const IDCardPreviewPage: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Phone Number</h3>
-                  <p>{applicant?.phoneNumber || "Not provided"}</p>
+                  <p>{applicant?.phone_number || "Not provided"}</p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Expiry Date</h3>
-                  <p>{applicant?.expiryDate ? new Date(applicant.expiryDate).toLocaleDateString() : "Not set"}</p>
+                  <p>{applicant?.expiry_date ? new Date(applicant.expiry_date).toLocaleDateString() : "Not set"}</p>
                 </div>
               </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Date Created</h3>
-                  <p>{new Date(applicant?.dateCreated).toLocaleDateString()}</p>
+                  <p>{new Date(applicant?.date_created).toLocaleDateString()}</p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Area</h3>

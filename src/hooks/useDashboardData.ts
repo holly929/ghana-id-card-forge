@@ -1,5 +1,5 @@
-
 import { useState, useEffect } from 'react';
+import { dataSyncService } from '@/services/dataSync';
 
 // Type definitions for our dashboard data
 export interface DashboardStat {
@@ -28,13 +28,18 @@ export interface DashboardData {
 // Time periods for reports
 export type TimePeriod = 'weekly' | 'monthly' | 'annually';
 
-// Mock data provider - in a real app this would fetch from an API
-const getMockDashboardData = (): DashboardData => {
-  // This simulates data we would get from a real backend
+// Mock data provider updated to use sync service
+const getMockDashboardData = async (): Promise<DashboardData> => {
+  const applicants = await dataSyncService.getApplicants();
+  
+  const totalApplicants = applicants.length;
+  const pendingApplications = applicants.filter(a => a.status === 'pending').length;
+  const idCardsIssued = applicants.filter(a => a.status === 'approved').length;
+  
   return {
-    totalApplicants: 358,
-    pendingApplications: 47,
-    idCardsIssued: 294,
+    totalApplicants,
+    pendingApplications,
+    idCardsIssued,
     activeUsers: 12,
     recentActivity: [
       {
@@ -122,14 +127,14 @@ export const useDashboardData = () => {
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    // In a real app, this would be an API call
+    // Updated to use sync service
     const fetchData = async () => {
       setLoading(true);
       try {
         // Simulate API delay
         await new Promise(resolve => setTimeout(resolve, 500));
-        const data = getMockDashboardData();
-        setData(data);
+        const dashboardData = await getMockDashboardData();
+        setData(dashboardData);
       } catch (error) {
         console.error('Failed to fetch dashboard data:', error);
       } finally {
