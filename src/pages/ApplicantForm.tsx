@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -65,15 +64,15 @@ const ApplicantForm: React.FC = () => {
             console.log('Loading applicant for edit:', applicant);
             
             setFormData({
-              fullName: applicant.full_name || applicant.fullName || '',
+              fullName: applicant.full_name || '',
               nationality: applicant.nationality || '',
               area: applicant.area || '',
-              dateOfBirth: applicant.date_of_birth || applicant.dateOfBirth || '',
-              expiryDate: applicant.expiry_date || applicant.expiryDate || '',
-              visaType: applicant.visa_type || applicant.visaType || '',
+              dateOfBirth: applicant.date_of_birth || '',
+              expiryDate: applicant.expiry_date || '',
+              visaType: applicant.visa_type || '',
               occupation: applicant.occupation || '',
-              phoneNumber: applicant.phone_number || applicant.phoneNumber || '',
-              status: applicant.status || 'pending',
+              phoneNumber: applicant.phone_number || '',
+              status: applicant.status as 'pending' | 'approved' | 'rejected' || 'pending',
               photo: applicant.photo || null,
             });
           } else {
