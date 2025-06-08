@@ -121,13 +121,18 @@ const Applicants: React.FC = () => {
     }
   }, []);
   
-  // Filter applicants based on search term
-  const filteredApplicants = applicants.filter(applicant => 
-    applicant.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    applicant.nationality.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (applicant.area && applicant.area.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (applicant.passportNumber && applicant.passportNumber.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  // Filter applicants based on search term with safe null checking
+  const filteredApplicants = applicants.filter(applicant => {
+    const searchTermLower = searchTerm.toLowerCase();
+    
+    // Safely check each field for null/undefined before calling toLowerCase
+    const fullNameMatch = (applicant.fullName || applicant.full_name || '').toLowerCase().includes(searchTermLower);
+    const nationalityMatch = (applicant.nationality || '').toLowerCase().includes(searchTermLower);
+    const areaMatch = (applicant.area || '').toLowerCase().includes(searchTermLower);
+    const passportMatch = (applicant.passportNumber || applicant.passport_number || '').toLowerCase().includes(searchTermLower);
+    
+    return fullNameMatch || nationalityMatch || areaMatch || passportMatch;
+  });
   
   // Handle applicant deletion
   const handleDelete = (id: string) => {
@@ -158,7 +163,7 @@ const Applicants: React.FC = () => {
   
   // Check if ID card is available
   const canViewIDCard = (applicant: any) => {
-    return applicant.status === 'approved' || applicant.idCardApproved === true;
+    return applicant.status === 'approved' || applicant.idCardApproved === true || applicant.id_card_approved === true;
   };
 
   const canEditApplicants = user && [UserRole.ADMIN, UserRole.DATA_ENTRY].includes(user.role);
@@ -220,13 +225,17 @@ const Applicants: React.FC = () => {
                 ) : (
                   filteredApplicants.map((applicant) => (
                     <TableRow key={applicant.id}>
-                      <TableCell className="font-medium">{applicant.fullName}</TableCell>
-                      <TableCell>{applicant.nationality}</TableCell>
-                      <TableCell>{applicant.area || applicant.passportNumber || 'Not provided'}</TableCell>
-                      <TableCell>{applicant.visaType}</TableCell>
-                      <TableCell>{getStatusBadge(applicant.status)}</TableCell>
+                      <TableCell className="font-medium">
+                        {applicant.fullName || applicant.full_name || 'N/A'}
+                      </TableCell>
+                      <TableCell>{applicant.nationality || 'N/A'}</TableCell>
                       <TableCell>
-                        {applicant.idCardApproved && (
+                        {applicant.area || applicant.passportNumber || applicant.passport_number || 'Not provided'}
+                      </TableCell>
+                      <TableCell>{applicant.visaType || applicant.visa_type || 'N/A'}</TableCell>
+                      <TableCell>{getStatusBadge(applicant.status || 'pending')}</TableCell>
+                      <TableCell>
+                        {(applicant.idCardApproved || applicant.id_card_approved) && (
                           <Badge className="bg-blue-100 text-blue-800">Approved</Badge>
                         )}
                       </TableCell>
