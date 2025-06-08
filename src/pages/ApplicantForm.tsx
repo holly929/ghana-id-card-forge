@@ -30,7 +30,6 @@ const ApplicantForm: React.FC = () => {
     visaType: '',
     occupation: '',
     phoneNumber: '',
-    passportNumber: '',
     status: 'pending' as 'pending' | 'approved' | 'rejected',
     photo: null as string | null,
   });
@@ -74,7 +73,6 @@ const ApplicantForm: React.FC = () => {
               visaType: applicant.visaType || '',
               occupation: applicant.occupation || '',
               phoneNumber: applicant.phoneNumber || '',
-              passportNumber: applicant.passportNumber || '',
               status: applicant.status || 'pending',
               photo: savedPhoto || applicant.photo || null,
             });
@@ -383,16 +381,6 @@ const ApplicantForm: React.FC = () => {
                   onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
                   placeholder="Enter phone number (e.g., +233123456789)"
                   required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="passportNumber">Passport Number</Label>
-                <Input
-                  id="passportNumber"
-                  value={formData.passportNumber}
-                  onChange={(e) => handleInputChange('passportNumber', e.target.value)}
-                  placeholder="Enter passport number"
                 />
               </div>
 
