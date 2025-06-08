@@ -126,10 +126,10 @@ const Applicants: React.FC = () => {
     const searchTermLower = searchTerm.toLowerCase();
     
     // Safely check each field for null/undefined before calling toLowerCase
-    const fullNameMatch = (applicant.fullName || applicant.full_name || '').toLowerCase().includes(searchTermLower);
+    const fullNameMatch = ((applicant as any).fullName || (applicant as any).full_name || '').toLowerCase().includes(searchTermLower);
     const nationalityMatch = (applicant.nationality || '').toLowerCase().includes(searchTermLower);
     const areaMatch = (applicant.area || '').toLowerCase().includes(searchTermLower);
-    const passportMatch = (applicant.passportNumber || applicant.passport_number || '').toLowerCase().includes(searchTermLower);
+    const passportMatch = ((applicant as any).passportNumber || (applicant as any).passport_number || '').toLowerCase().includes(searchTermLower);
     
     return fullNameMatch || nationalityMatch || areaMatch || passportMatch;
   });
@@ -226,16 +226,16 @@ const Applicants: React.FC = () => {
                   filteredApplicants.map((applicant) => (
                     <TableRow key={applicant.id}>
                       <TableCell className="font-medium">
-                        {applicant.fullName || applicant.full_name || 'N/A'}
+                        {(applicant as any).fullName || (applicant as any).full_name || 'N/A'}
                       </TableCell>
                       <TableCell>{applicant.nationality || 'N/A'}</TableCell>
                       <TableCell>
-                        {applicant.area || applicant.passportNumber || applicant.passport_number || 'Not provided'}
+                        {applicant.area || (applicant as any).passportNumber || (applicant as any).passport_number || 'Not provided'}
                       </TableCell>
-                      <TableCell>{applicant.visaType || applicant.visa_type || 'N/A'}</TableCell>
+                      <TableCell>{(applicant as any).visaType || (applicant as any).visa_type || 'N/A'}</TableCell>
                       <TableCell>{getStatusBadge(applicant.status || 'pending')}</TableCell>
                       <TableCell>
-                        {(applicant.idCardApproved || applicant.id_card_approved) && (
+                        {((applicant as any).idCardApproved || (applicant as any).id_card_approved) && (
                           <Badge className="bg-blue-100 text-blue-800">Approved</Badge>
                         )}
                       </TableCell>
