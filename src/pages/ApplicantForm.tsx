@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -14,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Camera, Upload } from 'lucide-react';
 import { toast } from "sonner";
 import { handleImageUpload, optimizeImage } from '@/lib/utils';
+import { dataSyncService } from '@/services/dataSync';
 
 const ApplicantForm: React.FC = () => {
   const navigate = useNavigate();
@@ -53,28 +55,26 @@ const ApplicantForm: React.FC = () => {
   useEffect(() => {
     if (isEditing && id) {
       setIsLoadingApplicant(true);
-      const storedApplicants = localStorage.getItem('applicants');
       
-      if (storedApplicants) {
+      const loadApplicant = async () => {
         try {
-          const applicants = JSON.parse(storedApplicants);
+          const applicants = await dataSyncService.getApplicants();
           const applicant = applicants.find((app: any) => app.id === id);
           
           if (applicant) {
-            // Load saved photo from localStorage if available
-            const savedPhoto = localStorage.getItem(`applicantPhoto_${id}`);
+            console.log('Loading applicant for edit:', applicant);
             
             setFormData({
-              fullName: applicant.fullName || '',
+              fullName: applicant.full_name || applicant.fullName || '',
               nationality: applicant.nationality || '',
               area: applicant.area || '',
-              dateOfBirth: applicant.dateOfBirth || '',
-              expiryDate: applicant.expiryDate || '',
-              visaType: applicant.visaType || '',
+              dateOfBirth: applicant.date_of_birth || applicant.dateOfBirth || '',
+              expiryDate: applicant.expiry_date || applicant.expiryDate || '',
+              visaType: applicant.visa_type || applicant.visaType || '',
               occupation: applicant.occupation || '',
-              phoneNumber: applicant.phoneNumber || '',
+              phoneNumber: applicant.phone_number || applicant.phoneNumber || '',
               status: applicant.status || 'pending',
-              photo: savedPhoto || applicant.photo || null,
+              photo: applicant.photo || null,
             });
           } else {
             toast.error('Applicant not found');
@@ -83,9 +83,12 @@ const ApplicantForm: React.FC = () => {
         } catch (error) {
           console.error('Error loading applicant:', error);
           toast.error('Failed to load applicant data');
+        } finally {
+          setIsLoadingApplicant(false);
         }
-      }
-      setIsLoadingApplicant(false);
+      };
+
+      loadApplicant();
     }
   }, [id, isEditing, navigate]);
 
@@ -205,37 +208,35 @@ const ApplicantForm: React.FC = () => {
     setLoading(true);
 
     try {
-      const storedApplicants = localStorage.getItem('applicants');
-      const applicants = storedApplicants ? JSON.parse(storedApplicants) : [];
-
       const applicantData = {
-        ...formData,
         id: isEditing ? id : generateApplicantId(),
-        dateCreated: isEditing ? 
-          (applicants.find((app: any) => app.id === id)?.dateCreated || new Date().toISOString().split('T')[0]) : 
+        full_name: formData.fullName,
+        nationality: formData.nationality,
+        area: formData.area || null,
+        phone_number: formData.phoneNumber,
+        date_of_birth: formData.dateOfBirth,
+        expiry_date: formData.expiryDate || null,
+        visa_type: formData.visaType || null,
+        occupation: formData.occupation || null,
+        status: formData.status,
+        photo: formData.photo,
+        date_created: isEditing ? 
+          (await dataSyncService.getApplicants()).find((app: any) => app.id === id)?.date_created || new Date().toISOString().split('T')[0] : 
           new Date().toISOString().split('T')[0],
-        idCardApproved: false,
+        id_card_approved: false,
       };
 
-      // Save photo separately in localStorage if it exists
-      if (formData.photo && applicantData.id) {
-        localStorage.setItem(`applicantPhoto_${applicantData.id}`, formData.photo);
-      }
+      console.log('Saving applicant data:', applicantData);
 
-      let updatedApplicants;
+      // Use the data sync service to save
+      await dataSyncService.saveApplicant(applicantData);
       
       if (isEditing) {
-        updatedApplicants = applicants.map((app: any) => 
-          app.id === id ? applicantData : app
-        );
         toast.success('Applicant updated successfully');
       } else {
-        updatedApplicants = [...applicants, applicantData];
         toast.success('Applicant added successfully');
       }
 
-      localStorage.setItem('applicants', JSON.stringify(updatedApplicants));
-      
       // Navigate back to applicants list
       navigate('/applicants');
     } catch (error) {
