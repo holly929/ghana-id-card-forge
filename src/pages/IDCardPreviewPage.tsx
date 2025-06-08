@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -91,7 +92,7 @@ const IDCardPreviewPage: React.FC = () => {
           <div>
             <h1 className="text-2xl font-semibold text-gray-800">ID Card Preview</h1>
             <p className="text-gray-600">
-              Preview the ID card for {applicant?.full_name}
+              Preview the ID card for {applicant?.fullName || applicant?.full_name}
             </p>
           </div>
         </div>
@@ -119,7 +120,7 @@ const IDCardPreviewPage: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Full Name</h3>
-                  <p>{applicant?.full_name}</p>
+                  <p>{applicant?.fullName || applicant?.full_name}</p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Nationality</h3>
@@ -129,19 +130,19 @@ const IDCardPreviewPage: React.FC = () => {
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500">Passport Number</h3>
-                  <p>{applicant?.passport_number || "Not provided"}</p>
+                  <h3 className="text-sm font-medium text-gray-500">Date of Birth</h3>
+                  <p>{applicant?.dateOfBirth || applicant?.date_of_birth ? new Date(applicant.dateOfBirth || applicant.date_of_birth).toLocaleDateString() : "Not provided"}</p>
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500">Date of Birth</h3>
-                  <p>{applicant?.date_of_birth ? new Date(applicant.date_of_birth).toLocaleDateString() : "Not provided"}</p>
+                  <h3 className="text-sm font-medium text-gray-500">Phone Number</h3>
+                  <p>{applicant?.phoneNumber || applicant?.phone_number || "Not provided"}</p>
                 </div>
               </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Visa Type</h3>
-                  <p>{applicant?.visa_type}</p>
+                  <p>{applicant?.visaType || applicant?.visa_type}</p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Occupation</h3>
@@ -162,23 +163,19 @@ const IDCardPreviewPage: React.FC = () => {
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500">Phone Number</h3>
-                  <p>{applicant?.phone_number || "Not provided"}</p>
+                  <h3 className="text-sm font-medium text-gray-500">Expiry Date</h3>
+                  <p>{applicant?.expiryDate || applicant?.expiry_date ? new Date(applicant.expiryDate || applicant.expiry_date).toLocaleDateString() : "Not set"}</p>
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500">Expiry Date</h3>
-                  <p>{applicant?.expiry_date ? new Date(applicant.expiry_date).toLocaleDateString() : "Not set"}</p>
+                  <h3 className="text-sm font-medium text-gray-500">Area</h3>
+                  <p>{applicant?.area || "Not provided"}</p>
                 </div>
               </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Date Created</h3>
-                  <p>{new Date(applicant?.date_created).toLocaleDateString()}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Area</h3>
-                  <p>{applicant?.area || "Not provided"}</p>
+                  <p>{applicant?.dateCreated || applicant?.date_created ? new Date(applicant.dateCreated || applicant.date_created).toLocaleDateString() : "Not set"}</p>
                 </div>
               </div>
               
@@ -203,7 +200,18 @@ const IDCardPreviewPage: React.FC = () => {
             <CardTitle>ID Card Preview</CardTitle>
           </CardHeader>
           <CardContent>
-            <IDCardPreview applicant={applicant} />
+            <IDCardPreview applicant={{
+              id: applicant.id,
+              fullName: applicant.fullName || applicant.full_name,
+              nationality: applicant.nationality,
+              dateOfBirth: applicant.dateOfBirth || applicant.date_of_birth,
+              expiryDate: applicant.expiryDate || applicant.expiry_date,
+              visaType: applicant.visaType || applicant.visa_type,
+              occupation: applicant.occupation,
+              photo: applicant.photo,
+              phoneNumber: applicant.phoneNumber || applicant.phone_number,
+              area: applicant.area,
+            }} />
           </CardContent>
         </Card>
       </div>

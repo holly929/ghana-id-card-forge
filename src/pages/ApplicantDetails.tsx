@@ -197,7 +197,7 @@ const ApplicantDetails: React.FC = () => {
                   <p className="text-base">{applicant.nationality}</p>
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500">Expiry Date</h3>
+                  <h3 className="text-sm font-medium text-gray-500">Date of Birth</h3>
                   <p className="text-base">{formatDate(applicant.dateOfBirth)}</p>
                 </div>
               </div>
@@ -207,22 +207,33 @@ const ApplicantDetails: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Area</h3>
-                  <p className="text-base">{applicant.area || applicant.passportNumber || 'Not provided'}</p>
+                  <p className="text-base">{applicant.area || 'Not provided'}</p>
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500">ID Number</h3>
-                  <p className="text-base font-mono">{applicant.id}</p>
+                  <h3 className="text-sm font-medium text-gray-500">Phone Number</h3>
+                  <p className="text-base">{applicant.phoneNumber || 'Not provided'}</p>
                 </div>
               </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Visa Type</h3>
-                  <p className="text-base">{applicant.visaType}</p>
+                  <p className="text-base">{applicant.visaType || 'Not specified'}</p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Occupation</h3>
                   <p className="text-base">{applicant.occupation || 'Not specified'}</p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Expiry Date</h3>
+                  <p className="text-base">{formatDate(applicant.expiryDate)}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">ID Number</h3>
+                  <p className="text-base font-mono">{applicant.id}</p>
                 </div>
               </div>
               
