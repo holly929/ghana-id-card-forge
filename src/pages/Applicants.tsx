@@ -37,8 +37,41 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 
+// Type definition for applicant data that handles both camelCase and snake_case
+interface ApplicantData {
+  id: string;
+  fullName?: string;
+  full_name?: string;
+  nationality?: string;
+  area?: string;
+  passportNumber?: string;
+  passport_number?: string;
+  dateOfBirth?: string;
+  date_of_birth?: string;
+  visaType?: string;
+  visa_type?: string;
+  status?: string;
+  dateCreated?: string;
+  date_created?: string;
+  occupation?: string;
+  idCardApproved?: boolean;
+  id_card_approved?: boolean;
+  expiryDate?: string;
+  expiry_date?: string;
+  phoneNumber?: string;
+  phone_number?: string;
+  photo?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Helper function to safely get property values
+const getApplicantProperty = (applicant: ApplicantData, camelCase: string, snakeCase: string): string => {
+  return (applicant as any)[camelCase] || (applicant as any)[snakeCase] || '';
+};
+
 // Default mock data (used when no localStorage data exists)
-const defaultApplicants = [
+const defaultApplicants: ApplicantData[] = [
   {
     id: '1',
     fullName: 'Ahmed Mohammed',
@@ -106,7 +139,7 @@ const defaultApplicants = [
 const Applicants: React.FC = () => {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
-  const [applicants, setApplicants] = useState(defaultApplicants);
+  const [applicants, setApplicants] = useState<ApplicantData[]>(defaultApplicants);
   
   // Load applicants from localStorage on component mount
   useEffect(() => {
@@ -126,10 +159,10 @@ const Applicants: React.FC = () => {
     const searchTermLower = searchTerm.toLowerCase();
     
     // Safely check each field for null/undefined before calling toLowerCase
-    const fullNameMatch = ((applicant as any).fullName || (applicant as any).full_name || '').toLowerCase().includes(searchTermLower);
+    const fullNameMatch = getApplicantProperty(applicant, 'fullName', 'full_name').toLowerCase().includes(searchTermLower);
     const nationalityMatch = (applicant.nationality || '').toLowerCase().includes(searchTermLower);
     const areaMatch = (applicant.area || '').toLowerCase().includes(searchTermLower);
-    const passportMatch = ((applicant as any).passportNumber || (applicant as any).passport_number || '').toLowerCase().includes(searchTermLower);
+    const passportMatch = getApplicantProperty(applicant, 'passportNumber', 'passport_number').toLowerCase().includes(searchTermLower);
     
     return fullNameMatch || nationalityMatch || areaMatch || passportMatch;
   });
@@ -162,7 +195,7 @@ const Applicants: React.FC = () => {
   };
   
   // Check if ID card is available
-  const canViewIDCard = (applicant: any) => {
+  const canViewIDCard = (applicant: ApplicantData) => {
     return applicant.status === 'approved' || applicant.idCardApproved === true || applicant.id_card_approved === true;
   };
 
@@ -226,16 +259,16 @@ const Applicants: React.FC = () => {
                   filteredApplicants.map((applicant) => (
                     <TableRow key={applicant.id}>
                       <TableCell className="font-medium">
-                        {(applicant as any).fullName || (applicant as any).full_name || 'N/A'}
+                        {getApplicantProperty(applicant, 'fullName', 'full_name') || 'N/A'}
                       </TableCell>
                       <TableCell>{applicant.nationality || 'N/A'}</TableCell>
                       <TableCell>
-                        {applicant.area || (applicant as any).passportNumber || (applicant as any).passport_number || 'Not provided'}
+                        {applicant.area || getApplicantProperty(applicant, 'passportNumber', 'passport_number') || 'Not provided'}
                       </TableCell>
-                      <TableCell>{(applicant as any).visaType || (applicant as any).visa_type || 'N/A'}</TableCell>
+                      <TableCell>{getApplicantProperty(applicant, 'visaType', 'visa_type') || 'N/A'}</TableCell>
                       <TableCell>{getStatusBadge(applicant.status || 'pending')}</TableCell>
                       <TableCell>
-                        {((applicant as any).idCardApproved || (applicant as any).id_card_approved) && (
+                        {(applicant.idCardApproved || applicant.id_card_approved) && (
                           <Badge className="bg-blue-100 text-blue-800">Approved</Badge>
                         )}
                       </TableCell>
