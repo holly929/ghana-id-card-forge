@@ -198,11 +198,11 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
     toast.success("Card customizations saved successfully");
   };
 
-  // Drag and drop handlers - Fixed TypeScript error
+  // Drag and drop handlers - Fixed to not interfere with checkbox
   const handleDragStart = (e: React.DragEvent, item: FieldOrder) => {
+    // Only start drag if not clicking on checkbox or delete button
     const target = e.target as HTMLElement;
-    // Check if clicking on checkbox or button elements
-    if (target.tagName === 'INPUT' || target.closest('button')) {
+    if (target.type === 'checkbox' || target.closest('button')) {
       e.preventDefault();
       return;
     }
@@ -250,7 +250,7 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
   };
 
   const toggleFieldEnabled = (fieldId: string, position: 'front' | 'back', event: React.MouseEvent) => {
-    event.stopPropagation();
+    event.stopPropagation(); // Prevent drag from starting
     const updateArray = position === 'front' ? setFrontFieldOrder : setBackFieldOrder;
     const currentArray = position === 'front' ? frontFieldOrder : backFieldOrder;
     
@@ -259,14 +259,13 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
     ));
   };
 
-  // Remove field from ordering - Fixed functionality
+  // Remove field from ordering
   const removeField = (fieldId: string, position: 'front' | 'back', event: React.MouseEvent) => {
-    event.stopPropagation();
+    event.stopPropagation(); // Prevent drag from starting
     const updateArray = position === 'front' ? setFrontFieldOrder : setBackFieldOrder;
     const currentArray = position === 'front' ? frontFieldOrder : backFieldOrder;
     
-    const newArray = currentArray.filter(field => field.id !== fieldId);
-    updateArray(newArray);
+    updateArray(currentArray.filter(field => field.id !== fieldId));
     toast.success("Field removed from card");
   };
 
@@ -1297,5 +1296,3 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
 };
 
 export default IDCardPreview;
-
-}
