@@ -1296,5 +1296,3 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
 };
 
 export default IDCardPreview;
-
-</edits_to_apply>
