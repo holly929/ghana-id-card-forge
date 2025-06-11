@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -1092,7 +1091,7 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
         </div>
       )}
       
-      {/* ID Card Front - Responsive adjustments */}
+      {/* ID Card Front - Updated to only show ordered fields */}
       <div className={`w-full max-w-[350px] ${isMobile ? 'scale-90 origin-top' : ''}`}>
         <Card className="w-full h-[220px] p-4 mb-6 bg-gradient-to-r from-ghana-green to-ghana-green/70 text-white overflow-hidden relative">
           {/* Security pattern */}
@@ -1140,7 +1139,7 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
               </div>
             </div>
             
-            {/* Right side - Card details with ordered fields */}
+            {/* Right side - Card details with ONLY ordered fields (no duplicates) */}
             <div className="w-2/3 pl-2">
               <div className="text-center mb-2">
                 <h3 className="text-sm font-bold text-white">{cardLabels.title}</h3>
@@ -1148,6 +1147,7 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
               </div>
               
               <div className="space-y-1 text-xs">
+                {/* ONLY display frontFieldOrder enabled fields */}
                 {frontFieldOrder.filter(field => field.enabled).map((field) => (
                   <div key={field.id} className="grid grid-cols-3 gap-1">
                     <span className="font-semibold text-white">{getFieldLabel(field.key)}</span>
@@ -1175,7 +1175,7 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
         </Card>
       </div>
       
-      {/* ID Card Back - Responsive adjustments */}
+      {/* ID Card Back - Updated to only show ordered fields */}
       <div className={`w-full max-w-[350px] ${isMobile ? 'scale-90 origin-top' : ''}`}>
         <Card className="w-full h-[220px] p-4 bg-gradient-to-r from-ghana-green to-ghana-green/70 text-white overflow-hidden relative">
           {/* Security pattern */}
@@ -1204,6 +1204,7 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
             </div>
             
             <div className="space-y-1 text-xs">
+              {/* ONLY display backFieldOrder enabled fields */}
               {backFieldOrder.filter(field => field.enabled).map((field) => (
                 <div key={field.id} className="grid grid-cols-3 gap-1">
                   <span className="font-semibold text-white">{getFieldLabel(field.key)}</span>
