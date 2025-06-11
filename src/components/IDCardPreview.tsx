@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Shield, Printer, Download, Upload, Camera, Edit, Save, Archive, Files, Plus, Trash2, GripVertical, X } from 'lucide-react';
+import { Shield, Printer, Download, Upload, Camera, Edit, Save, Archive, Files, Plus, Trash2, GripVertical } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from "sonner";
@@ -198,14 +198,8 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
     toast.success("Card customizations saved successfully");
   };
 
-  // Drag and drop handlers - Fixed to not interfere with checkbox
+  // Drag and drop handlers
   const handleDragStart = (e: React.DragEvent, item: FieldOrder) => {
-    // Only start drag if not clicking on checkbox or delete button
-    const target = e.target as HTMLElement;
-    if (target.type === 'checkbox' || target.closest('button')) {
-      e.preventDefault();
-      return;
-    }
     setDraggedItem(item);
     e.dataTransfer.effectAllowed = 'move';
   };
@@ -249,24 +243,13 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
     setDraggedItem(null);
   };
 
-  const toggleFieldEnabled = (fieldId: string, position: 'front' | 'back', event: React.MouseEvent) => {
-    event.stopPropagation(); // Prevent drag from starting
+  const toggleFieldEnabled = (fieldId: string, position: 'front' | 'back') => {
     const updateArray = position === 'front' ? setFrontFieldOrder : setBackFieldOrder;
     const currentArray = position === 'front' ? frontFieldOrder : backFieldOrder;
     
     updateArray(currentArray.map(field => 
       field.id === fieldId ? { ...field, enabled: !field.enabled } : field
     ));
-  };
-
-  // Remove field from ordering
-  const removeField = (fieldId: string, position: 'front' | 'back', event: React.MouseEvent) => {
-    event.stopPropagation(); // Prevent drag from starting
-    const updateArray = position === 'front' ? setFrontFieldOrder : setBackFieldOrder;
-    const currentArray = position === 'front' ? frontFieldOrder : backFieldOrder;
-    
-    updateArray(currentArray.filter(field => field.id !== fieldId));
-    toast.success("Field removed from card");
   };
 
   // Add custom field
@@ -928,13 +911,13 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
           {/* Field Ordering Section */}
           <div className="mb-6">
             <h4 className="font-medium mb-3">Rearrange Card Fields</h4>
-            <p className="text-sm text-gray-600 mb-4">Drag and drop to reorder fields, toggle them on/off, or remove them</p>
+            <p className="text-sm text-gray-600 mb-4">Drag and drop to reorder fields, or toggle them on/off</p>
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Front Fields */}
               <div>
                 <h5 className="text-sm font-medium mb-2">Front Side Fields</h5>
-                <div className="space-y-2 border rounded p-3 min-h-[200px]">
+                <div className="space-y-2 border rounded p-3">
                   {frontFieldOrder.map((field, index) => (
                     <div
                       key={field.id}
@@ -942,44 +925,30 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
                       onDragStart={(e) => handleDragStart(e, field)}
                       onDragOver={handleDragOver}
                       onDrop={(e) => handleDrop(e, field, 'front')}
-                      className={`flex items-center gap-2 p-2 border rounded ${
+                      className={`flex items-center gap-2 p-2 border rounded cursor-move ${
                         field.enabled ? 'bg-white' : 'bg-gray-100'
-                      } ${draggedItem?.id === field.id ? 'opacity-50' : ''} hover:shadow-sm transition-shadow`}
+                      } ${draggedItem?.id === field.id ? 'opacity-50' : ''}`}
                     >
-                      <GripVertical className="h-4 w-4 text-gray-400 cursor-move" />
+                      <GripVertical className="h-4 w-4 text-gray-400" />
                       <input
                         type="checkbox"
                         checked={field.enabled}
-                        onChange={(e) => toggleFieldEnabled(field.id, 'front', e as any)}
-                        onClick={(e) => e.stopPropagation()}
-                        className="mr-2 cursor-pointer"
+                        onChange={() => toggleFieldEnabled(field.id, 'front')}
+                        className="mr-2"
                       />
                       <div className="flex-1">
                         <span className="text-sm font-medium">{field.label}</span>
-                        <div className="text-xs text-gray-500 truncate">{getFieldValue(field.key)}</div>
+                        <div className="text-xs text-gray-500">{getFieldValue(field.key)}</div>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => removeField(field.id, 'front', e)}
-                        className="h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
                     </div>
                   ))}
-                  {frontFieldOrder.length === 0 && (
-                    <div className="text-center text-gray-500 py-8">
-                      No fields configured for front side
-                    </div>
-                  )}
                 </div>
               </div>
 
               {/* Back Fields */}
               <div>
                 <h5 className="text-sm font-medium mb-2">Back Side Fields</h5>
-                <div className="space-y-2 border rounded p-3 min-h-[200px]">
+                <div className="space-y-2 border rounded p-3">
                   {backFieldOrder.map((field, index) => (
                     <div
                       key={field.id}
@@ -987,37 +956,23 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
                       onDragStart={(e) => handleDragStart(e, field)}
                       onDragOver={handleDragOver}
                       onDrop={(e) => handleDrop(e, field, 'back')}
-                      className={`flex items-center gap-2 p-2 border rounded ${
+                      className={`flex items-center gap-2 p-2 border rounded cursor-move ${
                         field.enabled ? 'bg-white' : 'bg-gray-100'
-                      } ${draggedItem?.id === field.id ? 'opacity-50' : ''} hover:shadow-sm transition-shadow`}
+                      } ${draggedItem?.id === field.id ? 'opacity-50' : ''}`}
                     >
-                      <GripVertical className="h-4 w-4 text-gray-400 cursor-move" />
+                      <GripVertical className="h-4 w-4 text-gray-400" />
                       <input
                         type="checkbox"
                         checked={field.enabled}
-                        onChange={(e) => toggleFieldEnabled(field.id, 'back', e as any)}
-                        onClick={(e) => e.stopPropagation()}
-                        className="mr-2 cursor-pointer"
+                        onChange={() => toggleFieldEnabled(field.id, 'back')}
+                        className="mr-2"
                       />
                       <div className="flex-1">
                         <span className="text-sm font-medium">{field.label}</span>
-                        <div className="text-xs text-gray-500 truncate">{getFieldValue(field.key)}</div>
+                        <div className="text-xs text-gray-500">{getFieldValue(field.key)}</div>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => removeField(field.id, 'back', e)}
-                        className="h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
                     </div>
                   ))}
-                  {backFieldOrder.length === 0 && (
-                    <div className="text-center text-gray-500 py-8">
-                      No fields configured for back side
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
