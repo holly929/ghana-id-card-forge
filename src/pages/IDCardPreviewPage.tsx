@@ -10,12 +10,45 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from 'sonner';
 import { dataSyncService } from '@/services/dataSync';
 
+// Type definition for applicant data that handles both camelCase and snake_case
+interface ApplicantData {
+  id: string;
+  fullName?: string;
+  full_name?: string;
+  nationality?: string;
+  area?: string;
+  passportNumber?: string;
+  passport_number?: string;
+  dateOfBirth?: string;
+  date_of_birth?: string;
+  visaType?: string;
+  visa_type?: string;
+  status?: string;
+  dateCreated?: string;
+  date_created?: string;
+  occupation?: string;
+  idCardApproved?: boolean;
+  id_card_approved?: boolean;
+  expiryDate?: string;
+  expiry_date?: string;
+  phoneNumber?: string;
+  phone_number?: string;
+  photo?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Helper function to safely get property values
+const getApplicantProperty = (applicant: ApplicantData, camelCase: string, snakeCase: string): string => {
+  return (applicant as any)[camelCase] || (applicant as any)[snakeCase] || '';
+};
+
 const IDCardPreviewPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   
-  const [applicant, setApplicant] = useState<any>(null);
+  const [applicant, setApplicant] = useState<ApplicantData | null>(null);
   const [loading, setLoading] = useState(true);
   
   // Load applicant data using sync service
@@ -54,6 +87,15 @@ const IDCardPreviewPage: React.FC = () => {
       loadApplicant();
     }
   }, [id]);
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return 'Not provided';
+    try {
+      return new Date(dateString).toLocaleDateString();
+    } catch {
+      return dateString;
+    }
+  };
   
   if (loading) {
     return (
@@ -77,6 +119,14 @@ const IDCardPreviewPage: React.FC = () => {
       </div>
     );
   }
+
+  const fullName = getApplicantProperty(applicant, 'fullName', 'full_name');
+  const dateOfBirth = getApplicantProperty(applicant, 'dateOfBirth', 'date_of_birth');
+  const phoneNumber = getApplicantProperty(applicant, 'phoneNumber', 'phone_number');
+  const visaType = getApplicantProperty(applicant, 'visaType', 'visa_type');
+  const expiryDate = getApplicantProperty(applicant, 'expiryDate', 'expiry_date');
+  const dateCreated = getApplicantProperty(applicant, 'dateCreated', 'date_created');
+  const passportNumber = getApplicantProperty(applicant, 'passportNumber', 'passport_number');
   
   return (
     <div className="space-y-6">
@@ -92,7 +142,7 @@ const IDCardPreviewPage: React.FC = () => {
           <div>
             <h1 className="text-2xl font-semibold text-gray-800">ID Card Preview</h1>
             <p className="text-gray-600">
-              Preview the ID card for {applicant?.fullName || applicant?.full_name}
+              Preview the ID card for {fullName}
             </p>
           </div>
         </div>
@@ -120,66 +170,70 @@ const IDCardPreviewPage: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Full Name</h3>
-                  <p>{applicant?.fullName || applicant?.full_name}</p>
+                  <p>{fullName || 'Not provided'}</p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Nationality</h3>
-                  <p>{applicant?.nationality}</p>
+                  <p>{applicant.nationality || 'Not provided'}</p>
                 </div>
               </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Date of Birth</h3>
-                  <p>{applicant?.dateOfBirth || applicant?.date_of_birth ? new Date(applicant.dateOfBirth || applicant.date_of_birth).toLocaleDateString() : "Not provided"}</p>
+                  <p>{formatDate(dateOfBirth)}</p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Phone Number</h3>
-                  <p>{applicant?.phoneNumber || applicant?.phone_number || "Not provided"}</p>
+                  <p>{phoneNumber || 'Not provided'}</p>
                 </div>
               </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500">Visa Type</h3>
-                  <p>{applicant?.visaType || applicant?.visa_type}</p>
+                  <h3 className="text-sm font-medium text-gray-500">Passport Number</h3>
+                  <p>{passportNumber || 'Not provided'}</p>
                 </div>
                 <div>
+                  <h3 className="text-sm font-medium text-gray-500">Visa Type</h3>
+                  <p>{visaType || 'Not provided'}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
                   <h3 className="text-sm font-medium text-gray-500">Occupation</h3>
-                  <p>{applicant?.occupation || "Not provided"}</p>
+                  <p>{applicant.occupation || 'Not provided'}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Area</h3>
+                  <p>{applicant.area || 'Not provided'}</p>
                 </div>
               </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Status</h3>
-                  <p className="capitalize">{applicant?.status}</p>
+                  <p className="capitalize">{applicant.status || 'Pending'}</p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">ID Number</h3>
-                  <p>{applicant?.id}</p>
+                  <p>{applicant.id}</p>
                 </div>
               </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Expiry Date</h3>
-                  <p>{applicant?.expiryDate || applicant?.expiry_date ? new Date(applicant.expiryDate || applicant.expiry_date).toLocaleDateString() : "Not set"}</p>
+                  <p>{formatDate(expiryDate)}</p>
                 </div>
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Area</h3>
-                  <p>{applicant?.area || "Not provided"}</p>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Date Created</h3>
-                  <p>{applicant?.dateCreated || applicant?.date_created ? new Date(applicant.dateCreated || applicant.date_created).toLocaleDateString() : "Not set"}</p>
+                  <p>{formatDate(dateCreated)}</p>
                 </div>
               </div>
               
-              {applicant?.photo && (
+              {applicant.photo && (
                 <div className="mt-4">
                   <h3 className="text-sm font-medium text-gray-500 mb-2">Photo</h3>
                   <div className="w-32 h-40 border overflow-hidden">
@@ -202,15 +256,16 @@ const IDCardPreviewPage: React.FC = () => {
           <CardContent>
             <IDCardPreview applicant={{
               id: applicant.id,
-              fullName: applicant.fullName || applicant.full_name,
+              fullName: fullName,
               nationality: applicant.nationality,
-              dateOfBirth: applicant.dateOfBirth || applicant.date_of_birth,
-              expiryDate: applicant.expiryDate || applicant.expiry_date,
-              visaType: applicant.visaType || applicant.visa_type,
+              dateOfBirth: dateOfBirth,
+              expiryDate: expiryDate,
+              visaType: visaType,
               occupation: applicant.occupation,
               photo: applicant.photo,
-              phoneNumber: applicant.phoneNumber || applicant.phone_number,
+              phoneNumber: phoneNumber,
               area: applicant.area,
+              passportNumber: passportNumber
             }} />
           </CardContent>
         </Card>

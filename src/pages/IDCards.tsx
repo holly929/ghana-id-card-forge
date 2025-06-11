@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -54,14 +55,47 @@ import {
 } from '@/components/ui/select';
 import BulkPrintModal from '@/components/BulkPrintModal';
 
+// Type definition for applicant data that handles both camelCase and snake_case
+interface ApplicantData {
+  id: string;
+  fullName?: string;
+  full_name?: string;
+  nationality?: string;
+  area?: string;
+  passportNumber?: string;
+  passport_number?: string;
+  dateOfBirth?: string;
+  date_of_birth?: string;
+  visaType?: string;
+  visa_type?: string;
+  status?: string;
+  dateCreated?: string;
+  date_created?: string;
+  occupation?: string;
+  idCardApproved?: boolean;
+  id_card_approved?: boolean;
+  expiryDate?: string;
+  expiry_date?: string;
+  phoneNumber?: string;
+  phone_number?: string;
+  photo?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Helper function to safely get property values
+const getApplicantProperty = (applicant: ApplicantData, camelCase: string, snakeCase: string): string => {
+  return (applicant as any)[camelCase] || (applicant as any)[snakeCase] || '';
+};
+
 const IDCards: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [printFormat, setPrintFormat] = useState('standard');
   const isMobile = useIsMobile();
-  const [applicants, setApplicants] = useState<any[]>([]);
+  const [applicants, setApplicants] = useState<ApplicantData[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [applicantToDelete, setApplicantToDelete] = useState<any>(null);
+  const [applicantToDelete, setApplicantToDelete] = useState<ApplicantData | null>(null);
   const [bulkPrintModalOpen, setBulkPrintModalOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -80,12 +114,18 @@ const IDCards: React.FC = () => {
     setLoading(false);
   }, []);
 
-  const filteredApplicants = applicants.filter(applicant => 
-    applicant.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    applicant.nationality?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (applicant.phoneNumber && applicant.phoneNumber.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (applicant.id && applicant.id.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredApplicants = applicants.filter(applicant => {
+    const fullName = getApplicantProperty(applicant, 'fullName', 'full_name').toLowerCase();
+    const phoneNumber = getApplicantProperty(applicant, 'phoneNumber', 'phone_number').toLowerCase();
+    const nationality = applicant.nationality?.toLowerCase() || '';
+    const id = applicant.id?.toLowerCase() || '';
+    const searchLower = searchTerm.toLowerCase();
+    
+    return fullName.includes(searchLower) ||
+           nationality.includes(searchLower) ||
+           phoneNumber.includes(searchLower) ||
+           id.includes(searchLower);
+  });
 
   const approvedApplicants = filteredApplicants.filter(applicant => 
     applicant.status === 'approved'
@@ -101,9 +141,14 @@ const IDCards: React.FC = () => {
     });
   };
 
-  const handlePrint = (applicant: any) => {
+  const handlePrint = (applicant: ApplicantData) => {
     const logo = localStorage.getItem('systemLogo');
     const photo = localStorage.getItem(`applicantPhoto_${applicant.id}`) || applicant.photo;
+    const fullName = getApplicantProperty(applicant, 'fullName', 'full_name');
+    const phoneNumber = getApplicantProperty(applicant, 'phoneNumber', 'phone_number');
+    const dateOfBirth = getApplicantProperty(applicant, 'dateOfBirth', 'date_of_birth');
+    const expiryDate = getApplicantProperty(applicant, 'expiryDate', 'expiry_date');
+    const visaType = getApplicantProperty(applicant, 'visaType', 'visa_type');
 
     let scale = 1;
     switch (printFormat) {
@@ -121,7 +166,7 @@ const IDCards: React.FC = () => {
     printWindow.document.write(`
       <html>
         <head>
-          <title>${applicant.fullName} - ID Card</title>
+          <title>${fullName} - ID Card</title>
           <style>
             @media print {
               body {
@@ -193,7 +238,7 @@ const IDCards: React.FC = () => {
         </head>
         <body>
           <div class="card-container">
-            <h2 style="text-align:center;margin-bottom:20px;">${applicant.fullName} - ID Card</h2>
+            <h2 style="text-align:center;margin-bottom:20px;">${fullName} - ID Card</h2>
             <div class="card">
               <div style="display: flex; height: 100%;">
                 <div style="width: 33%; display: flex; flex-direction: column; align-items: center; justify-content: space-between;">
@@ -205,7 +250,7 @@ const IDCards: React.FC = () => {
                   </div>
                   <div style="margin-top: 5px; text-align: center;">
                     <div style="background: #fcd116; color: black; padding: 3px 8px; border-radius: 2px; font-weight: bold; font-size: 10px;">
-                      ${(applicant.visaType || 'NONE').toUpperCase()}
+                      ${(visaType || 'NONE').toUpperCase()}
                     </div>
                   </div>
                 </div>
@@ -215,12 +260,12 @@ const IDCards: React.FC = () => {
                     <div style="font-size: 10px;">NON-CITIZEN IDENTITY CARD</div>
                   </div>
                   <div style="font-size: 10px;">
-                    <div><strong>Name:</strong> ${applicant.fullName || 'Not provided'}</div>
+                    <div><strong>Name:</strong> ${fullName || 'Not provided'}</div>
                     <div><strong>Nationality:</strong> ${applicant.nationality || 'Not provided'}</div>
-                    <div><strong>Date of Birth:</strong> ${formatDate(applicant.dateOfBirth)}</div>
-                    <div><strong>Phone Number:</strong> ${applicant.phoneNumber || 'Not provided'}</div>
+                    <div><strong>Date of Birth:</strong> ${formatDate(dateOfBirth)}</div>
+                    <div><strong>Phone Number:</strong> ${phoneNumber || 'Not provided'}</div>
                     <div><strong>ID No:</strong> ${applicant.id || 'Not provided'}</div>
-                    <div><strong>Expiry Date:</strong> ${formatDate(applicant.expiryDate)}</div>
+                    <div><strong>Expiry Date:</strong> ${formatDate(expiryDate)}</div>
                   </div>
                 </div>
               </div>
@@ -242,10 +287,10 @@ const IDCards: React.FC = () => {
     `);
     
     printWindow.document.close();
-    toast.success(`Printing ID card for ${applicant.fullName} in ${printFormat} format`);
+    toast.success(`Printing ID card for ${fullName} in ${printFormat} format`);
   };
 
-  const handleDelete = (applicant: any) => {
+  const handleDelete = (applicant: ApplicantData) => {
     setApplicantToDelete(applicant);
     setDeleteDialogOpen(true);
   };
@@ -259,7 +304,8 @@ const IDCards: React.FC = () => {
       // Also remove the photo
       localStorage.removeItem(`applicantPhoto_${applicantToDelete.id}`);
       
-      toast.success(`Deleted ${applicantToDelete.fullName}'s record`);
+      const fullName = getApplicantProperty(applicantToDelete, 'fullName', 'full_name');
+      toast.success(`Deleted ${fullName}'s record`);
       setDeleteDialogOpen(false);
       setApplicantToDelete(null);
     }
@@ -338,77 +384,25 @@ const IDCards: React.FC = () => {
 
           {isMobile ? (
             <div className="space-y-4">
-              {approvedApplicants.map((applicant) => (
-                <Card key={applicant.id} className="p-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-medium">{applicant.fullName}</h3>
-                      <Badge variant="secondary">{applicant.status}</Badge>
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      <p><strong>ID:</strong> {applicant.id}</p>
-                      <p><strong>Nationality:</strong> {applicant.nationality}</p>
-                      <p><strong>Phone:</strong> {applicant.phoneNumber || 'Not provided'}</p>
-                      <p><strong>Expiry:</strong> {formatDate(applicant.expiryDate)}</p>
-                    </div>
-                    <div className="flex gap-2 pt-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => navigate(`/id-cards/${applicant.id}/preview`)}
-                        className="flex items-center gap-1"
-                      >
-                        <Eye className="h-3 w-3" />
-                        Preview
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={() => handlePrint(applicant)}
-                        className="flex items-center gap-1"
-                      >
-                        <Printer className="h-3 w-3" />
-                        Print
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => handleDelete(applicant)}
-                        className="flex items-center gap-1"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                        Delete
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>ID Number</TableHead>
-                  <TableHead>Nationality</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead>Expiry Date</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {approvedApplicants.map((applicant) => (
-                  <TableRow key={applicant.id}>
-                    <TableCell className="font-medium">{applicant.fullName}</TableCell>
-                    <TableCell>{applicant.id}</TableCell>
-                    <TableCell>{applicant.nationality}</TableCell>
-                    <TableCell>{applicant.phoneNumber || 'Not provided'}</TableCell>
-                    <TableCell>{formatDate(applicant.expiryDate)}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">{applicant.status}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
+              {approvedApplicants.map((applicant) => {
+                const fullName = getApplicantProperty(applicant, 'fullName', 'full_name');
+                const phoneNumber = getApplicantProperty(applicant, 'phoneNumber', 'phone_number');
+                const expiryDate = getApplicantProperty(applicant, 'expiryDate', 'expiry_date');
+                
+                return (
+                  <Card key={applicant.id} className="p-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-medium">{fullName}</h3>
+                        <Badge variant="secondary">{applicant.status}</Badge>
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        <p><strong>ID:</strong> {applicant.id}</p>
+                        <p><strong>Nationality:</strong> {applicant.nationality}</p>
+                        <p><strong>Phone:</strong> {phoneNumber || 'Not provided'}</p>
+                        <p><strong>Expiry:</strong> {formatDate(expiryDate)}</p>
+                      </div>
+                      <div className="flex gap-2 pt-2">
                         <Button
                           size="sm"
                           variant="outline"
@@ -436,9 +430,73 @@ const IDCards: React.FC = () => {
                           Delete
                         </Button>
                       </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>ID Number</TableHead>
+                  <TableHead>Nationality</TableHead>
+                  <TableHead>Phone</TableHead>
+                  <TableHead>Expiry Date</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {approvedApplicants.map((applicant) => {
+                  const fullName = getApplicantProperty(applicant, 'fullName', 'full_name');
+                  const phoneNumber = getApplicantProperty(applicant, 'phoneNumber', 'phone_number');
+                  const expiryDate = getApplicantProperty(applicant, 'expiryDate', 'expiry_date');
+                  
+                  return (
+                    <TableRow key={applicant.id}>
+                      <TableCell className="font-medium">{fullName}</TableCell>
+                      <TableCell>{applicant.id}</TableCell>
+                      <TableCell>{applicant.nationality}</TableCell>
+                      <TableCell>{phoneNumber || 'Not provided'}</TableCell>
+                      <TableCell>{formatDate(expiryDate)}</TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">{applicant.status}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => navigate(`/id-cards/${applicant.id}/preview`)}
+                            className="flex items-center gap-1"
+                          >
+                            <Eye className="h-3 w-3" />
+                            Preview
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => handlePrint(applicant)}
+                            className="flex items-center gap-1"
+                          >
+                            <Printer className="h-3 w-3" />
+                            Print
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleDelete(applicant)}
+                            className="flex items-center gap-1"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                            Delete
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           )}
@@ -465,7 +523,7 @@ const IDCards: React.FC = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Applicant</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete {applicantToDelete?.fullName}? This action cannot be undone.
+              Are you sure you want to delete {applicantToDelete ? getApplicantProperty(applicantToDelete, 'fullName', 'full_name') : ''}? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
