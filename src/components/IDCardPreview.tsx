@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Shield, Printer, Download, Upload, Camera, Edit, Save, Archive, Files, Plus, Trash2 } from 'lucide-react';
+import { Shield, Printer, Download, Upload, Camera, Edit, Save, Archive, Files, Plus, Trash2, GripVertical } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from "sonner";
@@ -38,6 +39,14 @@ interface CustomField {
   position: 'front' | 'back';
 }
 
+interface FieldOrder {
+  id: string;
+  label: string;
+  key: string;
+  position: 'front' | 'back';
+  enabled: boolean;
+}
+
 const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
   const isMobile = useIsMobile();
   const photoInputRef = useRef<HTMLInputElement>(null);
@@ -66,6 +75,24 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
     value: '',
     position: 'front' as 'front' | 'back'
   });
+
+  // State for field ordering
+  const [frontFieldOrder, setFrontFieldOrder] = useState<FieldOrder[]>([
+    { id: '1', label: 'Name', key: 'name', position: 'front', enabled: true },
+    { id: '2', label: 'Nationality', key: 'nationality', position: 'front', enabled: true },
+    { id: '3', label: 'Date of Birth', key: 'dateOfBirth', position: 'front', enabled: true },
+    { id: '4', label: 'Phone', key: 'phone', position: 'front', enabled: true },
+    { id: '5', label: 'ID Number', key: 'idNo', position: 'front', enabled: true },
+    { id: '6', label: 'Expiry Date', key: 'expiryDate', position: 'front', enabled: true },
+  ]);
+
+  const [backFieldOrder, setBackFieldOrder] = useState<FieldOrder[]>([
+    { id: '7', label: 'Occupation', key: 'occupation', position: 'back', enabled: true },
+    { id: '8', label: 'Area', key: 'area', position: 'back', enabled: true },
+    { id: '9', label: 'Issue Date', key: 'issueDate', position: 'back', enabled: true },
+  ]);
+
+  const [draggedItem, setDraggedItem] = useState<FieldOrder | null>(null);
 
   // State for footer settings
   const [footerSettings, setFooterSettings] = useState({
@@ -128,6 +155,27 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
         console.error("Error parsing custom fields:", e);
       }
     }
+
+    // Load field ordering
+    const savedFrontFieldOrder = localStorage.getItem('frontFieldOrder');
+    if (savedFrontFieldOrder) {
+      try {
+        const parsedFrontFieldOrder = JSON.parse(savedFrontFieldOrder);
+        setFrontFieldOrder(parsedFrontFieldOrder);
+      } catch (e) {
+        console.error("Error parsing front field order:", e);
+      }
+    }
+
+    const savedBackFieldOrder = localStorage.getItem('backFieldOrder');
+    if (savedBackFieldOrder) {
+      try {
+        const parsedBackFieldOrder = JSON.parse(savedBackFieldOrder);
+        setBackFieldOrder(parsedBackFieldOrder);
+      } catch (e) {
+        console.error("Error parsing back field order:", e);
+      }
+    }
     
     // Load applicant photo if available
     if (applicant && applicant.id) {
@@ -145,8 +193,64 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
     localStorage.setItem('cardLabels', JSON.stringify(cardLabels));
     localStorage.setItem('footerSettings', JSON.stringify(footerSettings));
     localStorage.setItem('customFields', JSON.stringify(customFields));
+    localStorage.setItem('frontFieldOrder', JSON.stringify(frontFieldOrder));
+    localStorage.setItem('backFieldOrder', JSON.stringify(backFieldOrder));
     setIsEditing(false);
     toast.success("Card customizations saved successfully");
+  };
+
+  // Drag and drop handlers
+  const handleDragStart = (e: React.DragEvent, item: FieldOrder) => {
+    setDraggedItem(item);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e: React.DragEvent, targetItem: FieldOrder, position: 'front' | 'back') => {
+    e.preventDefault();
+    
+    if (!draggedItem || draggedItem.id === targetItem.id) {
+      setDraggedItem(null);
+      return;
+    }
+
+    const sourceArray = draggedItem.position === 'front' ? frontFieldOrder : backFieldOrder;
+    const targetArray = position === 'front' ? frontFieldOrder : backFieldOrder;
+    const setSourceArray = draggedItem.position === 'front' ? setFrontFieldOrder : setBackFieldOrder;
+    const setTargetArray = position === 'front' ? setFrontFieldOrder : setBackFieldOrder;
+
+    // Remove from source
+    const newSourceArray = sourceArray.filter(item => item.id !== draggedItem.id);
+    
+    // Add to target at the correct position
+    const targetIndex = targetArray.findIndex(item => item.id === targetItem.id);
+    const newTargetArray = [...targetArray];
+    
+    if (draggedItem.position === position) {
+      // Same array, just reorder
+      newTargetArray.splice(targetIndex, 0, draggedItem);
+    } else {
+      // Different array, move and update position
+      const updatedDraggedItem = { ...draggedItem, position };
+      newTargetArray.splice(targetIndex, 0, updatedDraggedItem);
+      setSourceArray(newSourceArray);
+    }
+    
+    setTargetArray(newTargetArray);
+    setDraggedItem(null);
+  };
+
+  const toggleFieldEnabled = (fieldId: string, position: 'front' | 'back') => {
+    const updateArray = position === 'front' ? setFrontFieldOrder : setBackFieldOrder;
+    const currentArray = position === 'front' ? frontFieldOrder : backFieldOrder;
+    
+    updateArray(currentArray.map(field => 
+      field.id === fieldId ? { ...field, enabled: !field.enabled } : field
+    ));
   };
 
   // Add custom field
@@ -178,6 +282,8 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
       cardLabels,
       footerSettings,
       customFields,
+      frontFieldOrder,
+      backFieldOrder,
       timestamp: new Date().toISOString()
     };
     localStorage.setItem('cardSettingsBackup', JSON.stringify(backup));
@@ -193,15 +299,71 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
         setCardLabels(backupData.cardLabels);
         setFooterSettings(backupData.footerSettings || footerSettings);
         setCustomFields(backupData.customFields || []);
+        setFrontFieldOrder(backupData.frontFieldOrder || frontFieldOrder);
+        setBackFieldOrder(backupData.backFieldOrder || backFieldOrder);
         localStorage.setItem('cardLabels', JSON.stringify(backupData.cardLabels));
         localStorage.setItem('footerSettings', JSON.stringify(backupData.footerSettings || footerSettings));
         localStorage.setItem('customFields', JSON.stringify(backupData.customFields || []));
+        localStorage.setItem('frontFieldOrder', JSON.stringify(backupData.frontFieldOrder || frontFieldOrder));
+        localStorage.setItem('backFieldOrder', JSON.stringify(backupData.backFieldOrder || backFieldOrder));
         toast.success("Settings restored successfully");
       } catch (e) {
         toast.error("Failed to restore settings");
       }
     } else {
       toast.error("No backup found");
+    }
+  };
+
+  // Helper function to get field value
+  const getFieldValue = (fieldKey: string): string => {
+    switch (fieldKey) {
+      case 'name':
+        return applicant.fullName;
+      case 'nationality':
+        return applicant.nationality;
+      case 'dateOfBirth':
+        return formatDate(applicant.dateOfBirth);
+      case 'phone':
+        return applicant.phoneNumber || 'Not provided';
+      case 'idNo':
+        return applicant.id;
+      case 'expiryDate':
+        return formatDate(getExpiryDate());
+      case 'occupation':
+        return applicant.occupation || 'Not specified';
+      case 'area':
+        return applicant.area || 'Not provided';
+      case 'issueDate':
+        return formatDate(new Date().toISOString().split('T')[0]);
+      default:
+        return '';
+    }
+  };
+
+  // Helper function to get field label
+  const getFieldLabel = (fieldKey: string): string => {
+    switch (fieldKey) {
+      case 'name':
+        return cardLabels.name;
+      case 'nationality':
+        return cardLabels.nationality;
+      case 'dateOfBirth':
+        return cardLabels.dateOfBirth;
+      case 'phone':
+        return 'Phone:';
+      case 'idNo':
+        return cardLabels.idNo;
+      case 'expiryDate':
+        return cardLabels.expiryDate;
+      case 'occupation':
+        return cardLabels.occupation;
+      case 'area':
+        return 'Area:';
+      case 'issueDate':
+        return cardLabels.issueDate;
+      default:
+        return '';
     }
   };
   
@@ -237,7 +399,6 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
     }
   };
   
-  // Handle the actual file selection
   const handlePhotoFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) {
@@ -278,7 +439,6 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
     }
   };
   
-  // Update applicant photo in the localStorage applicants array
   const updateApplicantPhotoInStorage = (id: string, photoData: string) => {
     try {
       const storedApplicants = localStorage.getItem('applicants');
@@ -323,6 +483,18 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
       // Get front and back custom fields
       const frontCustomFields = customFields.filter(field => field.position === 'front');
       const backCustomFields = customFields.filter(field => field.position === 'back');
+      
+      // Generate front fields based on order
+      const frontFieldsHtml = frontFieldOrder
+        .filter(field => field.enabled)
+        .map(field => `<div><strong>${getFieldLabel(field.key)}</strong> ${getFieldValue(field.key)}</div>`)
+        .join('');
+
+      // Generate back fields based on order
+      const backFieldsHtml = backFieldOrder
+        .filter(field => field.enabled)
+        .map(field => `<div><strong>${getFieldLabel(field.key)}</strong> ${getFieldValue(field.key)}</div>`)
+        .join('');
       
       const htmlContent = `
         <html>
@@ -482,12 +654,7 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
                         <div>${cardLabels.subtitle}</div>
                       </div>
                       <div class="card-info">
-                        <div><strong>${cardLabels.name}</strong> ${applicant.fullName}</div>
-                        <div><strong>${cardLabels.nationality}</strong> ${applicant.nationality}</div>
-                        <div><strong>${cardLabels.dateOfBirth}</strong> ${formatDate(applicant.dateOfBirth)}</div>
-                        <div><strong>Phone:</strong> ${applicant.phoneNumber || 'Not provided'}</div>
-                        <div><strong>${cardLabels.idNo}</strong> ${applicant.id}</div>
-                        <div><strong>${cardLabels.expiryDate}</strong> ${formatDate(getExpiryDate())}</div>
+                        ${frontFieldsHtml}
                         ${frontCustomFields.map(field => `<div><strong>${field.label}:</strong> ${field.value}</div>`).join('')}
                       </div>
                     </div>
@@ -507,9 +674,7 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
                         ${footerSettings.showBackFooter ? `<div style="font-size: 8px;">${footerSettings.backFooter}</div>` : ''}
                       </div>
                       <div class="card-info">
-                        <div><strong>${cardLabels.occupation}</strong> ${applicant.occupation || 'Not specified'}</div>
-                        <div><strong>Area:</strong> ${applicant.area || 'Not provided'}</div>
-                        <div><strong>${cardLabels.issueDate}</strong> ${formatDate(new Date().toISOString().split('T')[0])}</div>
+                        ${backFieldsHtml}
                         ${backCustomFields.map(field => `<div><strong>${field.label}:</strong> ${field.value}</div>`).join('')}
                       </div>
                       ${footerSettings.showMainFooter ? `
@@ -556,7 +721,6 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
     }
   };
   
-  // Fixed version of download PDF functionality
   const handleDownloadPDF = () => {
     toast.info("Preparing PDF for download...");
     handlePrint();
@@ -599,7 +763,6 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
             Download PDF
           </Button>
           
-          {/* Add single page print toggle */}
           <Button 
             variant={singlePagePrint ? "secondary" : "outline"}
             onClick={() => setSinglePagePrint(!singlePagePrint)}
@@ -628,7 +791,6 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
             )}
           </Button>
           
-          {/* Fixed photo upload button */}
           <Button 
             variant="secondary" 
             className={`${isMobile ? 'w-full' : ''}`}
@@ -747,6 +909,76 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
             </div>
           </div>
 
+          {/* Field Ordering Section */}
+          <div className="mb-6">
+            <h4 className="font-medium mb-3">Rearrange Card Fields</h4>
+            <p className="text-sm text-gray-600 mb-4">Drag and drop to reorder fields, or toggle them on/off</p>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Front Fields */}
+              <div>
+                <h5 className="text-sm font-medium mb-2">Front Side Fields</h5>
+                <div className="space-y-2 border rounded p-3">
+                  {frontFieldOrder.map((field, index) => (
+                    <div
+                      key={field.id}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, field)}
+                      onDragOver={handleDragOver}
+                      onDrop={(e) => handleDrop(e, field, 'front')}
+                      className={`flex items-center gap-2 p-2 border rounded cursor-move ${
+                        field.enabled ? 'bg-white' : 'bg-gray-100'
+                      } ${draggedItem?.id === field.id ? 'opacity-50' : ''}`}
+                    >
+                      <GripVertical className="h-4 w-4 text-gray-400" />
+                      <input
+                        type="checkbox"
+                        checked={field.enabled}
+                        onChange={() => toggleFieldEnabled(field.id, 'front')}
+                        className="mr-2"
+                      />
+                      <div className="flex-1">
+                        <span className="text-sm font-medium">{field.label}</span>
+                        <div className="text-xs text-gray-500">{getFieldValue(field.key)}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Back Fields */}
+              <div>
+                <h5 className="text-sm font-medium mb-2">Back Side Fields</h5>
+                <div className="space-y-2 border rounded p-3">
+                  {backFieldOrder.map((field, index) => (
+                    <div
+                      key={field.id}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, field)}
+                      onDragOver={handleDragOver}
+                      onDrop={(e) => handleDrop(e, field, 'back')}
+                      className={`flex items-center gap-2 p-2 border rounded cursor-move ${
+                        field.enabled ? 'bg-white' : 'bg-gray-100'
+                      } ${draggedItem?.id === field.id ? 'opacity-50' : ''}`}
+                    >
+                      <GripVertical className="h-4 w-4 text-gray-400" />
+                      <input
+                        type="checkbox"
+                        checked={field.enabled}
+                        onChange={() => toggleFieldEnabled(field.id, 'back')}
+                        className="mr-2"
+                      />
+                      <div className="flex-1">
+                        <span className="text-sm font-medium">{field.label}</span>
+                        <div className="text-xs text-gray-500">{getFieldValue(field.key)}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Footer Settings Section */}
           <div className="mb-6">
             <h4 className="font-medium mb-3">Footer Settings</h4>
@@ -797,7 +1029,6 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
           <div className="mb-6">
             <h4 className="font-medium mb-3">Custom Fields</h4>
             
-            {/* Add new custom field */}
             <div className="border rounded p-3 mb-4">
               <h5 className="text-sm font-medium mb-2">Add New Custom Field</h5>
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
@@ -830,7 +1061,6 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
               </div>
             </div>
             
-            {/* Existing custom fields */}
             {customFields.length > 0 && (
               <div className="space-y-2">
                 <h5 className="text-sm font-medium">Existing Custom Fields</h5>
@@ -910,7 +1140,7 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
               </div>
             </div>
             
-            {/* Right side - Card details */}
+            {/* Right side - Card details with ordered fields */}
             <div className="w-2/3 pl-2">
               <div className="text-center mb-2">
                 <h3 className="text-sm font-bold text-white">{cardLabels.title}</h3>
@@ -918,35 +1148,12 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
               </div>
               
               <div className="space-y-1 text-xs">
-                <div className="grid grid-cols-3 gap-1">
-                  <span className="font-semibold text-white">{cardLabels.name}</span>
-                  <span className="col-span-2">{applicant.fullName}</span>
-                </div>
-                
-                <div className="grid grid-cols-3 gap-1">
-                  <span className="font-semibold text-white">{cardLabels.nationality}</span>
-                  <span className="col-span-2">{applicant.nationality}</span>
-                </div>
-                
-                <div className="grid grid-cols-3 gap-1">
-                  <span className="font-semibold text-white">{cardLabels.dateOfBirth}</span>
-                  <span className="col-span-2">{formatDate(applicant.dateOfBirth)}</span>
-                </div>
-                
-                <div className="grid grid-cols-3 gap-1">
-                  <span className="font-semibold text-white">Phone:</span>
-                  <span className="col-span-2">{applicant.phoneNumber || 'Not provided'}</span>
-                </div>
-                
-                <div className="grid grid-cols-3 gap-1">
-                  <span className="font-semibold text-white">{cardLabels.idNo}</span>
-                  <span className="col-span-2">{applicant.id}</span>
-                </div>
-                
-                <div className="grid grid-cols-3 gap-1">
-                  <span className="font-semibold text-white">{cardLabels.expiryDate}</span>
-                  <span className="col-span-2">{formatDate(getExpiryDate())}</span>
-                </div>
+                {frontFieldOrder.filter(field => field.enabled).map((field) => (
+                  <div key={field.id} className="grid grid-cols-3 gap-1">
+                    <span className="font-semibold text-white">{getFieldLabel(field.key)}</span>
+                    <span className="col-span-2">{getFieldValue(field.key)}</span>
+                  </div>
+                ))}
 
                 {/* Display front custom fields */}
                 {frontCustomFields.map((field) => (
@@ -997,20 +1204,12 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
             </div>
             
             <div className="space-y-1 text-xs">
-              <div className="grid grid-cols-3 gap-1">
-                <span className="font-semibold text-white">{cardLabels.occupation}</span>
-                <span className="col-span-2">{applicant.occupation || 'Not specified'}</span>
-              </div>
-              
-              <div className="grid grid-cols-3 gap-1">
-                <span className="font-semibold text-white">Area:</span>
-                <span className="col-span-2">{applicant.area || 'Not provided'}</span>
-              </div>
-              
-              <div className="grid grid-cols-3 gap-1">
-                <span className="font-semibold text-white">{cardLabels.issueDate}</span>
-                <span className="col-span-2">{formatDate(new Date().toISOString().split('T')[0])}</span>
-              </div>
+              {backFieldOrder.filter(field => field.enabled).map((field) => (
+                <div key={field.id} className="grid grid-cols-3 gap-1">
+                  <span className="font-semibold text-white">{getFieldLabel(field.key)}</span>
+                  <span className="col-span-2">{getFieldValue(field.key)}</span>
+                </div>
+              ))}
 
               {/* Display back custom fields */}
               {backCustomFields.map((field) => (
