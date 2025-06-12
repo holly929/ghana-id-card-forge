@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   Dialog, 
@@ -34,6 +33,7 @@ const BulkPrintModal: React.FC<BulkPrintModalProps> = ({
 }) => {
   const [selectedApplicants, setSelectedApplicants] = useState<string[]>([]);
   const [printFormat, setPrintFormat] = useState<string>('standard');
+  const [printBothSides, setPrintBothSides] = useState<boolean>(false);
   
   // Toggle selecting all applicants
   const toggleSelectAll = () => {
@@ -84,8 +84,48 @@ const BulkPrintModal: React.FC<BulkPrintModalProps> = ({
     // Print directly here instead of navigating
     printSelectedCards(selectedApplicantsData);
     
-    toast.success(`Printing ${selectedApplicants.length} ID cards`);
+    toast.success(`Printing ${selectedApplicants.length} ID cards${printBothSides ? ' (front and back)' : ''}`);
     onClose();
+  };
+
+  const generateBackSideHTML = (applicant: any) => {
+    const logo = localStorage.getItem('systemLogo');
+    
+    return `
+      <div class="card card-back">
+        <div style="height: 100%; display: flex; flex-direction: column; justify-content: space-between; padding: 20px;">
+          <div style="text-align: center;">
+            ${logo ? `<img src="${logo}" alt="Logo" class="logo-image" style="max-height: 30px; max-width: 80px;" />` : ''}
+            <div style="font-weight: bold; font-size: 10px; margin-top: 10px;">REPUBLIC OF GHANA</div>
+            <div style="font-size: 8px;">IMMIGRATION SERVICE</div>
+          </div>
+          
+          <div style="font-size: 8px; text-align: center;">
+            <div style="margin-bottom: 10px;">
+              <strong>CONDITIONS OF STAY</strong>
+            </div>
+            <div style="text-align: left; line-height: 1.4;">
+              • This card must be carried at all times<br/>
+              • Report change of address within 7 days<br/>
+              • Valid for identification purposes only<br/>
+              • Not transferable to another person<br/>
+              • Report loss or damage immediately
+            </div>
+          </div>
+          
+          <div style="text-align: center; font-size: 8px;">
+            <div style="border-top: 1px solid white; padding-top: 5px;">
+              <strong>Emergency Contact: +233-XXX-XXXX</strong>
+            </div>
+          </div>
+        </div>
+        <div class="color-band">
+          <div class="red-band"></div>
+          <div class="yellow-band"></div>
+          <div class="green-band"></div>
+        </div>
+      </div>
+    `;
   };
 
   const printSelectedCards = (selectedCards: any[]) => {
@@ -155,15 +195,28 @@ const BulkPrintModal: React.FC<BulkPrintModalProps> = ({
 
       // Generate all cards with proper page breaks
       let allCardsHTML = '';
-      const cardsPerPage = 6;
+      const cardsPerPage = printBothSides ? 3 : 6; // Fewer cards per page when printing both sides
       let currentPageCards = '';
       let cardsOnCurrentPage = 0;
 
       selectedCards.forEach((applicant, index) => {
         console.log(`Processing card ${index + 1} for applicant: ${getApplicantProperty(applicant, 'fullName', 'full_name')}`);
         
-        const cardHTML = generateCardHTML(applicant);
-        currentPageCards += cardHTML;
+        const frontCardHTML = generateCardHTML(applicant);
+        const backCardHTML = printBothSides ? generateBackSideHTML(applicant) : '';
+        
+        if (printBothSides) {
+          // For double-sided printing, show front and back side by side
+          currentPageCards += `
+            <div class="card-pair">
+              ${frontCardHTML}
+              ${backCardHTML}
+            </div>
+          `;
+        } else {
+          currentPageCards += frontCardHTML;
+        }
+        
         cardsOnCurrentPage++;
         
         // If we've reached the cards per page limit or this is the last card
@@ -181,7 +234,7 @@ const BulkPrintModal: React.FC<BulkPrintModalProps> = ({
         <!DOCTYPE html>
         <html>
           <head>
-            <title>Bulk ID Cards Print - ${selectedCards.length} cards</title>
+            <title>Bulk ID Cards Print - ${selectedCards.length} cards${printBothSides ? ' (front and back)' : ''}</title>
             <style>
               @page {
                 size: A4;
@@ -197,7 +250,7 @@ const BulkPrintModal: React.FC<BulkPrintModalProps> = ({
                 
                 .card-page {
                   display: grid;
-                  grid-template-columns: repeat(2, 1fr);
+                  grid-template-columns: ${printBothSides ? '1fr' : 'repeat(2, 1fr)'};
                   gap: 15mm;
                   width: 100%;
                   height: 100vh;
@@ -205,6 +258,15 @@ const BulkPrintModal: React.FC<BulkPrintModalProps> = ({
                   justify-items: center;
                   padding: 10mm;
                   box-sizing: border-box;
+                }
+                
+                .card-pair {
+                  display: grid;
+                  grid-template-columns: 1fr 1fr;
+                  gap: 10mm;
+                  width: 100%;
+                  justify-items: center;
+                  margin-bottom: 15mm;
                 }
                 
                 .card {
@@ -220,6 +282,10 @@ const BulkPrintModal: React.FC<BulkPrintModalProps> = ({
                   transform: scale(${scale});
                   transform-origin: center;
                   margin: ${scale > 1 ? '10px' : '5px'};
+                }
+                
+                .card-back {
+                  background: linear-gradient(to right, #006b3f, #006b3f99);
                 }
                 
                 .logo-container {
@@ -289,8 +355,16 @@ const BulkPrintModal: React.FC<BulkPrintModalProps> = ({
                   padding: 20px;
                   box-shadow: 0 0 10px rgba(0,0,0,0.1);
                   display: grid;
-                  grid-template-columns: repeat(2, 1fr);
+                  grid-template-columns: ${printBothSides ? '1fr' : 'repeat(2, 1fr)'};
                   gap: 20px;
+                  justify-items: center;
+                }
+                
+                .card-pair {
+                  display: grid;
+                  grid-template-columns: 1fr 1fr;
+                  gap: 20px;
+                  width: 100%;
                   justify-items: center;
                 }
                 
@@ -313,7 +387,7 @@ const BulkPrintModal: React.FC<BulkPrintModalProps> = ({
           <body>
             ${allCardsHTML}
             <script>
-              console.log('Print window loaded with ${selectedCards.length} cards');
+              console.log('Print window loaded with ${selectedCards.length} cards${printBothSides ? ' (front and back)' : ''}');
               window.onload = function() {
                 console.log('Starting print process...');
                 setTimeout(function() {
@@ -349,21 +423,34 @@ const BulkPrintModal: React.FC<BulkPrintModalProps> = ({
         </DialogHeader>
         
         <div className="py-4 space-y-4">
-          <div className="flex-1">
-            <Label htmlFor="print-format" className="mb-2 block">Card Size</Label>
-            <Select 
-              value={printFormat} 
-              onValueChange={setPrintFormat}
-            >
-              <SelectTrigger id="print-format">
-                <SelectValue placeholder="Select size" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="small">Small</SelectItem>
-                <SelectItem value="standard">Standard</SelectItem>
-                <SelectItem value="large">Large</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="print-format" className="mb-2 block">Card Size</Label>
+              <Select 
+                value={printFormat} 
+                onValueChange={setPrintFormat}
+              >
+                <SelectTrigger id="print-format">
+                  <SelectValue placeholder="Select size" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="small">Small</SelectItem>
+                  <SelectItem value="standard">Standard</SelectItem>
+                  <SelectItem value="large">Large</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex items-center space-x-2 mt-6">
+              <Checkbox 
+                id="print-both-sides"
+                checked={printBothSides}
+                onCheckedChange={setPrintBothSides}
+              />
+              <Label htmlFor="print-both-sides" className="text-sm font-medium">
+                Print both front and back
+              </Label>
+            </div>
           </div>
           
           <div className="border rounded-md">
@@ -438,6 +525,7 @@ const BulkPrintModal: React.FC<BulkPrintModalProps> = ({
           >
             <Printer className="mr-2 h-4 w-4" />
             Print {selectedApplicants.length} Card{selectedApplicants.length !== 1 ? 's' : ''}
+            {printBothSides && ' (Both Sides)'}
           </Button>
         </DialogFooter>
       </DialogContent>
