@@ -445,7 +445,9 @@ const BulkPrintModal: React.FC<BulkPrintModalProps> = ({
               <Checkbox 
                 id="print-both-sides"
                 checked={printBothSides}
-                onCheckedChange={setPrintBothSides}
+                onCheckedChange={(checked) => {
+                  setPrintBothSides(checked === true);
+                }}
               />
               <Label htmlFor="print-both-sides" className="text-sm font-medium">
                 Print both front and back
