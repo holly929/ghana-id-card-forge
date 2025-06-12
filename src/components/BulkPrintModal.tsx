@@ -52,6 +52,21 @@ const BulkPrintModal: React.FC<BulkPrintModalProps> = ({
       setSelectedApplicants([...selectedApplicants, id]);
     }
   };
+
+  // Helper function to safely get property values (handles both camelCase and snake_case)
+  const getApplicantProperty = (applicant: any, camelCase: string, snakeCase: string): string => {
+    return applicant[camelCase] || applicant[snakeCase] || '';
+  };
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return 'Not provided';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+  };
   
   // Handle printing directly without navigation
   const handlePrint = () => {
@@ -84,69 +99,48 @@ const BulkPrintModal: React.FC<BulkPrintModalProps> = ({
         default: scale = 1; break;
       }
 
-      const formatDate = (dateString: string) => {
-        if (!dateString) return 'Not provided';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-GB', {
-          day: '2-digit',
-          month: 'short',
-          year: 'numeric',
-        });
-      };
-
       const printWindow = window.open('', '_blank', 'width=1200,height=800');
       if (!printWindow) {
         toast.error("Pop-up blocked. Please allow pop-ups to print.");
         return;
       }
 
-      const cardsHTML = selectedCards.map(applicant => {
+      const generateCardHTML = (applicant: any) => {
         const photo = localStorage.getItem(`applicantPhoto_${applicant.id}`) || applicant.photo;
-        
+        const fullName = getApplicantProperty(applicant, 'fullName', 'full_name');
+        const phoneNumber = getApplicantProperty(applicant, 'phoneNumber', 'phone_number');
+        const dateOfBirth = getApplicantProperty(applicant, 'dateOfBirth', 'date_of_birth');
+        const expiryDate = getApplicantProperty(applicant, 'expiryDate', 'expiry_date');
+        const visaType = getApplicantProperty(applicant, 'visaType', 'visa_type');
+
         return `
           <div class="card">
-            <div class="card-content">
-              <div class="left-side">
+            <div style="display: flex; height: 100%;">
+              <div style="width: 33%; display: flex; flex-direction: column; align-items: center; justify-content: space-between;">
                 <div class="logo-container">
-                  ${logo ? `<img src="${logo}" alt="Logo" class="logo-image" />` : '<div class="logo-placeholder">LOGO</div>'}
+                  ${logo ? `<img src="${logo}" alt="Logo" class="logo-image" />` : ''}
                 </div>
                 <div class="photo-container">
-                  ${photo ? `<img src="${photo}" alt="Photo" class="photo-image" />` : '<div class="photo-placeholder">PHOTO</div>'}
+                  ${photo ? `<img src="${photo}" alt="Applicant" class="photo-image" />` : ''}
                 </div>
-                <div class="visa-type">
-                  ${(applicant.visaType || 'NONE').toUpperCase()}
+                <div style="margin-top: 5px; text-align: center;">
+                  <div style="background: #fcd116; color: black; padding: 3px 8px; border-radius: 2px; font-weight: bold; font-size: 10px;">
+                    ${(visaType || 'NONE').toUpperCase()}
+                  </div>
                 </div>
               </div>
-              <div class="right-side">
-                <div class="card-title">
-                  <div class="main-title">REPUBLIC OF GHANA</div>
-                  <div class="sub-title">NON-CITIZEN IDENTITY CARD</div>
+              <div style="width: 67%; padding-left: 10px;">
+                <div style="text-align: center; margin-bottom: 10px;">
+                  <div style="font-weight: bold; font-size: 12px;">REPUBLIC OF GHANA</div>
+                  <div style="font-size: 10px;">NON-CITIZEN IDENTITY CARD</div>
                 </div>
-                <div class="card-info">
-                  <div class="info-row">
-                    <span class="label">Name:</span>
-                    <span class="value">${applicant.fullName || 'Not provided'}</span>
-                  </div>
-                  <div class="info-row">
-                    <span class="label">Nationality:</span>
-                    <span class="value">${applicant.nationality || 'Not provided'}</span>
-                  </div>
-                  <div class="info-row">
-                    <span class="label">Date of Birth:</span>
-                    <span class="value">${formatDate(applicant.dateOfBirth)}</span>
-                  </div>
-                  <div class="info-row">
-                    <span class="label">Phone:</span>
-                    <span class="value">${applicant.phoneNumber || 'Not provided'}</span>
-                  </div>
-                  <div class="info-row">
-                    <span class="label">ID No:</span>
-                    <span class="value">${applicant.id || 'Not provided'}</span>
-                  </div>
-                  <div class="info-row">
-                    <span class="label">Expiry Date:</span>
-                    <span class="value">${formatDate(applicant.expiryDate || new Date(new Date().setFullYear(new Date().getFullYear() + 2)).toISOString().split('T')[0])}</span>
-                  </div>
+                <div style="font-size: 10px;">
+                  <div><strong>Name:</strong> ${fullName || 'Not provided'}</div>
+                  <div><strong>Nationality:</strong> ${applicant.nationality || 'Not provided'}</div>
+                  <div><strong>Date of Birth:</strong> ${formatDate(dateOfBirth)}</div>
+                  <div><strong>Phone Number:</strong> ${phoneNumber || 'Not provided'}</div>
+                  <div><strong>ID No:</strong> ${applicant.id || 'Not provided'}</div>
+                  <div><strong>Expiry Date:</strong> ${formatDate(expiryDate)}</div>
                 </div>
               </div>
             </div>
@@ -157,192 +151,179 @@ const BulkPrintModal: React.FC<BulkPrintModalProps> = ({
             </div>
           </div>
         `;
-      }).join('');
+      };
+
+      // Generate all cards with proper page breaks
+      let allCardsHTML = '';
+      const cardsPerPage = 6;
+      let currentPageCards = '';
+      let cardsOnCurrentPage = 0;
+
+      selectedCards.forEach((applicant, index) => {
+        console.log(`Processing card ${index + 1} for applicant: ${getApplicantProperty(applicant, 'fullName', 'full_name')}`);
+        
+        const cardHTML = generateCardHTML(applicant);
+        currentPageCards += cardHTML;
+        cardsOnCurrentPage++;
+        
+        // If we've reached the cards per page limit or this is the last card
+        if (cardsOnCurrentPage === cardsPerPage || index === selectedCards.length - 1) {
+          if (allCardsHTML !== '') {
+            allCardsHTML += '<div class="page-break"></div>';
+          }
+          allCardsHTML += `<div class="card-page">${currentPageCards}</div>`;
+          currentPageCards = '';
+          cardsOnCurrentPage = 0;
+        }
+      });
 
       const htmlContent = `
         <!DOCTYPE html>
         <html>
           <head>
-            <title>Bulk ID Cards Print</title>
+            <title>Bulk ID Cards Print - ${selectedCards.length} cards</title>
             <style>
-              * { margin: 0; padding: 0; box-sizing: border-box; }
-              body { font-family: Arial, sans-serif; background: white; padding: 20px; }
+              @page {
+                size: A4;
+                margin: 10mm;
+              }
               
               @media print {
-                body { margin: 0; padding: 10px; }
-                @page { size: auto; margin: 10mm; }
+                body {
+                  margin: 0;
+                  padding: 0;
+                  font-family: Arial, sans-serif;
+                }
+                
+                .card-page {
+                  display: grid;
+                  grid-template-columns: repeat(2, 1fr);
+                  gap: 15mm;
+                  width: 100%;
+                  height: 100vh;
+                  align-items: start;
+                  justify-items: center;
+                  padding: 10mm;
+                  box-sizing: border-box;
+                }
+                
+                .card {
+                  width: 85.6mm;
+                  height: 53.98mm;
+                  background: linear-gradient(to right, #006b3f, #006b3f99);
+                  color: white;
+                  padding: 16px;
+                  border-radius: 8px;
+                  position: relative;
+                  overflow: hidden;
+                  box-sizing: border-box;
+                  transform: scale(${scale});
+                  transform-origin: center;
+                  margin: ${scale > 1 ? '10px' : '5px'};
+                }
+                
+                .logo-container {
+                  text-align: center;
+                  margin-bottom: 10px;
+                }
+                
+                .logo-image {
+                  max-height: 40px;
+                  max-width: 100px;
+                }
+                
+                .photo-container {
+                  width: 80px;
+                  height: 100px;
+                  border: 2px solid white;
+                  overflow: hidden;
+                  margin: 5px auto;
+                }
+                
+                .photo-image {
+                  width: 100%;
+                  height: 100%;
+                  object-fit: cover;
+                }
+                
+                .color-band {
+                  position: absolute;
+                  bottom: 0;
+                  left: 0;
+                  right: 0;
+                  height: 16px;
+                  display: flex;
+                }
+                
+                .color-band div {
+                  flex: 1;
+                }
+                
+                .red-band {
+                  background-color: #ce1126;
+                }
+                
+                .yellow-band {
+                  background-color: #fcd116;
+                }
+                
+                .green-band {
+                  background-color: #006b3f;
+                }
+                
+                .page-break {
+                  page-break-before: always;
+                }
               }
               
-              .page-container {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-                gap: 20px;
-                justify-items: center;
-                transform: scale(${scale});
-                transform-origin: top left;
+              /* Screen preview styles */
+              @media screen {
+                body {
+                  background: #f5f5f5;
+                  padding: 20px;
+                }
+                
+                .card-page {
+                  background: white;
+                  margin-bottom: 20px;
+                  padding: 20px;
+                  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+                  display: grid;
+                  grid-template-columns: repeat(2, 1fr);
+                  gap: 20px;
+                  justify-items: center;
+                }
+                
+                .card {
+                  width: 85.6mm;
+                  height: 53.98mm;
+                  background: linear-gradient(to right, #006b3f, #006b3f99);
+                  color: white;
+                  padding: 16px;
+                  border-radius: 8px;
+                  position: relative;
+                  overflow: hidden;
+                  box-sizing: border-box;
+                  transform: scale(${scale});
+                  margin: 10px;
+                }
               }
-              
-              .card {
-                width: 85.6mm;
-                height: 53.98mm;
-                background: linear-gradient(135deg, #006b3f 0%, #004d2e 100%);
-                color: white;
-                padding: 8px;
-                border-radius: 6px;
-                position: relative;
-                overflow: hidden;
-                page-break-inside: avoid;
-                margin-bottom: 10px;
-              }
-              
-              .card-content {
-                display: flex;
-                height: calc(100% - 12px);
-                position: relative;
-                z-index: 2;
-              }
-              
-              .left-side {
-                width: 35%;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: flex-start;
-                padding-top: 5px;
-              }
-              
-              .right-side {
-                width: 65%;
-                padding-left: 8px;
-                font-size: 8px;
-                display: flex;
-                flex-direction: column;
-              }
-              
-              .logo-container {
-                height: 25px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                margin-bottom: 8px;
-              }
-              
-              .logo-image {
-                max-height: 25px;
-                max-width: 60px;
-                object-fit: contain;
-              }
-              
-              .logo-placeholder {
-                font-size: 8px;
-                color: rgba(255,255,255,0.7);
-              }
-              
-              .photo-container {
-                width: 55px;
-                height: 70px;
-                border: 2px solid white;
-                overflow: hidden;
-                margin: 5px 0;
-                background: rgba(255,255,255,0.1);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-              }
-              
-              .photo-image {
-                width: 100%;
-                height: 100%;
-                object-fit: cover;
-              }
-              
-              .photo-placeholder {
-                font-size: 6px;
-                color: rgba(255,255,255,0.7);
-              }
-              
-              .visa-type {
-                background: #fcd116;
-                color: #000;
-                padding: 2px 4px;
-                border-radius: 2px;
-                font-weight: bold;
-                font-size: 7px;
-                text-align: center;
-                margin-top: 5px;
-                min-width: 50px;
-              }
-              
-              .card-title {
-                text-align: center;
-                margin-bottom: 8px;
-              }
-              
-              .main-title {
-                font-weight: bold;
-                font-size: 9px;
-                line-height: 1.1;
-              }
-              
-              .sub-title {
-                font-size: 7px;
-                line-height: 1.1;
-                margin-top: 2px;
-              }
-              
-              .card-info {
-                flex: 1;
-              }
-              
-              .info-row {
-                margin-bottom: 2px;
-                line-height: 1.2;
-                display: flex;
-                font-size: 7px;
-              }
-              
-              .label {
-                font-weight: bold;
-                min-width: 35px;
-                margin-right: 2px;
-              }
-              
-              .value {
-                flex: 1;
-                word-break: break-word;
-              }
-              
-              .color-band {
-                position: absolute;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                height: 12px;
-                display: flex;
-                z-index: 1;
-              }
-              
-              .red-band { background-color: #ce1126; flex: 1; }
-              .yellow-band { background-color: #fcd116; flex: 1; }
-              .green-band { background-color: #006b3f; flex: 1; }
             </style>
           </head>
           <body>
-            <div class="page-container">
-              ${cardsHTML}
-            </div>
+            ${allCardsHTML}
             <script>
+              console.log('Print window loaded with ${selectedCards.length} cards');
               window.onload = function() {
+                console.log('Starting print process...');
                 setTimeout(function() {
                   window.print();
+                  setTimeout(function() { 
+                    console.log('Print dialog closed, closing window');
+                    window.close(); 
+                  }, 1000);
                 }, 500);
               };
-              
-              window.addEventListener('afterprint', function() {
-                setTimeout(function() { 
-                  window.close(); 
-                }, 1000);
-              });
             </script>
           </body>
         </html>
@@ -409,30 +390,34 @@ const BulkPrintModal: React.FC<BulkPrintModalProps> = ({
                   No approved applicants available for printing
                 </div>
               ) : (
-                applicants.map(applicant => (
-                  <div 
-                    key={applicant.id}
-                    className="p-3 border-b last:border-0 flex items-center"
-                  >
-                    <Checkbox 
-                      id={`select-${applicant.id}`}
-                      checked={selectedApplicants.includes(applicant.id)}
-                      onCheckedChange={() => toggleSelectApplicant(applicant.id)}
-                      className="mr-3"
-                    />
-                    <div>
-                      <Label 
-                        htmlFor={`select-${applicant.id}`}
-                        className="font-medium block"
-                      >
-                        {applicant.fullName}
-                      </Label>
-                      <div className="text-sm text-muted-foreground">
-                        {applicant.nationality} • {applicant.id}
+                applicants.map(applicant => {
+                  const fullName = getApplicantProperty(applicant, 'fullName', 'full_name');
+                  
+                  return (
+                    <div 
+                      key={applicant.id}
+                      className="p-3 border-b last:border-0 flex items-center"
+                    >
+                      <Checkbox 
+                        id={`select-${applicant.id}`}
+                        checked={selectedApplicants.includes(applicant.id)}
+                        onCheckedChange={() => toggleSelectApplicant(applicant.id)}
+                        className="mr-3"
+                      />
+                      <div>
+                        <Label 
+                          htmlFor={`select-${applicant.id}`}
+                          className="font-medium block"
+                        >
+                          {fullName}
+                        </Label>
+                        <div className="text-sm text-muted-foreground">
+                          {applicant.nationality} • {applicant.id}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>
