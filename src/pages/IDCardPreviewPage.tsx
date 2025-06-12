@@ -1,11 +1,11 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Printer } from 'lucide-react';
+import { ArrowLeft, Printer, Users } from 'lucide-react';
 import IDCardPreview from '@/components/IDCardPreview';
 import ConnectionStatus from '@/components/ConnectionStatus';
+import BulkPrintModal from '@/components/BulkPrintModal';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from 'sonner';
 import { dataSyncService } from '@/services/dataSync';
@@ -50,6 +50,8 @@ const IDCardPreviewPage: React.FC = () => {
   
   const [applicant, setApplicant] = useState<ApplicantData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [allApplicants, setAllApplicants] = useState<ApplicantData[]>([]);
+  const [showBulkPrintModal, setShowBulkPrintModal] = useState(false);
   
   // Load applicant data using sync service
   useEffect(() => {
@@ -87,6 +89,24 @@ const IDCardPreviewPage: React.FC = () => {
       loadApplicant();
     }
   }, [id]);
+
+  // Load all approved applicants for bulk printing
+  useEffect(() => {
+    const loadAllApplicants = async () => {
+      try {
+        const applicants = await dataSyncService.getApplicants();
+        // Filter for approved applicants only
+        const approved = applicants.filter(app => 
+          app.status === 'approved' || app.idCardApproved || app.id_card_approved
+        );
+        setAllApplicants(approved);
+      } catch (error) {
+        console.error('Error loading all applicants:', error);
+      }
+    };
+
+    loadAllApplicants();
+  }, []);
 
   const formatDate = (dateString: string) => {
     if (!dateString) return 'Not provided';
@@ -149,13 +169,24 @@ const IDCardPreviewPage: React.FC = () => {
         <ConnectionStatus />
       </div>
       
-      {/* Add Print Page Button */}
-      <div>
+      {/* Action buttons row */}
+      <div className="flex flex-wrap gap-2">
         <Button variant="outline" asChild className="flex items-center gap-2">
           <Link to={`/id-cards/${applicant.id}/print`}>
             <Printer className="h-4 w-4" />
             Go to Print Page
           </Link>
+        </Button>
+        
+        {/* Add Bulk Print Button */}
+        <Button 
+          variant="secondary" 
+          onClick={() => setShowBulkPrintModal(true)}
+          className="flex items-center gap-2"
+          disabled={allApplicants.length === 0}
+        >
+          <Users className="h-4 w-4" />
+          Bulk Print ({allApplicants.length} available)
         </Button>
       </div>
       
@@ -270,6 +301,13 @@ const IDCardPreviewPage: React.FC = () => {
           </CardContent>
         </Card>
       </div>
+      
+      {/* Bulk Print Modal */}
+      <BulkPrintModal
+        open={showBulkPrintModal}
+        onClose={() => setShowBulkPrintModal(false)}
+        applicants={allApplicants}
+      />
     </div>
   );
 };
