@@ -96,6 +96,8 @@ const BulkPrintPage: React.FC = () => {
       return;
     }
 
+    console.log(`Starting bulk print for ${selectedApplicants.length} applicants`);
+
     let scale = 1;
     switch (printFormat) {
       case 'small': scale = 0.7; break;
@@ -111,34 +113,70 @@ const BulkPrintPage: React.FC = () => {
       return;
     }
 
-    let cardsHTML = '';
+    // Generate all cards with proper page breaks
+    let allCardsHTML = '';
+    let currentPageCards = '';
+    let cardsOnCurrentPage = 0;
+
     selectedApplicants.forEach((applicant, index) => {
-      if (layout === 'multiple' && index % cardsPerPage === 0 && index > 0) {
-        cardsHTML += '<div class="page-break"></div>';
+      console.log(`Processing card ${index + 1} for applicant: ${applicant.fullName}`);
+      
+      const cardHTML = generateCardHTML(applicant);
+      
+      if (layout === 'single') {
+        // For single layout, each card gets its own page
+        if (index > 0) {
+          allCardsHTML += '<div class="page-break"></div>';
+        }
+        allCardsHTML += cardHTML;
+      } else {
+        // For multiple layout, group cards by page
+        currentPageCards += cardHTML;
+        cardsOnCurrentPage++;
+        
+        // If we've reached the cards per page limit or this is the last card
+        if (cardsOnCurrentPage === cardsPerPage || index === selectedApplicants.length - 1) {
+          if (allCardsHTML !== '') {
+            allCardsHTML += '<div class="page-break"></div>';
+          }
+          allCardsHTML += `<div class="card-page">${currentPageCards}</div>`;
+          currentPageCards = '';
+          cardsOnCurrentPage = 0;
+        }
       }
-      cardsHTML += generateCardHTML(applicant);
     });
 
-    printWindow.document.write(`
+    console.log('Generated HTML for all cards, opening print window');
+
+    const printHTML = `
       <html>
         <head>
-          <title>Bulk ID Cards Print</title>
+          <title>Bulk ID Cards Print - ${selectedApplicants.length} cards</title>
           <style>
+            @page {
+              size: A4;
+              margin: 10mm;
+            }
+            
             @media print {
               body {
                 margin: 0;
-                padding: 20px;
+                padding: 0;
+                font-family: Arial, sans-serif;
               }
-              .card-container {
-                display: ${layout === 'multiple' ? 'grid' : 'flex'};
-                ${layout === 'multiple' 
-                  ? 'grid-template-columns: repeat(2, 1fr); gap: 20px;' 
-                  : 'flex-direction: column; align-items: center;'
-                }
-                transform: scale(${scale});
-                transform-origin: top left;
-                margin-bottom: ${scale > 1 ? '100px' : '20px'};
+              
+              .card-page {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15mm;
+                width: 100%;
+                height: 100vh;
+                align-items: start;
+                justify-items: center;
+                padding: 10mm;
+                box-sizing: border-box;
               }
+              
               .card {
                 width: 85.6mm;
                 height: 53.98mm;
@@ -146,19 +184,24 @@ const BulkPrintPage: React.FC = () => {
                 color: white;
                 padding: 16px;
                 border-radius: 8px;
-                margin-bottom: ${layout === 'single' ? '30px' : '0'};
                 position: relative;
                 overflow: hidden;
                 box-sizing: border-box;
+                transform: scale(${scale});
+                transform-origin: center;
+                margin: ${scale > 1 ? '10px' : '5px'};
               }
+              
               .logo-container {
                 text-align: center;
                 margin-bottom: 10px;
               }
+              
               .logo-image {
                 max-height: 40px;
                 max-width: 100px;
               }
+              
               .photo-container {
                 width: 80px;
                 height: 100px;
@@ -166,11 +209,13 @@ const BulkPrintPage: React.FC = () => {
                 overflow: hidden;
                 margin: 5px auto;
               }
+              
               .photo-image {
                 width: 100%;
                 height: 100%;
                 object-fit: cover;
               }
+              
               .color-band {
                 position: absolute;
                 bottom: 0;
@@ -179,40 +224,100 @@ const BulkPrintPage: React.FC = () => {
                 height: 16px;
                 display: flex;
               }
+              
               .color-band div {
                 flex: 1;
               }
+              
               .red-band {
                 background-color: #ce1126;
               }
+              
               .yellow-band {
                 background-color: #fcd116;
               }
+              
               .green-band {
                 background-color: #006b3f;
               }
+              
               .page-break {
                 page-break-before: always;
               }
+              
+              /* Single card layout */
+              ${layout === 'single' ? `
+                .card {
+                  display: block;
+                  margin: 20mm auto;
+                }
+              ` : ''}
+            }
+            
+            /* Screen preview styles */
+            @media screen {
+              body {
+                background: #f5f5f5;
+                padding: 20px;
+              }
+              
+              .card-page {
+                background: white;
+                margin-bottom: 20px;
+                padding: 20px;
+                box-shadow: 0 0 10px rgba(0,0,0,0.1);
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 20px;
+                justify-items: center;
+              }
+              
+              .card {
+                width: 85.6mm;
+                height: 53.98mm;
+                background: linear-gradient(to right, #006b3f, #006b3f99);
+                color: white;
+                padding: 16px;
+                border-radius: 8px;
+                position: relative;
+                overflow: hidden;
+                box-sizing: border-box;
+                transform: scale(${scale});
+                margin: 10px;
+              }
+              
+              ${layout === 'single' ? `
+                .card-page {
+                  grid-template-columns: 1fr;
+                  justify-items: center;
+                }
+              ` : ''}
             }
           </style>
         </head>
         <body>
-          <div class="card-container">
-            ${cardsHTML}
-          </div>
+          ${allCardsHTML}
           <script>
+            console.log('Print window loaded with ${selectedApplicants.length} cards');
             window.onload = function() {
-              window.print();
-              setTimeout(function() { window.close(); }, 500);
+              console.log('Starting print process...');
+              setTimeout(function() {
+                window.print();
+                setTimeout(function() { 
+                  console.log('Print dialog closed, closing window');
+                  window.close(); 
+                }, 1000);
+              }, 500);
             };
           </script>
         </body>
       </html>
-    `);
-    
+    `;
+
+    printWindow.document.write(printHTML);
     printWindow.document.close();
-    toast.success(`Printing ${selectedApplicants.length} ID cards in ${printFormat} format`);
+    
+    toast.success(`Printing ${selectedApplicants.length} ID cards in ${printFormat} format with ${layout} layout`);
   };
 
   return (
@@ -252,7 +357,7 @@ const BulkPrintPage: React.FC = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="multiple">Multiple per page</SelectItem>
+                  <SelectItem value="multiple">Multiple per page (6 cards)</SelectItem>
                   <SelectItem value="single">Single per page</SelectItem>
                 </SelectContent>
               </Select>
