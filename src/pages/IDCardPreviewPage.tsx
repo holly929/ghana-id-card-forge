@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -97,7 +98,7 @@ const IDCardPreviewPage: React.FC = () => {
         const applicants = await dataSyncService.getApplicants();
         // Filter for approved applicants only
         const approved = applicants.filter(app => 
-          app.status === 'approved' || app.idCardApproved || app.id_card_approved
+          app.status === 'approved' || app.id_card_approved
         );
         setAllApplicants(approved);
       } catch (error) {
