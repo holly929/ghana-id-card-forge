@@ -113,7 +113,23 @@ const BulkPrintModal: React.FC<BulkPrintModalProps> = ({
             </div>
           </div>
           
-          <div style="text-align: center; font-size: 8px;">
+          <!-- Signature Section -->
+          <div style="display: flex; justify-content: space-between; margin-top: 15px; font-size: 7px;">
+            <div style="width: 45%; text-align: center;">
+              <div style="border-top: 1px solid white; padding-top: 3px; margin-bottom: 3px;">
+                <strong>HOLDER'S SIGNATURE</strong>
+              </div>
+              <div style="height: 20px; border-bottom: 1px solid white;"></div>
+            </div>
+            <div style="width: 45%; text-align: center;">
+              <div style="border-top: 1px solid white; padding-top: 3px; margin-bottom: 3px;">
+                <strong>ISSUING OFFICER</strong>
+              </div>
+              <div style="height: 20px; border-bottom: 1px solid white;"></div>
+            </div>
+          </div>
+          
+          <div style="text-align: center; font-size: 8px; margin-top: 5px;">
             <div style="border-top: 1px solid white; padding-top: 5px;">
               <strong>Emergency Contact: +233-XXX-XXXX</strong>
             </div>
@@ -155,7 +171,7 @@ const BulkPrintModal: React.FC<BulkPrintModalProps> = ({
 
         return `
           <div class="card">
-            <div style="display: flex; height: 100%;">
+            <div style="display: flex; height: calc(100% - 40px);">
               <div style="width: 33%; display: flex; flex-direction: column; align-items: center; justify-content: space-between;">
                 <div class="logo-container">
                   ${logo ? `<img src="${logo}" alt="Logo" class="logo-image" />` : ''}
@@ -169,18 +185,32 @@ const BulkPrintModal: React.FC<BulkPrintModalProps> = ({
                   </div>
                 </div>
               </div>
-              <div style="width: 67%; padding-left: 10px;">
-                <div style="text-align: center; margin-bottom: 10px;">
-                  <div style="font-weight: bold; font-size: 12px;">REPUBLIC OF GHANA</div>
-                  <div style="font-size: 10px;">NON-CITIZEN IDENTITY CARD</div>
+              <div style="width: 67%; padding-left: 10px; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                  <div style="text-align: center; margin-bottom: 10px;">
+                    <div style="font-weight: bold; font-size: 12px;">REPUBLIC OF GHANA</div>
+                    <div style="font-size: 10px;">NON-CITIZEN IDENTITY CARD</div>
+                  </div>
+                  <div style="font-size: 10px;">
+                    <div><strong>Name:</strong> ${fullName || 'Not provided'}</div>
+                    <div><strong>Nationality:</strong> ${applicant.nationality || 'Not provided'}</div>
+                    <div><strong>Date of Birth:</strong> ${formatDate(dateOfBirth)}</div>
+                    <div><strong>Phone Number:</strong> ${phoneNumber || 'Not provided'}</div>
+                    <div><strong>ID No:</strong> ${applicant.id || 'Not provided'}</div>
+                    <div><strong>Expiry Date:</strong> ${formatDate(expiryDate)}</div>
+                  </div>
                 </div>
-                <div style="font-size: 10px;">
-                  <div><strong>Name:</strong> ${fullName || 'Not provided'}</div>
-                  <div><strong>Nationality:</strong> ${applicant.nationality || 'Not provided'}</div>
-                  <div><strong>Date of Birth:</strong> ${formatDate(dateOfBirth)}</div>
-                  <div><strong>Phone Number:</strong> ${phoneNumber || 'Not provided'}</div>
-                  <div><strong>ID No:</strong> ${applicant.id || 'Not provided'}</div>
-                  <div><strong>Expiry Date:</strong> ${formatDate(expiryDate)}</div>
+                
+                <!-- Front Signature Section -->
+                <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 8px;">
+                  <div style="width: 45%; text-align: center;">
+                    <div style="height: 15px; border-bottom: 1px solid white; margin-bottom: 2px;"></div>
+                    <div style="font-size: 7px;"><strong>HOLDER'S SIGNATURE</strong></div>
+                  </div>
+                  <div style="width: 45%; text-align: center;">
+                    <div style="height: 15px; border-bottom: 1px solid white; margin-bottom: 2px;"></div>
+                    <div style="font-size: 7px;"><strong>ISSUING OFFICER</strong></div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -274,7 +304,7 @@ const BulkPrintModal: React.FC<BulkPrintModalProps> = ({
                   height: 53.98mm;
                   background: linear-gradient(to right, #006b3f, #006b3f99);
                   color: white;
-                  padding: 16px;
+                  padding: 12px;
                   border-radius: 8px;
                   position: relative;
                   overflow: hidden;
@@ -282,6 +312,8 @@ const BulkPrintModal: React.FC<BulkPrintModalProps> = ({
                   transform: scale(${scale});
                   transform-origin: center;
                   margin: ${scale > 1 ? '10px' : '5px'};
+                  display: flex;
+                  flex-direction: column;
                 }
                 
                 .card-back {
@@ -290,17 +322,17 @@ const BulkPrintModal: React.FC<BulkPrintModalProps> = ({
                 
                 .logo-container {
                   text-align: center;
-                  margin-bottom: 10px;
+                  margin-bottom: 8px;
                 }
                 
                 .logo-image {
-                  max-height: 40px;
-                  max-width: 100px;
+                  max-height: 35px;
+                  max-width: 90px;
                 }
                 
                 .photo-container {
-                  width: 80px;
-                  height: 100px;
+                  width: 70px;
+                  height: 90px;
                   border: 2px solid white;
                   overflow: hidden;
                   margin: 5px auto;
@@ -373,13 +405,15 @@ const BulkPrintModal: React.FC<BulkPrintModalProps> = ({
                   height: 53.98mm;
                   background: linear-gradient(to right, #006b3f, #006b3f99);
                   color: white;
-                  padding: 16px;
+                  padding: 12px;
                   border-radius: 8px;
                   position: relative;
                   overflow: hidden;
                   box-sizing: border-box;
                   transform: scale(${scale});
                   margin: 10px;
+                  display: flex;
+                  flex-direction: column;
                 }
               }
             </style>
