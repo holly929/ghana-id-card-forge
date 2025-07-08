@@ -73,92 +73,90 @@ const getApplicantProperty = (applicant: ApplicantData, camelCase: string, snake
 // Default mock data (used when no localStorage data exists)
 const defaultApplicants: ApplicantData[] = [
   {
-    id: '1',
+    id: 'GIS-DEFAULT-001',
     fullName: 'Ahmed Mohammed',
+    full_name: 'Ahmed Mohammed',
     nationality: 'Egyptian',
     area: 'Downtown',
     dateOfBirth: '1985-03-15',
+    date_of_birth: '1985-03-15',
     visaType: 'Work',
+    visa_type: 'Work',
     status: 'approved',
     dateCreated: '2023-07-10',
+    date_created: '2023-07-10',
     occupation: 'Engineer',
     idCardApproved: true,
+    id_card_approved: true,
+    phoneNumber: '+233123456789',
+    phone_number: '+233123456789'
   },
   {
-    id: '2',
+    id: 'GIS-DEFAULT-002',
     fullName: 'Maria Sanchez',
+    full_name: 'Maria Sanchez',
     nationality: 'Mexican',
     area: 'North District',
     dateOfBirth: '1990-11-22',
+    date_of_birth: '1990-11-22',
     visaType: 'Student',
+    visa_type: 'Student',
     status: 'pending',
     dateCreated: '2023-08-05',
+    date_created: '2023-08-05',
     occupation: 'Student',
     idCardApproved: false,
-  },
-  {
-    id: '3',
-    fullName: 'John Smith',
-    nationality: 'American',
-    area: 'West Side',
-    dateOfBirth: '1978-06-30',
-    visaType: 'Tourist',
-    status: 'rejected',
-    dateCreated: '2023-08-15',
-    idCardApproved: false,
-  },
-  {
-    id: '4',
-    fullName: 'Li Wei',
-    nationality: 'Chinese',
-    area: 'East District',
-    dateOfBirth: '1992-09-18',
-    visaType: 'Business',
-    status: 'approved',
-    dateCreated: '2023-08-20',
-    idCardApproved: true,
-  },
-  {
-    id: '5',
-    fullName: 'Amit Patel',
-    nationality: 'Indian',
-    area: 'South Area',
-    dateOfBirth: '1983-12-10',
-    visaType: 'Work',
-    status: 'pending',
-    dateCreated: '2023-08-25',
-    idCardApproved: false,
-  },
+    id_card_approved: false,
+    phoneNumber: '+233987654321',
+    phone_number: '+233987654321'
+  }
 ];
 
 const Applicants: React.FC = () => {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
-  const [applicants, setApplicants] = useState<ApplicantData[]>(defaultApplicants);
+  const [applicants, setApplicants] = useState<ApplicantData[]>([]);
+  const [loading, setLoading] = useState(true);
   
   // Load applicants from localStorage on component mount
   useEffect(() => {
+    console.log('Loading applicants from localStorage...');
     const storedApplicants = localStorage.getItem('applicants');
     if (storedApplicants) {
       try {
-        setApplicants(JSON.parse(storedApplicants));
+        const parsed = JSON.parse(storedApplicants);
+        console.log('Loaded applicants:', parsed);
+        console.log('Total applicants:', parsed.length);
+        setApplicants(parsed);
       } catch (error) {
         console.error('Error parsing applicants data:', error);
         toast.error('Failed to load applicant data');
+        // Fallback to default data
+        setApplicants(defaultApplicants);
+        localStorage.setItem('applicants', JSON.stringify(defaultApplicants));
       }
+    } else {
+      console.log('No applicants in localStorage, using defaults');
+      setApplicants(defaultApplicants);
+      localStorage.setItem('applicants', JSON.stringify(defaultApplicants));
     }
+    setLoading(false);
   }, []);
   
   // Filter applicants based on search term with safe null checking
   const filteredApplicants = applicants.filter(applicant => {
+    if (!applicant) return false;
+    
     const searchTermLower = searchTerm.toLowerCase();
     
     // Safely check each field for null/undefined before calling toLowerCase
     const fullNameMatch = getApplicantProperty(applicant, 'fullName', 'full_name').toLowerCase().includes(searchTermLower);
     const nationalityMatch = (applicant.nationality || '').toLowerCase().includes(searchTermLower);
     const areaMatch = (applicant.area || '').toLowerCase().includes(searchTermLower);
+    const phoneMatch = getApplicantProperty(applicant, 'phoneNumber', 'phone_number').toLowerCase().includes(searchTermLower);
+    const idMatch = (applicant.id || '').toLowerCase().includes(searchTermLower);
     
-    return fullNameMatch || nationalityMatch || areaMatch;
+    return fullNameMatch || nationalityMatch || areaMatch || phoneMatch || idMatch;
   });
   
   // Handle applicant deletion
@@ -172,19 +170,23 @@ const Applicants: React.FC = () => {
       localStorage.removeItem(`applicantPhoto_${id}`);
       
       toast.success('Applicant deleted successfully');
+      console.log('Deleted applicant:', id);
     }
   };
 
   // Handle approval/rejection
   const handleApproval = (id: string, approve: boolean) => {
+    console.log(`${approve ? 'Approving' : 'Rejecting'} applicant:`, id);
     const updatedApplicants = applicants.map(applicant => {
       if (applicant.id === id) {
-        return {
+        const updated = {
           ...applicant,
           status: approve ? 'approved' : 'rejected',
           idCardApproved: approve,
           id_card_approved: approve
         };
+        console.log('Updated applicant:', updated);
+        return updated;
       }
       return applicant;
     });
@@ -216,12 +218,23 @@ const Applicants: React.FC = () => {
   const canEditApplicants = user && [UserRole.ADMIN, UserRole.DATA_ENTRY].includes(user.role);
   const canApprove = user && user.role === UserRole.ADMIN;
   
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-center">
+          <h2 className="text-xl font-medium mb-2">Loading applicants...</h2>
+          <p>Please wait</p>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-gray-800">Applicants</h1>
-          <p className="text-gray-600">Manage non-citizen applicants and their ID cards</p>
+          <p className="text-gray-600">Manage non-citizen applicants and their ID cards ({applicants.length} total)</p>
         </div>
         
         {canEditApplicants && (
@@ -242,7 +255,7 @@ const Applicants: React.FC = () => {
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
               <Input
-                placeholder="Search applicants by name, nationality, or area..."
+                placeholder="Search applicants by name, nationality, area, phone, or ID..."
                 className="pl-8"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -255,6 +268,7 @@ const Applicants: React.FC = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Full Name</TableHead>
+                  <TableHead>ID Number</TableHead>
                   <TableHead>Nationality</TableHead>
                   <TableHead>Area</TableHead>
                   <TableHead>Visa Type</TableHead>
@@ -266,8 +280,11 @@ const Applicants: React.FC = () => {
               <TableBody>
                 {filteredApplicants.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                      No applicants found matching your search.
+                    <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                      {applicants.length === 0 
+                        ? "No applicants found. Click 'New Applicant' to add one."
+                        : "No applicants found matching your search."
+                      }
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -276,13 +293,16 @@ const Applicants: React.FC = () => {
                       <TableCell className="font-medium">
                         {getApplicantProperty(applicant, 'fullName', 'full_name') || 'N/A'}
                       </TableCell>
+                      <TableCell className="font-mono text-sm">{applicant.id}</TableCell>
                       <TableCell>{applicant.nationality || 'N/A'}</TableCell>
                       <TableCell>{applicant.area || 'Not provided'}</TableCell>
                       <TableCell>{getApplicantProperty(applicant, 'visaType', 'visa_type') || 'N/A'}</TableCell>
                       <TableCell>{getStatusBadge(applicant.status || 'pending')}</TableCell>
                       <TableCell>
-                        {(applicant.idCardApproved || applicant.id_card_approved) && (
+                        {(applicant.idCardApproved || applicant.id_card_approved) ? (
                           <Badge className="bg-blue-100 text-blue-800">Approved</Badge>
+                        ) : (
+                          <Badge variant="outline">Pending</Badge>
                         )}
                       </TableCell>
                       <TableCell>

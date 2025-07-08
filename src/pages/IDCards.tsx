@@ -62,8 +62,6 @@ interface ApplicantData {
   full_name?: string;
   nationality?: string;
   area?: string;
-  passportNumber?: string;
-  passport_number?: string;
   dateOfBirth?: string;
   date_of_birth?: string;
   visaType?: string;
@@ -101,15 +99,20 @@ const IDCards: React.FC = () => {
 
   // Load applicants from localStorage
   useEffect(() => {
+    console.log('Loading applicants from localStorage...');
     const storedApplicants = localStorage.getItem('applicants');
     if (storedApplicants) {
       try {
         const parsedApplicants = JSON.parse(storedApplicants);
+        console.log('Loaded applicants:', parsedApplicants);
+        console.log('Total applicants found:', parsedApplicants.length);
         setApplicants(parsedApplicants);
       } catch (error) {
         console.error('Error parsing applicants:', error);
         toast.error('Failed to load applicants data');
       }
+    } else {
+      console.log('No applicants found in localStorage');
     }
     setLoading(false);
   }, []);
@@ -127,9 +130,12 @@ const IDCards: React.FC = () => {
            id.includes(searchLower);
   });
 
-  const approvedApplicants = filteredApplicants.filter(applicant => 
-    applicant.status === 'approved'
-  );
+  const approvedApplicants = filteredApplicants.filter(applicant => {
+    console.log(`Applicant ${applicant.id} status:`, applicant.status);
+    return applicant.status === 'approved' || applicant.idCardApproved === true || applicant.id_card_approved === true;
+  });
+
+  console.log('Filtered approved applicants:', approvedApplicants.length);
 
   const formatDate = (dateString: string) => {
     if (!dateString) return 'Not provided';
@@ -142,6 +148,7 @@ const IDCards: React.FC = () => {
   };
 
   const handlePrint = (applicant: ApplicantData) => {
+    console.log('Printing ID card for applicant:', applicant.id);
     const logo = localStorage.getItem('systemLogo');
     const photo = localStorage.getItem(`applicantPhoto_${applicant.id}`) || applicant.photo;
     const fullName = getApplicantProperty(applicant, 'fullName', 'full_name');
@@ -336,7 +343,7 @@ const IDCards: React.FC = () => {
         <div>
           <h1 className="text-2xl font-semibold text-gray-800">ID Cards</h1>
           <p className="text-gray-600">
-            Manage and print ID cards for approved applicants
+            Manage and print ID cards for approved applicants ({approvedApplicants.length} available)
           </p>
         </div>
       </div>
@@ -377,7 +384,7 @@ const IDCards: React.FC = () => {
               
               <Button onClick={handleBulkPrint} className="flex items-center gap-2">
                 <Files className="h-4 w-4" />
-                Bulk Print
+                Bulk Print ({approvedApplicants.length})
               </Button>
             </div>
           </div>
@@ -503,7 +510,12 @@ const IDCards: React.FC = () => {
 
           {approvedApplicants.length === 0 && (
             <div className="text-center py-8">
-              <p className="text-gray-500">No approved applicants found.</p>
+              <p className="text-gray-500">
+                {applicants.length === 0 
+                  ? "No applicants found. Add some applicants first." 
+                  : "No approved applicants found. Approve some applicants first."
+                }
+              </p>
               {searchTerm && (
                 <Button
                   variant="outline"

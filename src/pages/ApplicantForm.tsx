@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -134,12 +133,27 @@ const ApplicantForm = () => {
 
     try {
       const applicantId = generateUniqueId();
+      console.log('Generated applicant ID:', applicantId);
+      
       const applicantData = {
         id: applicantId,
-        ...formData,
+        fullName: formData.fullName,
+        full_name: formData.fullName, // Store both formats for compatibility
+        dateOfBirth: formData.dateOfBirth,
+        date_of_birth: formData.dateOfBirth,
+        nationality: formData.nationality,
+        phoneNumber: formData.phoneNumber,
+        phone_number: formData.phoneNumber,
+        occupation: formData.occupation || '',
+        area: formData.area || '',
+        visaType: formData.visaType || '',
+        visa_type: formData.visaType || '',
+        photo: formData.photo || '',
         dateCreated: new Date().toISOString().split('T')[0],
+        date_created: new Date().toISOString().split('T')[0],
         status: 'pending',
-        idCardApproved: false
+        idCardApproved: false,
+        id_card_approved: false
       };
 
       // Get existing applicants from localStorage
@@ -148,15 +162,20 @@ const ApplicantForm = () => {
       // Add new applicant
       const updatedApplicants = [...existingApplicants, applicantData];
       localStorage.setItem('applicants', JSON.stringify(updatedApplicants));
+      
+      console.log('Saved applicant:', applicantData);
+      console.log('Total applicants:', updatedApplicants.length);
 
       // Store photo separately if exists
       if (formData.photo) {
         localStorage.setItem(`applicantPhoto_${applicantId}`, formData.photo);
+        console.log('Saved photo for applicant:', applicantId);
       }
 
       toast.success("Applicant added successfully");
       navigate('/applicants');
     } catch (error) {
+      console.error('Error saving applicant:', error);
       toast.error("Failed to add applicant");
     }
   };
@@ -264,7 +283,7 @@ const ApplicantForm = () => {
                       variant="destructive"
                       size="sm"
                       className="absolute -top-2 -right-2"
-                      onClick={removePhoto}
+                      onClick={() => setFormData(prev => ({ ...prev, photo: '' }))}
                     >
                       <X className="h-4 w-4" />
                     </Button>
@@ -283,7 +302,7 @@ const ApplicantForm = () => {
                     <Button 
                       type="button" 
                       variant="outline" 
-                      onClick={handlePhotoUpload}
+                      onClick={() => photoInputRef.current?.click()}
                       className="flex items-center gap-2"
                     >
                       <Upload className="h-4 w-4" />
@@ -292,7 +311,22 @@ const ApplicantForm = () => {
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={openCamera}
+                      onClick={async () => {
+                        setShowCamera(true);
+                        setCameraLoading(true);
+                        try {
+                          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                          if (videoRef.current) {
+                            videoRef.current.srcObject = stream;
+                            videoRef.current.play();
+                          }
+                        } catch (err) {
+                          toast.error("Unable to access camera");
+                          setShowCamera(false);
+                        } finally {
+                          setCameraLoading(false);
+                        }
+                      }}
                       className="flex items-center gap-2"
                     >
                       <Camera className="h-4 w-4" />
@@ -309,7 +343,25 @@ const ApplicantForm = () => {
                   ref={photoInputRef}
                   accept="image/*" 
                   className="hidden" 
-                  onChange={handlePhotoFileSelected}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      handleImageUpload(
+                        file,
+                        async (result) => {
+                          try {
+                            const optimized = await optimizeImage(result);
+                            setFormData(prev => ({ ...prev, photo: optimized }));
+                            toast.success("Photo uploaded successfully");
+                          } catch (error) {
+                            setFormData(prev => ({ ...prev, photo: result }));
+                            toast.success("Photo uploaded successfully");
+                          }
+                        },
+                        { maxSizeMB: 1 }
+                      );
+                    }
+                  }}
                 />
               </div>
             </div>
@@ -337,7 +389,14 @@ const ApplicantForm = () => {
           <div className="bg-white rounded-lg shadow-lg p-6 relative w-[350px]">
             <button
               className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
-              onClick={closeCamera}
+              onClick={() => {
+                setShowCamera(false);
+                if (videoRef.current && videoRef.current.srcObject) {
+                  const stream = videoRef.current.srcObject as MediaStream;
+                  stream.getTracks().forEach(track => track.stop());
+                  videoRef.current.srcObject = null;
+                }
+              }}
               type="button"
             >
               <X className="h-6 w-6" />
@@ -353,7 +412,43 @@ const ApplicantForm = () => {
               <canvas ref={canvasRef} className="hidden" />
               <Button
                 type="button"
-                onClick={capturePhoto}
+                onClick={async () => {
+                  if (videoRef.current && canvasRef.current) {
+                    const video = videoRef.current;
+                    const canvas = canvasRef.current;
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    const ctx = canvas.getContext('2d');
+                    if (ctx) {
+                      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                      canvas.toBlob(async (blob) => {
+                        if (blob) {
+                          const file = new File([blob], "photo.jpg", { type: "image/jpeg" });
+                          handleImageUpload(
+                            file,
+                            async (result) => {
+                              try {
+                                const optimized = await optimizeImage(result);
+                                setFormData(prev => ({ ...prev, photo: optimized }));
+                                toast.success("Photo captured successfully");
+                              } catch (error) {
+                                setFormData(prev => ({ ...prev, photo: result }));
+                                toast.success("Photo captured successfully");
+                              }
+                            },
+                            { maxSizeMB: 1 }
+                          );
+                        }
+                      }, "image/jpeg", 0.95);
+                    }
+                    setShowCamera(false);
+                    if (videoRef.current && videoRef.current.srcObject) {
+                      const stream = videoRef.current.srcObject as MediaStream;
+                      stream.getTracks().forEach(track => track.stop());
+                      videoRef.current.srcObject = null;
+                    }
+                  }
+                }}
                 disabled={cameraLoading}
                 className="w-full"
               >
