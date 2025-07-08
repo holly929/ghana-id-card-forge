@@ -53,7 +53,7 @@ function App() {
               } />
               
               <Route path="/applicants/new" element={
-                <ProtectedRoute requiredRoles={['admin', 'data_entry']}>
+                <ProtectedRoute>
                   <DashboardLayout>
                     <ApplicantForm />
                   </DashboardLayout>
@@ -61,7 +61,7 @@ function App() {
               } />
               
               <Route path="/applicants/:id/edit" element={
-                <ProtectedRoute requiredRoles={['admin', 'data_entry']}>
+                <ProtectedRoute>
                   <DashboardLayout>
                     <ApplicantEdit />
                   </DashboardLayout>
@@ -107,7 +107,7 @@ function App() {
               } />
               
               <Route path="/users" element={
-                <ProtectedRoute requiredRoles={['admin']}>
+                <ProtectedRoute>
                   <DashboardLayout>
                     <Users />
                   </DashboardLayout>
@@ -115,7 +115,7 @@ function App() {
               } />
               
               <Route path="/settings" element={
-                <ProtectedRoute requiredRoles={['admin']}>
+                <ProtectedRoute>
                   <DashboardLayout>
                     <Settings />
                   </DashboardLayout>

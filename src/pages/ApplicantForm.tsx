@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { generateUniqueId, handleImageUpload, optimizeImage } from '@/lib/utils';
 import { Camera, Upload, X } from 'lucide-react';
@@ -21,7 +20,6 @@ const ApplicantForm = () => {
     occupation: '',
     area: '',
     visaType: '',
-    passportNumber: '',
     photo: ''
   });
 
@@ -140,7 +138,8 @@ const ApplicantForm = () => {
         id: applicantId,
         ...formData,
         dateCreated: new Date().toISOString().split('T')[0],
-        status: 'pending'
+        status: 'pending',
+        idCardApproved: false
       };
 
       // Get existing applicants from localStorage
@@ -230,7 +229,7 @@ const ApplicantForm = () => {
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="visaType">Visa Type</Label>
                 <Select onValueChange={(value) => handleInputChange('visaType', value)}>
                   <SelectTrigger>
@@ -244,15 +243,6 @@ const ApplicantForm = () => {
                     <SelectItem value="transit">Transit</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="passportNumber">Passport Number</Label>
-                <Input
-                  id="passportNumber"
-                  value={formData.passportNumber}
-                  onChange={(e) => handleInputChange('passportNumber', e.target.value)}
-                />
               </div>
             </div>
 

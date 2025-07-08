@@ -32,7 +32,9 @@ import {
   Trash, 
   Eye, 
   CreditCard,
-  FileImage
+  FileImage,
+  CheckCircle,
+  XCircle
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
@@ -44,8 +46,6 @@ interface ApplicantData {
   full_name?: string;
   nationality?: string;
   area?: string;
-  passportNumber?: string;
-  passport_number?: string;
   dateOfBirth?: string;
   date_of_birth?: string;
   visaType?: string;
@@ -77,7 +77,6 @@ const defaultApplicants: ApplicantData[] = [
     fullName: 'Ahmed Mohammed',
     nationality: 'Egyptian',
     area: 'Downtown',
-    passportNumber: 'A12345678', // Keep for backwards compatibility
     dateOfBirth: '1985-03-15',
     visaType: 'Work',
     status: 'approved',
@@ -90,7 +89,6 @@ const defaultApplicants: ApplicantData[] = [
     fullName: 'Maria Sanchez',
     nationality: 'Mexican',
     area: 'North District',
-    passportNumber: 'B87654321',
     dateOfBirth: '1990-11-22',
     visaType: 'Student',
     status: 'pending',
@@ -103,7 +101,6 @@ const defaultApplicants: ApplicantData[] = [
     fullName: 'John Smith',
     nationality: 'American',
     area: 'West Side',
-    passportNumber: 'C45678912',
     dateOfBirth: '1978-06-30',
     visaType: 'Tourist',
     status: 'rejected',
@@ -115,7 +112,6 @@ const defaultApplicants: ApplicantData[] = [
     fullName: 'Li Wei',
     nationality: 'Chinese',
     area: 'East District',
-    passportNumber: 'D98765432',
     dateOfBirth: '1992-09-18',
     visaType: 'Business',
     status: 'approved',
@@ -127,7 +123,6 @@ const defaultApplicants: ApplicantData[] = [
     fullName: 'Amit Patel',
     nationality: 'Indian',
     area: 'South Area',
-    passportNumber: 'E12378945',
     dateOfBirth: '1983-12-10',
     visaType: 'Work',
     status: 'pending',
@@ -162,9 +157,8 @@ const Applicants: React.FC = () => {
     const fullNameMatch = getApplicantProperty(applicant, 'fullName', 'full_name').toLowerCase().includes(searchTermLower);
     const nationalityMatch = (applicant.nationality || '').toLowerCase().includes(searchTermLower);
     const areaMatch = (applicant.area || '').toLowerCase().includes(searchTermLower);
-    const passportMatch = getApplicantProperty(applicant, 'passportNumber', 'passport_number').toLowerCase().includes(searchTermLower);
     
-    return fullNameMatch || nationalityMatch || areaMatch || passportMatch;
+    return fullNameMatch || nationalityMatch || areaMatch;
   });
   
   // Handle applicant deletion
@@ -179,6 +173,26 @@ const Applicants: React.FC = () => {
       
       toast.success('Applicant deleted successfully');
     }
+  };
+
+  // Handle approval/rejection
+  const handleApproval = (id: string, approve: boolean) => {
+    const updatedApplicants = applicants.map(applicant => {
+      if (applicant.id === id) {
+        return {
+          ...applicant,
+          status: approve ? 'approved' : 'rejected',
+          idCardApproved: approve,
+          id_card_approved: approve
+        };
+      }
+      return applicant;
+    });
+    
+    setApplicants(updatedApplicants);
+    localStorage.setItem('applicants', JSON.stringify(updatedApplicants));
+    
+    toast.success(`Applicant ${approve ? 'approved' : 'rejected'} successfully`);
   };
   
   const getStatusBadge = (status: string) => {
@@ -200,6 +214,7 @@ const Applicants: React.FC = () => {
   };
 
   const canEditApplicants = user && [UserRole.ADMIN, UserRole.DATA_ENTRY].includes(user.role);
+  const canApprove = user && user.role === UserRole.ADMIN;
   
   return (
     <div className="space-y-6">
@@ -262,9 +277,7 @@ const Applicants: React.FC = () => {
                         {getApplicantProperty(applicant, 'fullName', 'full_name') || 'N/A'}
                       </TableCell>
                       <TableCell>{applicant.nationality || 'N/A'}</TableCell>
-                      <TableCell>
-                        {applicant.area || getApplicantProperty(applicant, 'passportNumber', 'passport_number') || 'Not provided'}
-                      </TableCell>
+                      <TableCell>{applicant.area || 'Not provided'}</TableCell>
                       <TableCell>{getApplicantProperty(applicant, 'visaType', 'visa_type') || 'N/A'}</TableCell>
                       <TableCell>{getStatusBadge(applicant.status || 'pending')}</TableCell>
                       <TableCell>
@@ -295,6 +308,24 @@ const Applicants: React.FC = () => {
                                     <span>Edit</span>
                                   </Link>
                                 </DropdownMenuItem>
+                                {canApprove && applicant.status === 'pending' && (
+                                  <>
+                                    <DropdownMenuItem 
+                                      className="text-green-600"
+                                      onClick={() => handleApproval(applicant.id, true)}
+                                    >
+                                      <CheckCircle className="mr-2 h-4 w-4" />
+                                      <span>Approve</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem 
+                                      className="text-red-600"
+                                      onClick={() => handleApproval(applicant.id, false)}
+                                    >
+                                      <XCircle className="mr-2 h-4 w-4" />
+                                      <span>Reject</span>
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
                                 {user?.role === UserRole.ADMIN && (
                                   <DropdownMenuItem 
                                     className="text-red-600"

@@ -16,8 +16,6 @@ interface ApplicantData {
   full_name?: string;
   nationality?: string;
   area?: string;
-  passportNumber?: string;
-  passport_number?: string;
   dateOfBirth?: string;
   date_of_birth?: string;
   visaType?: string;
@@ -43,7 +41,6 @@ const ApplicantEdit = () => {
     occupation: '',
     area: '',
     visaType: '',
-    passportNumber: '',
     photo: ''
   });
 
@@ -78,7 +75,6 @@ const ApplicantEdit = () => {
             occupation: applicant.occupation || '',
             area: applicant.area || '',
             visaType: applicant.visaType || applicant.visa_type || '',
-            passportNumber: applicant.passportNumber || applicant.passport_number || '',
             photo: applicant.photo || ''
           });
 
@@ -227,7 +223,6 @@ const ApplicantEdit = () => {
         occupation: formData.occupation,
         area: formData.area,
         visaType: formData.visaType,
-        passportNumber: formData.passportNumber,
         photo: formData.photo
       };
 
@@ -343,7 +338,7 @@ const ApplicantEdit = () => {
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="visaType">Visa Type</Label>
                 <Select value={formData.visaType} onValueChange={(value) => handleInputChange('visaType', value)}>
                   <SelectTrigger>
@@ -357,15 +352,6 @@ const ApplicantEdit = () => {
                     <SelectItem value="transit">Transit</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="passportNumber">Passport Number</Label>
-                <Input
-                  id="passportNumber"
-                  value={formData.passportNumber}
-                  onChange={(e) => handleInputChange('passportNumber', e.target.value)}
-                />
               </div>
             </div>
 
