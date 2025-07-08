@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -19,7 +20,6 @@ interface ApplicantData {
   fullName: string;
   nationality: string;
   area: string;
-  passportNumber: string;
   dateOfBirth: string;
   visaType: string;
   status: string;
@@ -36,7 +36,6 @@ const defaultValues: ApplicantData = {
   fullName: '',
   nationality: '',
   area: '',
-  passportNumber: '',
   dateOfBirth: '',
   visaType: '',
   status: 'pending',
@@ -61,20 +60,10 @@ const visaTypes = [
   "Tourist", "Student", "Work", "Business", "Diplomatic", "Transit", "Medical", "Family", " সাংবাদিক", "Other"
 ];
 
-const areas = [
-  "Accra", "Kumasi", "Takoradi", "Tamale", "Cape Coast", "Obuasi", "Tema", "Koforidua", "Sunyani", "Ho",
-  "Wa", "Bolgatanga", "Mampong", "Techiman", "Nkawkaw", "Akim Oda", "Winneba", "Suhum", "Konongo", "Nsawam",
-  "Dome", "Teshie", "Madina", "Achimota", "Spintex", "East Legon", "Cantonments", "Labadi", "Osu", "Airport Residential",
-  "Roman Ridge", "Dzorwulu", "Abelemkpe", "Kanda", "Nima", "Mamobi", "New Town", "Darkuman", "Odorkor", "Kaneshie",
-  "North Kaneshie", "South Kaneshie", "Kokomlemle", "Tesano", "Avenor", "Alajo", "Kotobabi", "Circle", "Adabraka", "Asylum Down",
-  "Ridge", "West Ridge", "North Ridge", "Cedi House Area", "Ministries Area", "High Street", "James Town", "Usshertown", "Other"
-];
-
 const ApplicantForm: React.FC = () => {
   const [fullName, setFullName] = useState(defaultValues.fullName);
   const [nationality, setNationality] = useState(defaultValues.nationality);
   const [area, setArea] = useState(defaultValues.area);
-  const [passportNumber, setPassportNumber] = useState(defaultValues.passportNumber);
   const [dateOfBirth, setDateOfBirth] = useState(defaultValues.dateOfBirth);
   const [visaType, setVisaType] = useState(defaultValues.visaType);
   const [occupation, setOccupation] = useState(defaultValues.occupation);
@@ -100,7 +89,7 @@ const ApplicantForm: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!fullName || !nationality || !area || !passportNumber || !dateOfBirth || !visaType || !occupation || !phoneNumber) {
+    if (!fullName || !nationality || !area || !dateOfBirth || !visaType || !occupation || !phoneNumber) {
       toast.error('Please fill in all required fields.');
       return;
     }
@@ -110,7 +99,6 @@ const ApplicantForm: React.FC = () => {
       fullName,
       nationality,
       area,
-      passportNumber,
       dateOfBirth,
       visaType,
       status: 'pending',
@@ -197,31 +185,15 @@ const ApplicantForm: React.FC = () => {
               </Select>
             </div>
 
-            {/* Area */}
+            {/* Area - Changed to manual input */}
             <div className="space-y-2">
               <Label htmlFor="area">Area</Label>
-              <Select onValueChange={setArea} defaultValue={area}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select an area" />
-                </SelectTrigger>
-                <SelectContent>
-                  {areas.map((a) => (
-                    <SelectItem key={a} value={a}>
-                      {a}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Passport Number */}
-            <div className="space-y-2">
-              <Label htmlFor="passportNumber">Passport Number</Label>
               <Input
                 type="text"
-                id="passportNumber"
-                value={passportNumber}
-                onChange={(e) => setPassportNumber(e.target.value)}
+                id="area"
+                value={area}
+                onChange={(e) => setArea(e.target.value)}
+                placeholder="Enter area/location"
                 required
               />
             </div>
