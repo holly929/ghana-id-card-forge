@@ -9,7 +9,6 @@ import ConnectionStatus from '@/components/ConnectionStatus';
 import BulkPrintModal from '@/components/BulkPrintModal';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from 'sonner';
-import { dataSyncService } from '@/services/dataSync';
 
 // Type definition for applicant data that handles both camelCase and snake_case
 interface ApplicantData {
@@ -54,13 +53,31 @@ const IDCardPreviewPage: React.FC = () => {
   const [allApplicants, setAllApplicants] = useState<ApplicantData[]>([]);
   const [showBulkPrintModal, setShowBulkPrintModal] = useState(false);
   
-  // Load applicant data using sync service
+  // Load applicant data
   useEffect(() => {
     const loadApplicant = async () => {
       setLoading(true);
       try {
-        const applicants = await dataSyncService.getApplicants();
-        const found = applicants.find(a => a.id === id);
+        console.log('Loading applicant with ID:', id);
+        
+        // Get applicants from localStorage
+        const storedApplicants = localStorage.getItem('applicants');
+        if (!storedApplicants) {
+          console.log('No applicants found in localStorage');
+          toast.error('No applicants data found');
+          setLoading(false);
+          return;
+        }
+
+        const applicants = JSON.parse(storedApplicants);
+        console.log('All applicants:', applicants.length);
+        console.log('Looking for ID:', id);
+        
+        // Find the specific applicant
+        const found = applicants.find((a: ApplicantData) => {
+          console.log('Checking applicant ID:', a.id, 'against:', id);
+          return a.id === id;
+        });
         
         if (found) {
           console.log('Found applicant:', found);
@@ -70,12 +87,14 @@ const IDCardPreviewPage: React.FC = () => {
             const savedPhoto = localStorage.getItem(`applicantPhoto_${id}`);
             if (savedPhoto) {
               found.photo = savedPhoto;
+              console.log('Loaded photo from localStorage');
             }
           }
           
           setApplicant({...found});
         } else {
           console.log('Applicant not found with ID:', id);
+          console.log('Available IDs:', applicants.map((a: ApplicantData) => a.id));
           toast.error(`Applicant with ID ${id} not found`);
         }
       } catch (error) {
@@ -95,12 +114,15 @@ const IDCardPreviewPage: React.FC = () => {
   useEffect(() => {
     const loadAllApplicants = async () => {
       try {
-        const applicants = await dataSyncService.getApplicants();
-        // Filter for approved applicants only
-        const approved = applicants.filter(app => 
-          app.status === 'approved' || app.id_card_approved
-        );
-        setAllApplicants(approved);
+        const storedApplicants = localStorage.getItem('applicants');
+        if (storedApplicants) {
+          const applicants = JSON.parse(storedApplicants);
+          // Filter for approved applicants only
+          const approved = applicants.filter((app: ApplicantData) => 
+            app.status === 'approved' || app.id_card_approved
+          );
+          setAllApplicants(approved);
+        }
       } catch (error) {
         console.error('Error loading all applicants:', error);
       }
@@ -147,7 +169,6 @@ const IDCardPreviewPage: React.FC = () => {
   const visaType = getApplicantProperty(applicant, 'visaType', 'visa_type');
   const expiryDate = getApplicantProperty(applicant, 'expiryDate', 'expiry_date');
   const dateCreated = getApplicantProperty(applicant, 'dateCreated', 'date_created');
-  const passportNumber = getApplicantProperty(applicant, 'passportNumber', 'passport_number');
   
   return (
     <div className="space-y-6">
@@ -223,42 +244,38 @@ const IDCardPreviewPage: React.FC = () => {
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500">Passport Number</h3>
-                  <p>{passportNumber || 'Not provided'}</p>
-                </div>
-                <div>
                   <h3 className="text-sm font-medium text-gray-500">Visa Type</h3>
                   <p>{visaType || 'Not provided'}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Occupation</h3>
+                  <p>{applicant.occupation || 'Not provided'}</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500">Occupation</h3>
-                  <p>{applicant.occupation || 'Not provided'}</p>
-                </div>
-                <div>
                   <h3 className="text-sm font-medium text-gray-500">Area</h3>
                   <p>{applicant.area || 'Not provided'}</p>
                 </div>
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Status</h3>
                   <p className="capitalize">{applicant.status || 'Pending'}</p>
                 </div>
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">ID Number</h3>
-                  <p>{applicant.id}</p>
-                </div>
               </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
+                  <h3 className="text-sm font-medium text-gray-500">ID Number</h3>
+                  <p>{applicant.id}</p>
+                </div>
+                <div>
                   <h3 className="text-sm font-medium text-gray-500">Expiry Date</h3>
                   <p>{formatDate(expiryDate)}</p>
                 </div>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Date Created</h3>
                   <p>{formatDate(dateCreated)}</p>
@@ -296,8 +313,7 @@ const IDCardPreviewPage: React.FC = () => {
               occupation: applicant.occupation,
               photo: applicant.photo,
               phoneNumber: phoneNumber,
-              area: applicant.area,
-              passportNumber: passportNumber
+              area: applicant.area
             }} />
           </CardContent>
         </Card>

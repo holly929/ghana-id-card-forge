@@ -20,7 +20,6 @@ const defaultApplicants = [
     id: 'GIS-123456789',
     fullName: 'Ahmed Mohammed',
     nationality: 'Egyptian',
-    passportNumber: 'A12345678',
     dateOfBirth: '1985-03-15',
     visaType: 'Work',
     status: 'approved',
@@ -210,10 +209,11 @@ const IDCardPrintPage: React.FC = () => {
     });
   };
   
-  // Calculate expiry date (2 years from now)
+  // Calculate expiry date helper
   const getExpiryDate = (applicant: any) => {
-    if (applicant.expiryDate) {
-      return applicant.expiryDate;
+    // Use provided expiry date or calculate default (2 years from now)
+    if (applicant.expiryDate || applicant.expiry_date) {
+      return applicant.expiryDate || applicant.expiry_date;
     }
     const date = new Date();
     date.setFullYear(date.getFullYear() + 2);
@@ -500,7 +500,7 @@ const IDCardPrintPage: React.FC = () => {
                           ${applicant.photo ? `<img src="${applicant.photo}" alt="Photo" class="photo-image" />` : '<div style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 6px; color: rgba(255,255,255,0.7);">PHOTO</div>'}
                         </div>
                         <div class="visa-type">
-                          ${(applicant.visaType || 'NONE').toUpperCase()}
+                          ${((applicant.visaType || applicant.visa_type) || 'NONE').toUpperCase()}
                         </div>
                       </div>
                       <div class="right-side">
@@ -511,7 +511,7 @@ const IDCardPrintPage: React.FC = () => {
                         <div class="card-info">
                           <div class="info-row">
                             <span class="label">${cardLabels.name}</span>
-                            <span class="value">${applicant.fullName || 'Not provided'}</span>
+                            <span class="value">${(applicant.fullName || applicant.full_name) || 'Not provided'}</span>
                           </div>
                           <div class="info-row">
                             <span class="label">${cardLabels.nationality}</span>
@@ -519,11 +519,11 @@ const IDCardPrintPage: React.FC = () => {
                           </div>
                           <div class="info-row">
                             <span class="label">${cardLabels.dateOfBirth}</span>
-                            <span class="value">${formatDate(applicant.dateOfBirth)}</span>
+                            <span class="value">${formatDate(applicant.dateOfBirth || applicant.date_of_birth)}</span>
                           </div>
                           <div class="info-row">
                             <span class="label">Phone:</span>
-                            <span class="value">${applicant.phoneNumber || 'Not provided'}</span>
+                            <span class="value">${(applicant.phoneNumber || applicant.phone_number) || 'Not provided'}</span>
                           </div>
                           <div class="info-row">
                             <span class="label">${cardLabels.idNo}</span>
@@ -676,7 +676,7 @@ const IDCardPrintPage: React.FC = () => {
           <h1 className="text-2xl font-semibold text-gray-800">ID Card Print Page</h1>
           <p className="text-gray-600">
             {selectedApplicants.length === 1 
-              ? `Print ID card for ${selectedApplicants[0]?.fullName}`
+              ? `Print ID card for ${selectedApplicants[0]?.fullName || selectedApplicants[0]?.full_name}`
               : `Print ${selectedApplicants.length} ID cards on one page`
             }
           </p>
@@ -790,13 +790,13 @@ const IDCardPrintPage: React.FC = () => {
             <div key={applicant.id} className="border rounded-md p-2 bg-white flex items-center gap-2">
               <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
                 {applicant.photo ? (
-                  <img src={applicant.photo} alt={applicant.fullName} className="w-full h-full object-cover" />
+                  <img src={applicant.photo} alt={applicant.fullName || applicant.full_name} className="w-full h-full object-cover" />
                 ) : (
                   <span className="text-xs text-gray-500">No photo</span>
                 )}
               </div>
               <div className="flex-1 truncate">
-                <div className="font-medium text-sm">{applicant.fullName}</div>
+                <div className="font-medium text-sm">{applicant.fullName || applicant.full_name}</div>
                 <div className="text-xs text-gray-500">{applicant.nationality} • {applicant.area || 'No area'}</div>
                 <div className="text-xs text-gray-400">Expires: {formatDate(getExpiryDate(applicant))}</div>
               </div>

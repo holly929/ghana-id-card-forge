@@ -1,190 +1,194 @@
-import React, { useState, useRef } from 'react';
+
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CalendarIcon, Upload, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateUniqueId, handleImageUpload, optimizeImage } from '@/lib/utils';
-import { Camera, Upload, X } from 'lucide-react';
+import { useAuth, UserRole } from '@/context/AuthContext';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 
-const ApplicantForm = () => {
+const ApplicantForm: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  
+  // Form state
   const [formData, setFormData] = useState({
     fullName: '',
-    dateOfBirth: '',
+    full_name: '',
     nationality: '',
     phoneNumber: '',
+    phone_number: '',
+    dateOfBirth: '',
+    date_of_birth: '',
+    visaType: '',
+    visa_type: '',
     occupation: '',
     area: '',
-    visaType: '',
-    photo: ''
+    expiryDate: '',
+    expiry_date: ''
   });
+  
+  const [photo, setPhoto] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [expiryDate, setExpiryDate] = useState<Date>();
+  const [dateOfBirth, setDateOfBirth] = useState<Date>();
 
-  // Camera functionality states
-  const [showCamera, setShowCamera] = useState(false);
-  const [cameraLoading, setCameraLoading] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const photoInputRef = useRef<HTMLInputElement>(null);
+  // Check permissions
+  const canCreateApplicants = user && [UserRole.ADMIN, UserRole.DATA_ENTRY].includes(user.role);
+
+  if (!canCreateApplicants) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8">
+        <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
+        <p className="mb-6">You don't have permission to create applicants.</p>
+        <Button onClick={() => navigate('/applicants')}>
+          Return to Applicants
+        </Button>
+      </div>
+    );
+  }
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => ({
+      ...prev,
+      [field]: value,
+      // Set both camelCase and snake_case versions
+      ...(field === 'fullName' && { full_name: value }),
+      ...(field === 'full_name' && { fullName: value }),
+      ...(field === 'phoneNumber' && { phone_number: value }),
+      ...(field === 'phone_number' && { phoneNumber: value }),
+      ...(field === 'dateOfBirth' && { date_of_birth: value }),
+      ...(field === 'date_of_birth' && { dateOfBirth: value }),
+      ...(field === 'visaType' && { visa_type: value }),
+      ...(field === 'visa_type' && { visaType: value }),
+      ...(field === 'expiryDate' && { expiry_date: value }),
+      ...(field === 'expiry_date' && { expiryDate: value })
+    }));
   };
 
-  const handlePhotoUpload = () => {
-    photoInputRef.current?.click();
-  };
-
-  const handlePhotoFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (file) {
-      handleImageUpload(
-        file,
-        async (result) => {
-          try {
-            const optimized = await optimizeImage(result);
-            setFormData(prev => ({ ...prev, photo: optimized }));
-            toast.success("Photo uploaded successfully");
-          } catch (error) {
-            setFormData(prev => ({ ...prev, photo: result }));
-            toast.success("Photo uploaded successfully");
-          }
-        },
-        { maxSizeMB: 1 }
-      );
-    }
-  };
-
-  const removePhoto = () => {
-    setFormData(prev => ({ ...prev, photo: '' }));
-    if (photoInputRef.current) {
-      photoInputRef.current.value = '';
-    }
-  };
-
-  const openCamera = async () => {
-    setShowCamera(true);
-    setCameraLoading(true);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Photo size should be less than 5MB');
+        return;
       }
-    } catch (err) {
-      toast.error("Unable to access camera");
-      setShowCamera(false);
-    } finally {
-      setCameraLoading(false);
-    }
-  };
-
-  const closeCamera = () => {
-    setShowCamera(false);
-    if (videoRef.current && videoRef.current.srcObject) {
-      const stream = videoRef.current.srcObject as MediaStream;
-      stream.getTracks().forEach(track => track.stop());
-      videoRef.current.srcObject = null;
-    }
-  };
-
-  const capturePhoto = async () => {
-    if (videoRef.current && canvasRef.current) {
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob(async (blob) => {
-          if (blob) {
-            const file = new File([blob], "photo.jpg", { type: "image/jpeg" });
-            handleImageUpload(
-              file,
-              async (result) => {
-                try {
-                  const optimized = await optimizeImage(result);
-                  setFormData(prev => ({ ...prev, photo: optimized }));
-                  toast.success("Photo captured successfully");
-                } catch (error) {
-                  setFormData(prev => ({ ...prev, photo: result }));
-                  toast.success("Photo captured successfully");
-                }
-              },
-              { maxSizeMB: 1 }
-            );
-          }
-        }, "image/jpeg", 0.95);
-      }
-      closeCamera();
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.fullName || !formData.dateOfBirth || !formData.nationality || !formData.phoneNumber) {
-      toast.error("Please fill in all required fields");
-      return;
-    }
-
-    try {
-      const applicantId = generateUniqueId();
-      console.log('Generated applicant ID:', applicantId);
       
+      handleImageUpload(file, async (result) => {
+        try {
+          const optimized = await optimizeImage(result);
+          setPhoto(optimized);
+          toast.success('Photo uploaded successfully');
+        } catch (error) {
+          console.error('Error optimizing image:', error);
+          setPhoto(result);
+          toast.success('Photo uploaded successfully');
+        }
+      });
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      // Validate required fields
+      if (!formData.fullName || !formData.nationality || !formData.phoneNumber || !formData.dateOfBirth) {
+        toast.error('Please fill in all required fields');
+        setLoading(false);
+        return;
+      }
+
+      // Generate unique ID
+      const applicantId = generateUniqueId();
+      
+      // Create applicant object with both formats for compatibility
       const applicantData = {
         id: applicantId,
         fullName: formData.fullName,
-        full_name: formData.fullName, // Store both formats for compatibility
-        dateOfBirth: formData.dateOfBirth,
-        date_of_birth: formData.dateOfBirth,
+        full_name: formData.fullName,
         nationality: formData.nationality,
         phoneNumber: formData.phoneNumber,
         phone_number: formData.phoneNumber,
-        occupation: formData.occupation || '',
-        area: formData.area || '',
-        visaType: formData.visaType || '',
-        visa_type: formData.visaType || '',
-        photo: formData.photo || '',
+        dateOfBirth: formData.dateOfBirth,
+        date_of_birth: formData.dateOfBirth,
+        visaType: formData.visaType || 'Not specified',
+        visa_type: formData.visaType || 'Not specified',
+        occupation: formData.occupation || 'Not specified',
+        area: formData.area || 'Not provided',
+        expiryDate: formData.expiryDate,
+        expiry_date: formData.expiryDate,
+        status: 'pending',
         dateCreated: new Date().toISOString().split('T')[0],
         date_created: new Date().toISOString().split('T')[0],
-        status: 'pending',
         idCardApproved: false,
-        id_card_approved: false
+        id_card_approved: false,
+        photo: photo || null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       };
 
-      // Get existing applicants from localStorage
+      console.log('Creating applicant with data:', applicantData);
+
+      // Get existing applicants
       const existingApplicants = JSON.parse(localStorage.getItem('applicants') || '[]');
       
       // Add new applicant
       const updatedApplicants = [...existingApplicants, applicantData];
+      
+      // Save to localStorage
       localStorage.setItem('applicants', JSON.stringify(updatedApplicants));
       
-      console.log('Saved applicant:', applicantData);
-      console.log('Total applicants:', updatedApplicants.length);
-
-      // Store photo separately if exists
-      if (formData.photo) {
-        localStorage.setItem(`applicantPhoto_${applicantId}`, formData.photo);
-        console.log('Saved photo for applicant:', applicantId);
+      // Save photo separately if exists
+      if (photo) {
+        localStorage.setItem(`applicantPhoto_${applicantId}`, photo);
       }
 
-      toast.success("Applicant added successfully");
+      console.log('Applicant saved successfully:', applicantId);
+      console.log('Total applicants now:', updatedApplicants.length);
+      
+      toast.success('Applicant created successfully!');
+      
+      // Navigate to applicants list
       navigate('/applicants');
+      
     } catch (error) {
-      console.error('Error saving applicant:', error);
-      toast.error("Failed to add applicant");
+      console.error('Error creating applicant:', error);
+      toast.error('Failed to create applicant. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="space-y-6">
+      <div className="flex items-center gap-2">
+        <Button 
+          variant="ghost" 
+          size="icon"
+          onClick={() => navigate('/applicants')}
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-800">New Applicant</h1>
+          <p className="text-gray-600">Create a new non-citizen applicant record</p>
+        </div>
+      </div>
+
       <Card>
         <CardHeader>
-          <CardTitle>Add New Applicant</CardTitle>
+          <CardTitle>Applicant Information</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -195,17 +199,7 @@ const ApplicantForm = () => {
                   id="fullName"
                   value={formData.fullName}
                   onChange={(e) => handleInputChange('fullName', e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="dateOfBirth">Date of Birth *</Label>
-                <Input
-                  id="dateOfBirth"
-                  type="date"
-                  value={formData.dateOfBirth}
-                  onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
+                  placeholder="Enter full name"
                   required
                 />
               </div>
@@ -216,6 +210,7 @@ const ApplicantForm = () => {
                   id="nationality"
                   value={formData.nationality}
                   onChange={(e) => handleInputChange('nationality', e.target.value)}
+                  placeholder="Enter nationality"
                   required
                 />
               </div>
@@ -224,10 +219,65 @@ const ApplicantForm = () => {
                 <Label htmlFor="phoneNumber">Phone Number *</Label>
                 <Input
                   id="phoneNumber"
+                  type="tel"
                   value={formData.phoneNumber}
                   onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
+                  placeholder="+233123456789"
                   required
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Date of Birth *</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !dateOfBirth && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dateOfBirth ? format(dateOfBirth, "PPP") : "Pick a date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={dateOfBirth}
+                      onSelect={(date) => {
+                        setDateOfBirth(date);
+                        if (date) {
+                          const dateString = date.toISOString().split('T')[0];
+                          handleInputChange('dateOfBirth', dateString);
+                        }
+                      }}
+                      disabled={(date) =>
+                        date > new Date() || date < new Date("1900-01-01")
+                      }
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="visaType">Visa Type</Label>
+                <Select onValueChange={(value) => handleInputChange('visaType', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select visa type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="work">Work</SelectItem>
+                    <SelectItem value="student">Student</SelectItem>
+                    <SelectItem value="tourist">Tourist</SelectItem>
+                    <SelectItem value="business">Business</SelectItem>
+                    <SelectItem value="transit">Transit</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
@@ -236,145 +286,86 @@ const ApplicantForm = () => {
                   id="occupation"
                   value={formData.occupation}
                   onChange={(e) => handleInputChange('occupation', e.target.value)}
+                  placeholder="Enter occupation"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="area">Area</Label>
+                <Label htmlFor="area">Area/Region</Label>
                 <Input
                   id="area"
                   value={formData.area}
                   onChange={(e) => handleInputChange('area', e.target.value)}
+                  placeholder="Enter area or region"
                 />
               </div>
 
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="visaType">Visa Type</Label>
-                <Select onValueChange={(value) => handleInputChange('visaType', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select visa type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="tourist">Tourist</SelectItem>
-                    <SelectItem value="business">Business</SelectItem>
-                    <SelectItem value="work">Work</SelectItem>
-                    <SelectItem value="student">Student</SelectItem>
-                    <SelectItem value="transit">Transit</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="space-y-2">
+                <Label>Expiry Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !expiryDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {expiryDate ? format(expiryDate, "PPP") : "Pick expiry date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={expiryDate}
+                      onSelect={(date) => {
+                        setExpiryDate(date);
+                        if (date) {
+                          const dateString = date.toISOString().split('T')[0];
+                          handleInputChange('expiryDate', dateString);
+                        }
+                      }}
+                      disabled={(date) => date < new Date()}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
 
-            {/* Photo Upload Section */}
-            <div className="space-y-4">
-              <Label>Applicant Photo</Label>
+            <div className="space-y-2">
+              <Label htmlFor="photo">Photo</Label>
               <div className="flex items-center gap-4">
-                {formData.photo ? (
-                  <div className="relative">
-                    <div className="w-32 h-40 border-2 border-gray-300 rounded-lg overflow-hidden">
-                      <img 
-                        src={formData.photo} 
-                        alt="Applicant" 
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      className="absolute -top-2 -right-2"
-                      onClick={() => setFormData(prev => ({ ...prev, photo: '' }))}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="w-32 h-40 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
-                    <div className="text-center">
-                      <Camera className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-500">No photo</p>
-                    </div>
-                  </div>
-                )}
-                
-                <div className="flex flex-col gap-2">
-                  <div className="flex gap-2">
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      onClick={() => photoInputRef.current?.click()}
-                      className="flex items-center gap-2"
-                    >
-                      <Upload className="h-4 w-4" />
-                      Upload Photo
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={async () => {
-                        setShowCamera(true);
-                        setCameraLoading(true);
-                        try {
-                          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                          if (videoRef.current) {
-                            videoRef.current.srcObject = stream;
-                            videoRef.current.play();
-                          }
-                        } catch (err) {
-                          toast.error("Unable to access camera");
-                          setShowCamera(false);
-                        } finally {
-                          setCameraLoading(false);
-                        }
-                      }}
-                      className="flex items-center gap-2"
-                    >
-                      <Camera className="h-4 w-4" />
-                      Use Camera
-                    </Button>
-                  </div>
-                  <p className="text-xs text-gray-500">
-                    Max size: 1MB. Formats: JPG, PNG
-                  </p>
-                </div>
-                
-                <Input 
-                  type="file" 
-                  ref={photoInputRef}
-                  accept="image/*" 
-                  className="hidden" 
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      handleImageUpload(
-                        file,
-                        async (result) => {
-                          try {
-                            const optimized = await optimizeImage(result);
-                            setFormData(prev => ({ ...prev, photo: optimized }));
-                            toast.success("Photo uploaded successfully");
-                          } catch (error) {
-                            setFormData(prev => ({ ...prev, photo: result }));
-                            toast.success("Photo uploaded successfully");
-                          }
-                        },
-                        { maxSizeMB: 1 }
-                      );
-                    }
-                  }}
+                <Input
+                  id="photo"
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoUpload}
+                  className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                 />
+                <Upload className="h-5 w-5 text-gray-400" />
               </div>
+              {photo && (
+                <div className="mt-4">
+                  <img
+                    src={photo}
+                    alt="Preview"
+                    className="w-32 h-40 object-cover rounded-md border"
+                  />
+                </div>
+              )}
             </div>
 
             <div className="flex gap-4">
-              <Button type="submit" className="flex-1">
-                Add Applicant
+              <Button type="submit" disabled={loading}>
+                {loading ? 'Creating...' : 'Create Applicant'}
               </Button>
               <Button 
                 type="button" 
                 variant="outline" 
                 onClick={() => navigate('/applicants')}
-                className="flex-1"
               >
                 Cancel
               </Button>
@@ -382,82 +373,6 @@ const ApplicantForm = () => {
           </form>
         </CardContent>
       </Card>
-
-      {/* Camera Modal */}
-      {showCamera && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
-          <div className="bg-white rounded-lg shadow-lg p-6 relative w-[350px]">
-            <button
-              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
-              onClick={() => {
-                setShowCamera(false);
-                if (videoRef.current && videoRef.current.srcObject) {
-                  const stream = videoRef.current.srcObject as MediaStream;
-                  stream.getTracks().forEach(track => track.stop());
-                  videoRef.current.srcObject = null;
-                }
-              }}
-              type="button"
-            >
-              <X className="h-6 w-6" />
-            </button>
-            <div className="flex flex-col items-center">
-              <h3 className="text-lg font-semibold mb-4">Capture Photo</h3>
-              <video
-                ref={videoRef}
-                className="w-64 h-48 bg-black rounded mb-4"
-                autoPlay
-                playsInline
-              />
-              <canvas ref={canvasRef} className="hidden" />
-              <Button
-                type="button"
-                onClick={async () => {
-                  if (videoRef.current && canvasRef.current) {
-                    const video = videoRef.current;
-                    const canvas = canvasRef.current;
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                    const ctx = canvas.getContext('2d');
-                    if (ctx) {
-                      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                      canvas.toBlob(async (blob) => {
-                        if (blob) {
-                          const file = new File([blob], "photo.jpg", { type: "image/jpeg" });
-                          handleImageUpload(
-                            file,
-                            async (result) => {
-                              try {
-                                const optimized = await optimizeImage(result);
-                                setFormData(prev => ({ ...prev, photo: optimized }));
-                                toast.success("Photo captured successfully");
-                              } catch (error) {
-                                setFormData(prev => ({ ...prev, photo: result }));
-                                toast.success("Photo captured successfully");
-                              }
-                            },
-                            { maxSizeMB: 1 }
-                          );
-                        }
-                      }, "image/jpeg", 0.95);
-                    }
-                    setShowCamera(false);
-                    if (videoRef.current && videoRef.current.srcObject) {
-                      const stream = videoRef.current.srcObject as MediaStream;
-                      stream.getTracks().forEach(track => track.stop());
-                      videoRef.current.srcObject = null;
-                    }
-                  }
-                }}
-                disabled={cameraLoading}
-                className="w-full"
-              >
-                {cameraLoading ? "Loading..." : "Capture Photo"}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
