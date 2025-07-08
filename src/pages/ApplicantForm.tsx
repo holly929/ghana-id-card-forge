@@ -10,7 +10,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon, Upload, Camera, X } from 'lucide-react';
 import { format } from 'date-fns';
-import { cn, generateId } from '@/lib/utils';
+import { cn, generateUniqueId } from '@/lib/utils';
 import { toast } from 'sonner';
 import CameraCapture from '@/components/CameraCapture';
 
@@ -32,7 +32,7 @@ interface ApplicantData {
 }
 
 const defaultValues: ApplicantData = {
-  id: generateId(),
+  id: generateUniqueId(),
   fullName: '',
   nationality: '',
   area: '',
@@ -106,7 +106,7 @@ const ApplicantForm: React.FC = () => {
     }
 
     const newApplicant: ApplicantData = {
-      id: generateId(),
+      id: generateUniqueId(),
       fullName,
       nationality,
       area,
