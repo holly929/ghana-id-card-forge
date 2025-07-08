@@ -64,3 +64,54 @@ export const optimizeImage = async (imageDataUrl: string): Promise<string> => {
     img.src = imageDataUrl;
   });
 };
+
+// Backup and restore system functions
+export const backupSystem = (): string => {
+  try {
+    const backup = {
+      version: '1.0',
+      timestamp: new Date().toISOString(),
+      data: {
+        applicants: localStorage.getItem('applicants') || '[]',
+        systemLogo: localStorage.getItem('systemLogo') || null,
+        companyName: localStorage.getItem('companyName') || 'Ghana Immigration Service',
+        settings: {
+          // Add any other settings that need to be backed up
+        }
+      }
+    };
+    
+    return JSON.stringify(backup, null, 2);
+  } catch (error) {
+    throw new Error('Failed to create system backup');
+  }
+};
+
+export const restoreSystem = (backupString: string): void => {
+  try {
+    const backup = JSON.parse(backupString);
+    
+    if (!backup.version || !backup.data) {
+      throw new Error('Invalid backup file format');
+    }
+    
+    // Restore applicants data
+    if (backup.data.applicants) {
+      localStorage.setItem('applicants', backup.data.applicants);
+    }
+    
+    // Restore system logo
+    if (backup.data.systemLogo) {
+      localStorage.setItem('systemLogo', backup.data.systemLogo);
+    }
+    
+    // Restore company name
+    if (backup.data.companyName) {
+      localStorage.setItem('companyName', backup.data.companyName);
+    }
+    
+    console.log('System restored successfully from backup');
+  } catch (error) {
+    throw new Error('Failed to restore system from backup. Please check the backup file format.');
+  }
+};
