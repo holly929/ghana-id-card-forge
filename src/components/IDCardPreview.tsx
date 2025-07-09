@@ -82,18 +82,26 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
           {/* Left side - Photo and Logo */}
           <div className="w-2/5 flex flex-col items-center justify-start space-y-3">
             {/* Logo */}
-            <div className="h-10 flex items-center justify-center mb-2">
+            <div className="h-12 flex items-center justify-center mb-2 bg-white/10 rounded-lg p-2 w-full">
               {logo ? (
-                <img src={logo} alt="Logo" className="max-h-10 max-w-24 object-contain filter brightness-0 invert" />
+                <img 
+                  src={logo} 
+                  alt="System Logo" 
+                  className="max-h-10 max-w-full object-contain filter brightness-0 invert" 
+                />
               ) : (
-                <div className="text-white text-sm font-bold opacity-80">LOGO</div>
+                <div className="text-white text-sm font-bold opacity-80">SYSTEM LOGO</div>
               )}
             </div>
             
             {/* Photo with better styling */}
             <div className="w-20 h-24 border-3 border-white rounded-lg overflow-hidden bg-white shadow-lg">
               {applicant.photo ? (
-                <img src={applicant.photo} alt="Applicant" className="w-full h-full object-cover" />
+                <img 
+                  src={applicant.photo} 
+                  alt="Applicant" 
+                  className="w-full h-full object-cover" 
+                />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-500 text-xs font-medium">
                   PHOTO
@@ -189,14 +197,11 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
             If found, please return to the nearest Ghana Immigration Service office
           </div>
           
-          {/* Signatures */}
-          <div className="flex justify-between items-end">
+          {/* Issuing Officer Signature Section */}
+          <div className="flex justify-center items-end">
             <div className="text-center">
-              <div className="border-t border-white/50 w-20 mb-2"></div>
-              <div className="text-xs">Holder's Signature</div>
-            </div>
-            <div className="text-center">
-              <div className="w-24 h-8 border-t border-white/50 mb-2 flex items-center justify-center bg-white/10 rounded">
+              {/* Signature Display */}
+              <div className="w-28 h-12 mb-2 flex items-center justify-center bg-white rounded border-2 border-white/20">
                 {issuingOfficerSignature ? (
                   <img 
                     src={issuingOfficerSignature} 
@@ -204,10 +209,13 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
                     className="max-h-full max-w-full object-contain"
                   />
                 ) : (
-                  <div className="text-xs opacity-50">No Signature</div>
+                  <div className="text-gray-400 text-xs">No Signature</div>
                 )}
               </div>
-              <div className="text-xs">Issuing Officer</div>
+              {/* Label under signature */}
+              <div className="border-t border-white/50 pt-1">
+                <div className="text-xs font-medium">Issuing Officer</div>
+              </div>
             </div>
           </div>
         </div>
