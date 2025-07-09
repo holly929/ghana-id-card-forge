@@ -209,7 +209,7 @@ const IDCardPrintPage: React.FC = () => {
     });
   };
   
-  // Calculate expiry date helper
+  // Calculate expiry date helper - UPDATED
   const getExpiryDate = (applicant: any) => {
     // Use provided expiry date or calculate default (2 years from now)
     if (applicant.expiryDate || applicant.expiry_date) {
@@ -220,7 +220,7 @@ const IDCardPrintPage: React.FC = () => {
     return date.toISOString().split('T')[0];
   };
   
-  // Handle printing all cards - FIXED with improved error handling
+  // Handle printing all cards - UPDATED to use global signature
   const handlePrintAllCards = () => {
     if (selectedApplicants.length === 0) {
       toast.error("No approved applicants to print");
@@ -236,6 +236,9 @@ const IDCardPrintPage: React.FC = () => {
         toast.error("Pop-up blocked. Please allow pop-ups to print.");
         return;
       }
+
+      // Get the global issuing officer signature
+      const globalSignature = localStorage.getItem('issuingOfficerSignature');
       
       // Get scale based on the print format
       let scale = 1;
@@ -585,9 +588,9 @@ const IDCardPrintPage: React.FC = () => {
                         <div class="signature-area">
                           <div class="signature-box">${cardLabels.holderSignature}</div>
                           <div class="signature-box" style="display: flex; flex-direction: column; align-items: center;">
-                            ${applicant.issuingOfficerSignature ? 
+                            ${globalSignature ? 
                               `<div style="height: 20px; width: 50px; margin-bottom: 2px; display: flex; align-items: center; justify-content: center;">
-                                <img src="${applicant.issuingOfficerSignature}" alt="Officer Signature" style="max-height: 100%; max-width: 100%; object-fit: contain;" />
+                                <img src="${globalSignature}" alt="Officer Signature" style="max-height: 100%; max-width: 100%; object-fit: contain;" />
                                </div>` : 
                               '<div style="height: 20px; margin-bottom: 2px;"></div>'
                             }

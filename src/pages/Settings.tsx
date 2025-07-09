@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Upload, Save, Archive, RefreshCw, Database } from 'lucide-react';
+import { Upload, Save, Archive, RefreshCw, Database, FileSignature } from 'lucide-react';
 import { toast } from "sonner";
 import { handleImageUpload, backupSystem, restoreSystem } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -13,10 +13,12 @@ import { dataSyncService } from '@/services/dataSync';
 const Settings: React.FC = () => {
   const [logo, setLogo] = useState<string | null>(null);
   const [companyName, setCompanyName] = useState('Ghana Immigration Service');
+  const [issuingOfficerSignature, setIssuingOfficerSignature] = useState<string | null>(null);
   const [isBackupDialogOpen, setIsBackupDialogOpen] = useState(false);
   const [backupData, setBackupData] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const signatureInputRef = useRef<HTMLInputElement>(null);
   const backupFileInputRef = useRef<HTMLInputElement>(null);
   
   // Load settings from localStorage on component mount
@@ -29,6 +31,11 @@ const Settings: React.FC = () => {
     const savedCompanyName = localStorage.getItem('companyName');
     if (savedCompanyName) {
       setCompanyName(savedCompanyName);
+    }
+
+    const savedSignature = localStorage.getItem('issuingOfficerSignature');
+    if (savedSignature) {
+      setIssuingOfficerSignature(savedSignature);
     }
   }, []);
   
@@ -55,6 +62,33 @@ const Settings: React.FC = () => {
         toast.error(error.message);
       } else {
         toast.error("Failed to upload logo");
+      }
+    }
+  };
+
+  // Handle signature upload
+  const handleSignatureUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      toast.error("No file selected");
+      return;
+    }
+    
+    try {
+      handleImageUpload(
+        file,
+        (result) => {
+          setIssuingOfficerSignature(result);
+          localStorage.setItem('issuingOfficerSignature', result);
+          toast.success("Issuing officer signature uploaded successfully");
+        },
+        { maxSizeMB: 1 }
+      );
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("Failed to upload signature");
       }
     }
   };
@@ -130,6 +164,13 @@ const Settings: React.FC = () => {
     }
   };
   
+  // Trigger signature file input click
+  const triggerSignatureFileInput = () => {
+    if (signatureInputRef.current) {
+      signatureInputRef.current.click();
+    }
+  };
+
   // Trigger backup file input click
   const triggerBackupFileInput = () => {
     if (backupFileInputRef.current) {
@@ -245,8 +286,56 @@ const Settings: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
+          <CardHeader>
+            <CardTitle>Issuing Officer Signature</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex justify-center p-4 border rounded-lg">
+                {issuingOfficerSignature ? (
+                  <img src={issuingOfficerSignature} alt="Officer Signature" className="max-h-24" />
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-24 text-gray-400">
+                    <FileSignature className="h-10 w-10 mb-2" />
+                    <p>No signature uploaded</p>
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex items-center justify-center space-x-2">
+                <Input
+                  type="file"
+                  ref={signatureInputRef}
+                  id="signature-upload"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleSignatureUpload}
+                />
+                <Button variant="outline" className="w-full" onClick={triggerSignatureFileInput}>
+                  <FileSignature className="h-4 w-4 mr-2" />
+                  Upload Signature
+                </Button>
+                
+                {issuingOfficerSignature && (
+                  <Button
+                    variant="destructive"
+                    onClick={() => {
+                      localStorage.removeItem('issuingOfficerSignature');
+                      setIssuingOfficerSignature(null);
+                      toast.success("Signature removed");
+                    }}
+                  >
+                    Remove
+                  </Button>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="md:col-span-2">
           <CardHeader>
             <CardTitle>Company Information</CardTitle>
           </CardHeader>
