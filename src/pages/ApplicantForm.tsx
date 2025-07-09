@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -29,6 +28,7 @@ interface ApplicantData {
   expiryDate: string;
   phoneNumber: string;
   photo: string;
+  issuingOfficerSignature: string;
 }
 
 const defaultValues: ApplicantData = {
@@ -45,6 +45,7 @@ const defaultValues: ApplicantData = {
   expiryDate: '',
   phoneNumber: '',
   photo: '',
+  issuingOfficerSignature: '',
 };
 
 const nationalities = [
@@ -70,9 +71,11 @@ const ApplicantForm: React.FC = () => {
   const [phoneNumber, setPhoneNumber] = useState(defaultValues.phoneNumber);
   const [expiryDate, setExpiryDate] = useState(defaultValues.expiryDate);
   const [photo, setPhoto] = useState(defaultValues.photo);
+  const [issuingOfficerSignature, setIssuingOfficerSignature] = useState(defaultValues.issuingOfficerSignature);
   const navigate = useNavigate();
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const signatureInputRef = useRef<HTMLInputElement>(null);
 
   const handleDateChange = (date: Date | undefined) => {
     if (date) {
@@ -108,6 +111,7 @@ const ApplicantForm: React.FC = () => {
       expiryDate,
       phoneNumber,
       photo,
+      issuingOfficerSignature,
     };
 
     // Get existing applicants from localStorage
@@ -131,6 +135,10 @@ const ApplicantForm: React.FC = () => {
     setPhoto(photoDataUrl);
   };
 
+  const handleSignatureCapture = (signatureDataUrl: string) => {
+    setIssuingOfficerSignature(signatureDataUrl);
+  };
+
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -143,6 +151,23 @@ const ApplicantForm: React.FC = () => {
       reader.onload = (e) => {
         const result = e.target?.result as string;
         setPhoto(result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSignatureUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) { // 2MB limit for signature
+        toast.error('Signature image size must be less than 2MB');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setIssuingOfficerSignature(result);
       };
       reader.readAsDataURL(file);
     }
@@ -346,6 +371,60 @@ const ApplicantForm: React.FC = () => {
                     size="icon"
                     className="absolute top-1 right-1 h-6 w-6"
                     onClick={() => setPhoto('')}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            {/* Issuing Officer Signature Upload Section */}
+            <div className="space-y-2">
+              <Label htmlFor="signature">Issuing Officer Signature</Label>
+              <div className="flex gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => signatureInputRef.current?.click()}
+                  className="flex items-center gap-2"
+                >
+                  <Upload className="h-4 w-4" />
+                  Upload Signature
+                </Button>
+                
+                <CameraCapture onPhotoCapture={handleSignatureCapture}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="flex items-center gap-2"
+                  >
+                    <Camera className="h-4 w-4" />
+                    Use Camera
+                  </Button>
+                </CameraCapture>
+              </div>
+              
+              <input
+                ref={signatureInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleSignatureUpload}
+                className="hidden"
+              />
+              
+              {issuingOfficerSignature && (
+                <div className="relative w-48 h-24 border border-gray-300 rounded-md overflow-hidden bg-white">
+                  <img 
+                    src={issuingOfficerSignature} 
+                    alt="Issuing Officer Signature" 
+                    className="w-full h-full object-contain"
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-1 right-1 h-6 w-6"
+                    onClick={() => setIssuingOfficerSignature('')}
                   >
                     <X className="h-3 w-3" />
                   </Button>

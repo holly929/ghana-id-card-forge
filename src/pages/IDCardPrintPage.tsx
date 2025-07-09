@@ -584,7 +584,15 @@ const IDCardPrintPage: React.FC = () => {
                         ` : ''}
                         <div class="signature-area">
                           <div class="signature-box">${cardLabels.holderSignature}</div>
-                          <div class="signature-box">${cardLabels.issuingOfficer}</div>
+                          <div class="signature-box" style="display: flex; flex-direction: column; align-items: center;">
+                            ${applicant.issuingOfficerSignature ? 
+                              `<div style="height: 20px; width: 50px; margin-bottom: 2px; display: flex; align-items: center; justify-content: center;">
+                                <img src="${applicant.issuingOfficerSignature}" alt="Officer Signature" style="max-height: 100%; max-width: 100%; object-fit: contain;" />
+                               </div>` : 
+                              '<div style="height: 20px; margin-bottom: 2px;"></div>'
+                            }
+                            <div style="font-size: 6px; text-align: center;">${cardLabels.issuingOfficer}</div>
+                          </div>
                         </div>
                       </div>
                     </div>

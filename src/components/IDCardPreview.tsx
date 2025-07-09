@@ -28,6 +28,7 @@ interface IDCardPreviewProps {
     photo?: string | null;
     phoneNumber?: string;
     area?: string;
+    issuingOfficerSignature?: string;
   };
 }
 
@@ -41,6 +42,7 @@ interface CustomField {
 const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
   const isMobile = useIsMobile();
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const signatureInputRef = useRef<HTMLInputElement>(null);
   
   // State for customizable fields
   const [cardLabels, setCardLabels] = useState({
@@ -90,6 +92,9 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
   // State for single-page print option
   const [singlePagePrint, setSinglePagePrint] = useState(true);
   
+  // State for issuing officer signature
+  const [issuingOfficerSignature, setIssuingOfficerSignature] = useState<string | null>(null);
+  
   // Load system logo and settings from localStorage
   useEffect(() => {
     const savedLogo = localStorage.getItem('systemLogo');
@@ -136,6 +141,16 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
         setPhoto(savedPhoto);
       } else if (applicant.photo) {
         setPhoto(applicant.photo);
+      }
+    }
+
+    // Load applicant signature if available
+    if (applicant && applicant.id) {
+      const savedSignature = localStorage.getItem(`applicantSignature_${applicant.id}`);
+      if (savedSignature) {
+        setIssuingOfficerSignature(savedSignature);
+      } else if (applicant.issuingOfficerSignature) {
+        setIssuingOfficerSignature(applicant.issuingOfficerSignature);
       }
     }
   }, [applicant]);
@@ -278,6 +293,49 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
     }
   };
   
+  // Handle signature upload
+  const handleSignatureUpload = async () => {
+    if (signatureInputRef.current) {
+      signatureInputRef.current.click();
+    }
+  };
+  
+  // Handle the actual signature file selection
+  const handleSignatureFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      toast.error("No file selected");
+      return;
+    }
+    
+    try {
+      if (file.size > 2 * 1024 * 1024) { // 2MB limit
+        toast.error('Signature size must be less than 2MB');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setIssuingOfficerSignature(result);
+        localStorage.setItem(`applicantSignature_${applicant.id}`, result);
+        updateApplicantSignatureInStorage(applicant.id, result);
+        toast.success("Signature uploaded successfully");
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("Failed to upload signature");
+      }
+    }
+    
+    if (signatureInputRef.current) {
+      signatureInputRef.current.value = '';
+    }
+  };
+  
   // Update applicant photo in the localStorage applicants array
   const updateApplicantPhotoInStorage = (id: string, photoData: string) => {
     try {
@@ -294,6 +352,25 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
       }
     } catch (error) {
       console.error("Error updating applicant photo in storage:", error);
+    }
+  };
+
+  // Update applicant signature in the localStorage applicants array
+  const updateApplicantSignatureInStorage = (id: string, signatureData: string) => {
+    try {
+      const storedApplicants = localStorage.getItem('applicants');
+      if (storedApplicants) {
+        const applicants = JSON.parse(storedApplicants);
+        const updatedApplicants = applicants.map((app: any) => {
+          if (app.id === id) {
+            return { ...app, issuingOfficerSignature: signatureData };
+          }
+          return app;
+        });
+        localStorage.setItem('applicants', JSON.stringify(updatedApplicants));
+      }
+    } catch (error) {
+      console.error("Error updating applicant signature in storage:", error);
     }
   };
   
@@ -643,6 +720,22 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
             accept="image/*" 
             className="hidden" 
             onChange={handlePhotoFileSelected}
+          />
+          
+          <Button 
+            variant="secondary" 
+            className={`${isMobile ? 'w-full' : ''}`}
+            onClick={handleSignatureUpload}
+          >
+            <Upload className="mr-2 h-4 w-4" />
+            Upload Signature
+          </Button>
+          <Input 
+            type="file" 
+            ref={signatureInputRef}
+            accept="image/*" 
+            className="hidden" 
+            onChange={handleSignatureFileSelected}
           />
         </div>
       </div>
@@ -1032,7 +1125,18 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
                 <p className="text-xs">{cardLabels.holderSignature}</p>
               </div>
               
-              <div className="w-1/3 border-t border-white/40 pt-1 text-center">
+              <div className="w-1/3 border-t border-white/40 pt-1 text-center flex flex-col items-center">
+                <div className="h-8 w-20 mb-1 flex items-center justify-center">
+                  {issuingOfficerSignature ? (
+                    <img 
+                      src={issuingOfficerSignature} 
+                      alt="Officer Signature" 
+                      className="max-h-full max-w-full object-contain"
+                    />
+                  ) : (
+                    <div className="text-xs text-white/50">Signature</div>
+                  )}
+                </div>
                 <p className="text-xs">{cardLabels.issuingOfficer}</p>
               </div>
             </div>
