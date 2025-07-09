@@ -69,78 +69,84 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
   };
 
   return (
-    <div className="flex flex-col items-center space-y-4">
+    <div className="flex flex-col items-center space-y-6">
       {/* ID Card Front */}
-      <div className="relative w-[340px] h-[215px] bg-gradient-to-br from-green-800 to-green-900 rounded-lg overflow-hidden shadow-lg border-2 border-green-700">
-        <div className="flex h-full p-3">
-          {/* Left side */}
-          <div className="w-2/5 flex flex-direction-col items-center justify-start space-y-2">
+      <div className="relative w-[380px] h-[240px] bg-gradient-to-br from-green-800 to-green-900 rounded-xl overflow-hidden shadow-2xl border-2 border-green-700">
+        {/* Card Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-4 right-4 w-32 h-32 border-2 border-white rounded-full"></div>
+          <div className="absolute bottom-4 left-4 w-24 h-24 border border-white rounded-full"></div>
+        </div>
+        
+        <div className="relative z-10 flex h-full p-4">
+          {/* Left side - Photo and Logo */}
+          <div className="w-2/5 flex flex-col items-center justify-start space-y-3">
             {/* Logo */}
-            <div className="h-8 flex items-center justify-center mb-2">
+            <div className="h-10 flex items-center justify-center mb-2">
               {logo ? (
-                <img src={logo} alt="Logo" className="max-h-8 max-w-20 object-contain" />
+                <img src={logo} alt="Logo" className="max-h-10 max-w-24 object-contain filter brightness-0 invert" />
               ) : (
-                <div className="text-white text-xs opacity-70">LOGO</div>
+                <div className="text-white text-sm font-bold opacity-80">LOGO</div>
               )}
             </div>
             
-            {/* Photo */}
-            <div className="w-16 h-20 border-2 border-white rounded overflow-hidden bg-white/10">
+            {/* Photo with better styling */}
+            <div className="w-20 h-24 border-3 border-white rounded-lg overflow-hidden bg-white shadow-lg">
               {applicant.photo ? (
                 <img src={applicant.photo} alt="Applicant" className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-white text-xs opacity-70">
+                <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-500 text-xs font-medium">
                   PHOTO
                 </div>
               )}
             </div>
             
-            {/* Visa Type Badge */}
-            <div className="bg-yellow-400 text-black px-2 py-1 rounded text-xs font-bold text-center min-w-16">
+            {/* Visa Type Badge with better styling */}
+            <div className="bg-yellow-400 text-black px-3 py-1.5 rounded-full text-xs font-bold text-center min-w-16 shadow-md">
               {(applicant.visaType || 'NONE').toUpperCase()}
             </div>
           </div>
           
-          {/* Right side */}
-          <div className="w-3/5 pl-3 text-white text-xs space-y-1">
+          {/* Right side - Information */}
+          <div className="w-3/5 pl-4 text-white">
             {/* Header */}
-            <div className="text-center mb-3">
-              <div className="font-bold text-sm leading-tight">REPUBLIC OF GHANA</div>
-              <div className="text-xs leading-tight">NON-CITIZEN IDENTITY CARD</div>
+            <div className="text-center mb-4">
+              <div className="font-bold text-lg leading-tight text-yellow-300">REPUBLIC OF GHANA</div>
+              <div className="text-sm leading-tight mt-1">NON-CITIZEN IDENTITY CARD</div>
             </div>
             
-            {/* Information */}
-            <div className="space-y-1">
-              <div className="flex">
-                <span className="font-bold w-12 shrink-0">Name:</span>
-                <span className="break-words">{applicant.fullName}</span>
+            {/* Information Grid */}
+            <div className="space-y-2">
+              <div className="flex items-start">
+                <span className="font-bold text-xs w-16 shrink-0 text-yellow-200">Name:</span>
+                <span className="text-xs break-words leading-tight">{applicant.fullName}</span>
               </div>
-              <div className="flex">
-                <span className="font-bold w-12 shrink-0">Nat:</span>
-                <span className="break-words">{applicant.nationality || 'Not provided'}</span>
+              <div className="flex items-start">
+                <span className="font-bold text-xs w-16 shrink-0 text-yellow-200">Nat:</span>
+                <span className="text-xs break-words">{applicant.nationality || 'Not provided'}</span>
               </div>
-              <div className="flex">
-                <span className="font-bold w-12 shrink-0">DOB:</span>
-                <span>{formatDate(applicant.dateOfBirth)}</span>
+              <div className="flex items-start">
+                <span className="font-bold text-xs w-16 shrink-0 text-yellow-200">DOB:</span>
+                <span className="text-xs">{formatDate(applicant.dateOfBirth)}</span>
               </div>
-              <div className="flex">
-                <span className="font-bold w-12 shrink-0">Phone:</span>
-                <span className="break-words">{applicant.phoneNumber || 'Not provided'}</span>
+              <div className="flex items-start">
+                <span className="font-bold text-xs w-16 shrink-0 text-yellow-200">Phone:</span>
+                <span className="text-xs break-words">{applicant.phoneNumber || 'Not provided'}</span>
               </div>
-              <div className="flex">
-                <span className="font-bold w-12 shrink-0">ID No:</span>
-                <span className="break-words">{applicant.id}</span>
+              <div className="flex items-start">
+                <span className="font-bold text-xs w-16 shrink-0 text-yellow-200">ID No:</span>
+                <span className="text-xs break-words font-mono">{applicant.id}</span>
               </div>
-              <div className="flex">
-                <span className="font-bold w-12 shrink-0">Exp:</span>
-                <span>{getExpiryDate()}</span>
+              <div className="flex items-start">
+                <span className="font-bold text-xs w-16 shrink-0 text-yellow-200">Exp:</span>
+                <span className="text-xs">{getExpiryDate()}</span>
               </div>
             </div>
           </div>
         </div>
         
         {/* Ghana flag colors at bottom */}
-        <div className="absolute bottom-0 left-0 right-0 h-3 flex">
+        <div className="absolute bottom-0 left-0 right-0 h-4 flex">
           <div className="flex-1 bg-red-600"></div>
           <div className="flex-1 bg-yellow-400"></div>
           <div className="flex-1 bg-green-600"></div>
@@ -148,49 +154,57 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
       </div>
       
       {/* ID Card Back */}
-      <div className="relative w-[340px] h-[215px] bg-gradient-to-br from-green-800 to-green-900 rounded-lg overflow-hidden shadow-lg border-2 border-green-700">
-        <div className="flex flex-col h-full p-3 text-white text-xs">
+      <div className="relative w-[380px] h-[240px] bg-gradient-to-br from-green-800 to-green-900 rounded-xl overflow-hidden shadow-2xl border-2 border-green-700">
+        {/* Card Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-4 left-4 w-28 h-28 border-2 border-white rounded-full"></div>
+          <div className="absolute bottom-4 right-4 w-20 h-20 border border-white rounded-full"></div>
+        </div>
+        
+        <div className="relative z-10 flex flex-col h-full p-4 text-white">
           {/* Header */}
           <div className="text-center mb-4">
-            <div className="font-bold text-sm">REPUBLIC OF GHANA</div>
-            <div className="text-xs mt-1">This card remains the property of the Ghana Immigration Service</div>
+            <div className="font-bold text-lg text-yellow-300">REPUBLIC OF GHANA</div>
+            <div className="text-xs mt-2 leading-relaxed">This card remains the property of the Ghana Immigration Service</div>
           </div>
           
           {/* Information */}
-          <div className="space-y-1 flex-1">
-            <div className="flex">
-              <span className="font-bold w-16 shrink-0">Occupation:</span>
-              <span>{applicant.occupation || 'Not specified'}</span>
+          <div className="space-y-2 flex-1">
+            <div className="flex items-start">
+              <span className="font-bold text-xs w-20 shrink-0 text-yellow-200">Occupation:</span>
+              <span className="text-xs">{applicant.occupation || 'Not specified'}</span>
             </div>
-            <div className="flex">
-              <span className="font-bold w-16 shrink-0">Area:</span>
-              <span>{applicant.area || 'Not provided'}</span>
+            <div className="flex items-start">
+              <span className="font-bold text-xs w-20 shrink-0 text-yellow-200">Area:</span>
+              <span className="text-xs">{applicant.area || 'Not provided'}</span>
             </div>
-            <div className="flex">
-              <span className="font-bold w-16 shrink-0">Issue Date:</span>
-              <span>{getCurrentDate()}</span>
+            <div className="flex items-start">
+              <span className="font-bold text-xs w-20 shrink-0 text-yellow-200">Issue Date:</span>
+              <span className="text-xs">{getCurrentDate()}</span>
             </div>
           </div>
           
           {/* Footer */}
-          <div className="border-t border-white/30 pt-2 text-center text-xs">
+          <div className="border-t border-white/30 pt-3 text-center text-xs mb-4">
             If found, please return to the nearest Ghana Immigration Service office
           </div>
           
           {/* Signatures */}
-          <div className="flex justify-between items-end mt-4">
+          <div className="flex justify-between items-end">
             <div className="text-center">
-              <div className="border-t border-white/50 w-16 mb-1"></div>
+              <div className="border-t border-white/50 w-20 mb-2"></div>
               <div className="text-xs">Holder's Signature</div>
             </div>
             <div className="text-center">
-              <div className="w-16 h-6 border-t border-white/50 mb-1 flex items-center justify-center">
-                {issuingOfficerSignature && (
+              <div className="w-24 h-8 border-t border-white/50 mb-2 flex items-center justify-center bg-white/10 rounded">
+                {issuingOfficerSignature ? (
                   <img 
                     src={issuingOfficerSignature} 
                     alt="Officer Signature" 
                     className="max-h-full max-w-full object-contain"
                   />
+                ) : (
+                  <div className="text-xs opacity-50">No Signature</div>
                 )}
               </div>
               <div className="text-xs">Issuing Officer</div>
@@ -199,7 +213,7 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
         </div>
         
         {/* Ghana flag colors at bottom */}
-        <div className="absolute bottom-0 left-0 right-0 h-3 flex">
+        <div className="absolute bottom-0 left-0 right-0 h-4 flex">
           <div className="flex-1 bg-red-600"></div>
           <div className="flex-1 bg-yellow-400"></div>
           <div className="flex-1 bg-green-600"></div>
