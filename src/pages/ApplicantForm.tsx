@@ -225,32 +225,16 @@ const ApplicantForm: React.FC = () => {
 
             {/* Date of Birth */}
             <div className="space-y-2">
-              <Label>Date of Birth</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={'outline'}
-                    className={cn(
-                      'w-full justify-start text-left font-normal',
-                      !dateOfBirth && 'text-muted-foreground'
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dateOfBirth ? format(new Date(dateOfBirth), 'PPP') : <span>Pick a date</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={dateOfBirth ? new Date(dateOfBirth) : undefined}
-                    onSelect={handleDateChange}
-                    disabled={(date) =>
-                      date > new Date() || date < new Date('1900-01-01')
-                    }
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+              <Label htmlFor="dateOfBirth">Date of Birth</Label>
+              <Input
+                type="date"
+                id="dateOfBirth"
+                value={dateOfBirth}
+                onChange={(e) => setDateOfBirth(e.target.value)}
+                max={new Date().toISOString().split('T')[0]}
+                min="1900-01-01"
+                required
+              />
             </div>
 
             {/* Visa Type */}
@@ -296,32 +280,14 @@ const ApplicantForm: React.FC = () => {
 
             {/* Expiry Date */}
             <div className="space-y-2">
-              <Label>Visa Expiry Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={'outline'}
-                    className={cn(
-                      'w-full justify-start text-left font-normal',
-                      !expiryDate && 'text-muted-foreground'
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {expiryDate ? format(new Date(expiryDate), 'PPP') : <span>Pick a date</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={expiryDate ? new Date(expiryDate) : undefined}
-                    onSelect={handleExpiryDateChange}
-                    disabled={(date) =>
-                      date < new Date()
-                    }
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+              <Label htmlFor="expiryDate">Visa Expiry Date</Label>
+              <Input
+                type="date"
+                id="expiryDate"
+                value={expiryDate}
+                onChange={(e) => setExpiryDate(e.target.value)}
+                min={new Date().toISOString().split('T')[0]}
+              />
             </div>
 
             {/* Photo Upload Section */}
