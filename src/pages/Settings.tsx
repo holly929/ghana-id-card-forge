@@ -13,6 +13,7 @@ import { dataSyncService } from '@/services/dataSync';
 const Settings: React.FC = () => {
   const [logo, setLogo] = useState<string | null>(null);
   const [companyName, setCompanyName] = useState('Ghana Immigration Service');
+  const [countryName, setCountryName] = useState('REPUBLIC OF GHANA');
   const [issuingOfficerSignature, setIssuingOfficerSignature] = useState<string | null>(null);
   const [isBackupDialogOpen, setIsBackupDialogOpen] = useState(false);
   const [backupData, setBackupData] = useState<string | null>(null);
@@ -31,6 +32,11 @@ const Settings: React.FC = () => {
     const savedCompanyName = localStorage.getItem('companyName');
     if (savedCompanyName) {
       setCompanyName(savedCompanyName);
+    }
+
+    const savedCountryName = localStorage.getItem('countryName');
+    if (savedCountryName) {
+      setCountryName(savedCountryName);
     }
 
     const savedSignature = localStorage.getItem('issuingOfficerSignature');
@@ -97,6 +103,12 @@ const Settings: React.FC = () => {
   const saveCompanyName = () => {
     localStorage.setItem('companyName', companyName);
     toast.success("Company name saved successfully");
+  };
+
+  // Save country name
+  const saveCountryName = () => {
+    localStorage.setItem('countryName', countryName);
+    toast.success("Country name saved successfully");
   };
   
   // Create system backup
@@ -337,7 +349,7 @@ const Settings: React.FC = () => {
         
         <Card className="md:col-span-2">
           <CardHeader>
-            <CardTitle>Company Information</CardTitle>
+            <CardTitle>Organization Information</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -350,11 +362,27 @@ const Settings: React.FC = () => {
                   placeholder="Enter company name"
                 />
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="country-name">Country Name</Label>
+                <Input
+                  id="country-name"
+                  value={countryName}
+                  onChange={(e) => setCountryName(e.target.value)}
+                  placeholder="Enter country name (e.g., REPUBLIC OF GHANA)"
+                />
+              </div>
               
-              <Button className="w-full" onClick={saveCompanyName}>
-                <Save className="h-4 w-4 mr-2" />
-                Save Company Info
-              </Button>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Button onClick={saveCompanyName}>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Company Name
+                </Button>
+                <Button onClick={saveCountryName}>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Country Name
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

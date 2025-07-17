@@ -19,6 +19,7 @@ interface IDCardPreviewProps {
 const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
   const [logo, setLogo] = useState<string | null>(null);
   const [issuingOfficerSignature, setIssuingOfficerSignature] = useState<string | null>(null);
+  const [countryName, setCountryName] = useState('REPUBLIC OF GHANA');
   
   useEffect(() => {
     const savedLogo = localStorage.getItem('systemLogo');
@@ -29,6 +30,11 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
     const savedSignature = localStorage.getItem('issuingOfficerSignature');
     if (savedSignature) {
       setIssuingOfficerSignature(savedSignature);
+    }
+
+    const savedCountryName = localStorage.getItem('countryName');
+    if (savedCountryName) {
+      setCountryName(savedCountryName);
     }
   }, []);
 
@@ -119,7 +125,7 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
           <div className="w-3/5 pl-4 text-white">
             {/* Header */}
             <div className="text-center mb-4">
-              <div className="font-bold text-lg leading-tight text-yellow-300">REPUBLIC OF GHANA</div>
+              <div className="font-bold text-lg leading-tight text-yellow-300">{countryName}</div>
               <div className="text-sm leading-tight mt-1">NON-CITIZEN IDENTITY CARD</div>
             </div>
             
@@ -172,7 +178,7 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
         <div className="relative z-10 flex flex-col h-full p-4 text-white">
           {/* Header */}
           <div className="text-center mb-4">
-            <div className="font-bold text-lg text-yellow-300">REPUBLIC OF GHANA</div>
+            <div className="font-bold text-lg text-yellow-300">{countryName}</div>
             <div className="text-xs mt-2 leading-relaxed">This card remains the property of the Ghana Immigration Service</div>
           </div>
           
