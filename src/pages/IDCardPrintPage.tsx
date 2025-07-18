@@ -510,7 +510,7 @@ const IDCardPrintPage: React.FC = () => {
                           <div class="main-title">${cardLabels.title}</div>
                           <div class="sub-title">${cardLabels.subtitle}</div>
                         </div>
-                        <div class="card-info">
+                         <div class="card-info" style="flex: 1;">
                           <div class="info-row">
                             <span class="label">${cardLabels.name}</span>
                             <span class="value">${(applicant.fullName || applicant.full_name) || 'Not provided'}</span>
@@ -541,6 +541,19 @@ const IDCardPrintPage: React.FC = () => {
                               <span class="value">${field.value}</span>
                             </div>
                           `).join('')}
+                        </div>
+                        
+                        <!-- Issuing Officer Signature Section - Moved to Front -->
+                        <div style="display: flex; justify-content: center; margin-top: 5px;">
+                          <div style="text-align: center;">
+                            ${globalSignature ? 
+                              `<div style="height: 15px; width: 40px; margin-bottom: 2px; display: flex; align-items: center; justify-content: center;">
+                                 <img src="${globalSignature}" alt="Officer Signature" style="max-height: 100%; max-width: 100%; object-fit: contain;" />
+                               </div>` : 
+                              '<div style="height: 15px; margin-bottom: 2px; border-bottom: 1px solid white; width: 40px;"></div>'
+                            }
+                            <div style="font-size: 6px; text-align: center; border-top: 1px solid rgba(255,255,255,0.5); padding-top: 1px;">${cardLabels.issuingOfficer}</div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -584,17 +597,6 @@ const IDCardPrintPage: React.FC = () => {
                             ${footerSettings.mainFooter}
                           </div>
                         ` : ''}
-                        <div class="signature-area">
-                          <div class="signature-box" style="display: flex; flex-direction: column; align-items: center;">
-                            ${globalSignature ? 
-                              `<div style="height: 20px; width: 50px; margin-bottom: 2px; display: flex; align-items: center; justify-content: center;">
-                                 <img src="${globalSignature}" alt="Officer Signature" style="max-height: 100%; max-width: 100%; object-fit: contain;" />
-                                </div>` : 
-                              '<div style="height: 20px; margin-bottom: 2px;"></div>'
-                            }
-                            <div style="font-size: 6px; text-align: center;">${cardLabels.issuingOfficer}</div>
-                          </div>
-                        </div>
                       </div>
                     </div>
                     <div class="color-band">

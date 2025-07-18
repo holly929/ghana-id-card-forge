@@ -136,7 +136,7 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
             </div>
             
             {/* Information Grid */}
-            <div className="space-y-2">
+            <div className="space-y-2 flex-1">
               <div className="flex items-start">
                 <span className="font-bold text-xs w-16 shrink-0 text-yellow-200">Name:</span>
                 <span className="text-xs break-words leading-tight">{applicant.fullName}</span>
@@ -160,6 +160,28 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
               <div className="flex items-start">
                 <span className="font-bold text-xs w-16 shrink-0 text-yellow-200">Exp:</span>
                 <span className="text-xs">{getExpiryDate()}</span>
+              </div>
+            </div>
+            
+            {/* Issuing Officer Signature Section - Moved to Front */}
+            <div className="flex justify-center items-end mt-2">
+              <div className="text-center">
+                {/* Signature Display */}
+                <div className="w-20 h-8 mb-1 flex items-center justify-center bg-white/10 rounded border border-white/20">
+                  {issuingOfficerSignature ? (
+                    <img 
+                      src={issuingOfficerSignature} 
+                      alt="Officer Signature" 
+                      className="max-h-full max-w-full object-contain"
+                    />
+                  ) : (
+                    <div className="text-white/50 text-xs">Signature</div>
+                  )}
+                </div>
+                {/* Label under signature */}
+                <div className="border-t border-white/50 pt-1">
+                  <div className="text-xs font-medium">Issuing Officer</div>
+                </div>
               </div>
             </div>
           </div>
@@ -205,30 +227,8 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
           </div>
           
           {/* Footer */}
-          <div className="border-t border-white/30 pt-3 text-center text-xs mb-4">
+          <div className="border-t border-white/30 pt-3 text-center text-xs">
             If found, please return to the nearest Ghana Immigration Service office
-          </div>
-          
-          {/* Issuing Officer Signature Section */}
-          <div className="flex justify-center items-end">
-            <div className="text-center">
-              {/* Signature Display */}
-              <div className="w-28 h-12 mb-2 flex items-center justify-center bg-white rounded border-2 border-white/20">
-                {issuingOfficerSignature ? (
-                  <img 
-                    src={issuingOfficerSignature} 
-                    alt="Officer Signature" 
-                    className="max-h-full max-w-full object-contain"
-                  />
-                ) : (
-                  <div className="text-gray-400 text-xs">No Signature</div>
-                )}
-              </div>
-              {/* Label under signature */}
-              <div className="border-t border-white/50 pt-1">
-                <div className="text-xs font-medium">Issuing Officer</div>
-              </div>
-            </div>
           </div>
         </div>
         

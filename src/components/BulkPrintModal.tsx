@@ -113,15 +113,6 @@ const BulkPrintModal: React.FC<BulkPrintModalProps> = ({
             </div>
           </div>
           
-          <!-- Signature Section -->
-          <div style="display: flex; justify-content: center; margin-top: 15px; font-size: 7px;">
-            <div style="width: 45%; text-align: center;">
-              <div style="border-top: 1px solid white; padding-top: 3px; margin-bottom: 3px;">
-                <strong>ISSUING OFFICER</strong>
-              </div>
-              <div style="height: 20px; border-bottom: 1px solid white;"></div>
-            </div>
-          </div>
           
           <div style="text-align: center; font-size: 8px; margin-top: 5px;">
             <div style="border-top: 1px solid white; padding-top: 5px;">
@@ -185,7 +176,7 @@ const BulkPrintModal: React.FC<BulkPrintModalProps> = ({
                     <div style="font-weight: bold; font-size: 12px;">REPUBLIC OF GHANA</div>
                     <div style="font-size: 10px;">NON-CITIZEN IDENTITY CARD</div>
                   </div>
-                  <div style="font-size: 10px;">
+                  <div style="font-size: 10px; flex: 1;">
                     <div><strong>Name:</strong> ${fullName || 'Not provided'}</div>
                     <div><strong>Nationality:</strong> ${applicant.nationality || 'Not provided'}</div>
                     <div><strong>Date of Birth:</strong> ${formatDate(dateOfBirth)}</div>
@@ -193,13 +184,13 @@ const BulkPrintModal: React.FC<BulkPrintModalProps> = ({
                     <div><strong>ID No:</strong> ${applicant.id || 'Not provided'}</div>
                     <div><strong>Expiry Date:</strong> ${formatDate(expiryDate)}</div>
                   </div>
-                </div>
-                
-                <!-- Front Signature Section -->
-                <div style="display: flex; justify-content: center; margin-top: 8px; font-size: 8px;">
-                  <div style="width: 45%; text-align: center;">
-                    <div style="height: 15px; border-bottom: 1px solid white; margin-bottom: 2px;"></div>
-                    <div style="font-size: 7px;"><strong>ISSUING OFFICER</strong></div>
+                  
+                  <!-- Front Signature Section -->
+                  <div style="display: flex; justify-content: center; margin-top: 8px; font-size: 8px; width: 100%;">
+                    <div style="width: 45%; text-align: center;">
+                      <div style="height: 15px; border-bottom: 1px solid white; margin-bottom: 2px;"></div>
+                      <div style="font-size: 7px;"><strong>ISSUING OFFICER</strong></div>
+                    </div>
                   </div>
                 </div>
               </div>
