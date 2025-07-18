@@ -59,7 +59,6 @@ const IDCardPrintPage: React.FC = () => {
     expiryDate: 'Expiry Date:',
     occupation: 'Occupation:',
     issueDate: 'Date of Issue:',
-    holderSignature: 'Holder\'s Signature',
     issuingOfficer: 'Issuing Officer',
   });
 
@@ -586,12 +585,11 @@ const IDCardPrintPage: React.FC = () => {
                           </div>
                         ` : ''}
                         <div class="signature-area">
-                          <div class="signature-box">${cardLabels.holderSignature}</div>
                           <div class="signature-box" style="display: flex; flex-direction: column; align-items: center;">
                             ${globalSignature ? 
                               `<div style="height: 20px; width: 50px; margin-bottom: 2px; display: flex; align-items: center; justify-content: center;">
-                                <img src="${globalSignature}" alt="Officer Signature" style="max-height: 100%; max-width: 100%; object-fit: contain;" />
-                               </div>` : 
+                                 <img src="${globalSignature}" alt="Officer Signature" style="max-height: 100%; max-width: 100%; object-fit: contain;" />
+                                </div>` : 
                               '<div style="height: 20px; margin-bottom: 2px;"></div>'
                             }
                             <div style="font-size: 6px; text-align: center;">${cardLabels.issuingOfficer}</div>
