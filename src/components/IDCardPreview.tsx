@@ -20,6 +20,7 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
   const [logo, setLogo] = useState<string | null>(null);
   const [issuingOfficerSignature, setIssuingOfficerSignature] = useState<string | null>(null);
   const [countryName, setCountryName] = useState('REPUBLIC OF GHANA');
+  const [cardType, setCardType] = useState('NON-CITIZEN IDENTITY CARD');
   
   useEffect(() => {
     const savedLogo = localStorage.getItem('systemLogo');
@@ -35,6 +36,11 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
     const savedCountryName = localStorage.getItem('countryName');
     if (savedCountryName) {
       setCountryName(savedCountryName);
+    }
+
+    const savedCardType = localStorage.getItem('cardType');
+    if (savedCardType) {
+      setCardType(savedCardType);
     }
   }, []);
 
@@ -126,7 +132,7 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
             {/* Header */}
             <div className="text-center mb-4">
               <div className="font-bold text-lg leading-tight text-yellow-300">{countryName}</div>
-              <div className="text-sm leading-tight mt-1">NON-CITIZEN IDENTITY CARD</div>
+              <div className="text-sm leading-tight mt-1">{cardType}</div>
             </div>
             
             {/* Information Grid */}

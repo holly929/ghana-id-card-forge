@@ -14,6 +14,7 @@ const Settings: React.FC = () => {
   const [logo, setLogo] = useState<string | null>(null);
   const [companyName, setCompanyName] = useState('Ghana Immigration Service');
   const [countryName, setCountryName] = useState('REPUBLIC OF GHANA');
+  const [cardType, setCardType] = useState('NON-CITIZEN IDENTITY CARD');
   const [issuingOfficerSignature, setIssuingOfficerSignature] = useState<string | null>(null);
   const [isBackupDialogOpen, setIsBackupDialogOpen] = useState(false);
   const [backupData, setBackupData] = useState<string | null>(null);
@@ -37,6 +38,11 @@ const Settings: React.FC = () => {
     const savedCountryName = localStorage.getItem('countryName');
     if (savedCountryName) {
       setCountryName(savedCountryName);
+    }
+
+    const savedCardType = localStorage.getItem('cardType');
+    if (savedCardType) {
+      setCardType(savedCardType);
     }
 
     const savedSignature = localStorage.getItem('issuingOfficerSignature');
@@ -109,6 +115,12 @@ const Settings: React.FC = () => {
   const saveCountryName = () => {
     localStorage.setItem('countryName', countryName);
     toast.success("Country name saved successfully");
+  };
+
+  // Save card type
+  const saveCardType = () => {
+    localStorage.setItem('cardType', cardType);
+    toast.success("Card type saved successfully");
   };
   
   // Create system backup
@@ -372,8 +384,18 @@ const Settings: React.FC = () => {
                   placeholder="Enter country name (e.g., REPUBLIC OF GHANA)"
                 />
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="card-type">Card Type</Label>
+                <Input
+                  id="card-type"
+                  value={cardType}
+                  onChange={(e) => setCardType(e.target.value)}
+                  placeholder="Enter card type (e.g., NON-CITIZEN IDENTITY CARD)"
+                />
+              </div>
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <Button onClick={saveCompanyName}>
                   <Save className="h-4 w-4 mr-2" />
                   Save Company Name
@@ -381,6 +403,10 @@ const Settings: React.FC = () => {
                 <Button onClick={saveCountryName}>
                   <Save className="h-4 w-4 mr-2" />
                   Save Country Name
+                </Button>
+                <Button onClick={saveCardType}>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Card Type
                 </Button>
               </div>
             </div>
