@@ -106,9 +106,9 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
   };
 
   return (
-    <div className="flex flex-col items-center space-y-6">
-      {/* ID Card Front */}
-      <div className="relative w-[380px] h-[240px] bg-gradient-to-br from-green-800 to-green-900 rounded-xl overflow-hidden shadow-2xl border-2 border-green-700">
+    <div className="flex justify-center items-center">
+      {/* Single ID Card with All Information */}
+      <div className="relative w-[480px] h-[300px] bg-gradient-to-br from-green-800 to-green-900 rounded-xl overflow-hidden shadow-2xl border-2 border-green-700">
         {/* Card Background Pattern */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-4 right-4 w-32 h-32 border-2 border-white rounded-full"></div>
@@ -116,8 +116,8 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
         </div>
         
         <div className="relative z-10 flex h-full p-4">
-          {/* Left side - Photo and Logo */}
-          <div className="w-2/5 flex flex-col items-center justify-start space-y-3">
+          {/* Left side - Photo, Logo, and Signature */}
+          <div className="w-1/3 flex flex-col items-center justify-start space-y-3">
             {/* Logo */}
             <div className="h-12 flex items-center justify-center mb-2 bg-white/10 rounded-lg p-2 w-full">
               {logo ? (
@@ -131,8 +131,8 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
               )}
             </div>
             
-            {/* Photo with better styling */}
-            <div className="w-20 h-24 border-3 border-white rounded-lg overflow-hidden bg-white shadow-lg">
+            {/* Photo */}
+            <div className="w-24 h-28 border-3 border-white rounded-lg overflow-hidden bg-white shadow-lg">
               {applicant.photo ? (
                 <img 
                   src={applicant.photo} 
@@ -146,134 +146,108 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
               )}
             </div>
             
-            {/* Visa Type Badge with better styling */}
+            {/* Visa Type Badge */}
             <div className="bg-yellow-400 text-black px-3 py-1.5 rounded-full text-xs font-bold text-center min-w-16 shadow-md">
               {(applicant.visaType || 'NONE').toUpperCase()}
             </div>
+            
+            {/* Issuing Officer Signature Section */}
+            <div className="text-center mt-4">
+              <div className="w-24 h-10 mb-1 flex items-center justify-center bg-white/10 rounded border border-white/20">
+                {issuingOfficerSignature ? (
+                  <img 
+                    src={issuingOfficerSignature} 
+                    alt="Officer Signature" 
+                    className="max-h-full max-w-full object-contain"
+                  />
+                ) : (
+                  <div className="text-white/50 text-xs">Signature</div>
+                )}
+              </div>
+              <div className="border-t border-white/50 pt-1">
+                <div className="text-xs font-medium text-white">Issuing Officer</div>
+              </div>
+            </div>
           </div>
           
-          {/* Right side - Information */}
-          <div className="w-3/5 pl-4 text-white">
+          {/* Right side - All Information */}
+          <div className="w-2/3 pl-6 text-white">
             {/* Header */}
             <div className="text-center mb-4">
               {showCountryName && countryName && (
-                <div className="font-bold text-lg leading-tight text-yellow-300">{countryName}</div>
+                <div className="font-bold text-xl leading-tight text-yellow-300">{countryName}</div>
               )}
               {showCardType && cardType && (
                 <div className="text-sm leading-tight mt-1">{cardType}</div>
               )}
             </div>
             
-            {/* Information Grid */}
-            <div className="space-y-2 flex-1">
-              <div className="flex items-start">
-                <span className="font-bold text-xs w-16 shrink-0 text-yellow-200">Name:</span>
-                <span className="text-xs break-words leading-tight">{applicant.fullName}</span>
+            {/* All Information in Two Columns */}
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2 flex-1">
+              {/* Left Column */}
+              <div className="space-y-2">
+                <div className="flex flex-col">
+                  <span className="font-bold text-xs text-yellow-200">Name:</span>
+                  <span className="text-xs break-words leading-tight">{applicant.fullName}</span>
+                </div>
+                {showNationality && (
+                  <div className="flex flex-col">
+                    <span className="font-bold text-xs text-yellow-200">Nationality:</span>
+                    <span className="text-xs break-words">{applicant.nationality || 'Not provided'}</span>
+                  </div>
+                )}
+                {showDOB && (
+                  <div className="flex flex-col">
+                    <span className="font-bold text-xs text-yellow-200">Date of Birth:</span>
+                    <span className="text-xs">{formatDate(applicant.dateOfBirth)}</span>
+                  </div>
+                )}
+                {showPhone && (
+                  <div className="flex flex-col">
+                    <span className="font-bold text-xs text-yellow-200">Phone:</span>
+                    <span className="text-xs break-words">{applicant.phoneNumber || 'Not provided'}</span>
+                  </div>
+                )}
+                <div className="flex flex-col">
+                  <span className="font-bold text-xs text-yellow-200">Issue Date:</span>
+                  <span className="text-xs">{getCurrentDate()}</span>
+                </div>
               </div>
-              {showNationality && (
-                <div className="flex items-start">
-                  <span className="font-bold text-xs w-16 shrink-0 text-yellow-200">Nat:</span>
-                  <span className="text-xs break-words">{applicant.nationality || 'Not provided'}</span>
+              
+              {/* Right Column */}
+              <div className="space-y-2">
+                <div className="flex flex-col">
+                  <span className="font-bold text-xs text-yellow-200">ID Number:</span>
+                  <span className="text-xs break-words font-mono">{applicant.id}</span>
                 </div>
-              )}
-              {showDOB && (
-                <div className="flex items-start">
-                  <span className="font-bold text-xs w-16 shrink-0 text-yellow-200">DOB:</span>
-                  <span className="text-xs">{formatDate(applicant.dateOfBirth)}</span>
+                <div className="flex flex-col">
+                  <span className="font-bold text-xs text-yellow-200">Expiry Date:</span>
+                  <span className="text-xs">{getExpiryDate()}</span>
                 </div>
-              )}
-              {showPhone && (
-                <div className="flex items-start">
-                  <span className="font-bold text-xs w-16 shrink-0 text-yellow-200">Phone:</span>
-                  <span className="text-xs break-words">{applicant.phoneNumber || 'Not provided'}</span>
-                </div>
-              )}
-              <div className="flex items-start">
-                <span className="font-bold text-xs w-16 shrink-0 text-yellow-200">ID No:</span>
-                <span className="text-xs break-words font-mono">{applicant.id}</span>
-              </div>
-              <div className="flex items-start">
-                <span className="font-bold text-xs w-16 shrink-0 text-yellow-200">Exp:</span>
-                <span className="text-xs">{getExpiryDate()}</span>
+                {showOccupation && (
+                  <div className="flex flex-col">
+                    <span className="font-bold text-xs text-yellow-200">Occupation:</span>
+                    <span className="text-xs">{applicant.occupation || 'Not specified'}</span>
+                  </div>
+                )}
+                {showArea && (
+                  <div className="flex flex-col">
+                    <span className="font-bold text-xs text-yellow-200">Area:</span>
+                    <span className="text-xs">{applicant.area || 'Not provided'}</span>
+                  </div>
+                )}
               </div>
             </div>
             
-            {/* Issuing Officer Signature Section - Moved to Front */}
-            <div className="flex justify-center items-end mt-2">
-              <div className="text-center">
-                {/* Signature Display */}
-                <div className="w-20 h-8 mb-1 flex items-center justify-center bg-white/10 rounded border border-white/20">
-                  {issuingOfficerSignature ? (
-                    <img 
-                      src={issuingOfficerSignature} 
-                      alt="Officer Signature" 
-                      className="max-h-full max-w-full object-contain"
-                    />
-                  ) : (
-                    <div className="text-white/50 text-xs">Signature</div>
-                  )}
-                </div>
-                {/* Label under signature */}
-                <div className="border-t border-white/50 pt-1">
-                  <div className="text-xs font-medium">Issuing Officer</div>
-                </div>
-              </div>
+            {/* Footer Text */}
+            <div className="border-t border-white/30 pt-2 mt-4 text-center text-xs">
+              <div>This card remains the property of the issuing authority</div>
+              <div className="mt-1">If found, please return to the nearest issuing authority office</div>
             </div>
           </div>
         </div>
         
-        {/* Ghana flag colors at bottom */}
-        <div className="absolute bottom-0 left-0 right-0 h-4 flex">
-          <div className="flex-1 bg-red-600"></div>
-          <div className="flex-1 bg-yellow-400"></div>
-          <div className="flex-1 bg-green-600"></div>
-        </div>
-      </div>
-      
-      {/* ID Card Back */}
-      <div className="relative w-[380px] h-[240px] bg-gradient-to-br from-green-800 to-green-900 rounded-xl overflow-hidden shadow-2xl border-2 border-green-700">
-        {/* Card Background Pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-4 left-4 w-28 h-28 border-2 border-white rounded-full"></div>
-          <div className="absolute bottom-4 right-4 w-20 h-20 border border-white rounded-full"></div>
-        </div>
-        
-        <div className="relative z-10 flex flex-col h-full p-4 text-white">
-          {/* Header */}
-          <div className="text-center mb-4">
-            {showCountryName && countryName && (
-              <div className="font-bold text-lg text-yellow-300">{countryName}</div>
-            )}
-            <div className="text-xs mt-2 leading-relaxed">This card remains the property of the issuing authority</div>
-          </div>
-          
-          {/* Information */}
-          <div className="space-y-2 flex-1">
-            {showOccupation && (
-              <div className="flex items-start">
-                <span className="font-bold text-xs w-20 shrink-0 text-yellow-200">Occupation:</span>
-                <span className="text-xs">{applicant.occupation || 'Not specified'}</span>
-              </div>
-            )}
-            {showArea && (
-              <div className="flex items-start">
-                <span className="font-bold text-xs w-20 shrink-0 text-yellow-200">Area:</span>
-                <span className="text-xs">{applicant.area || 'Not provided'}</span>
-              </div>
-            )}
-            <div className="flex items-start">
-              <span className="font-bold text-xs w-20 shrink-0 text-yellow-200">Issue Date:</span>
-              <span className="text-xs">{getCurrentDate()}</span>
-            </div>
-          </div>
-          
-          {/* Footer */}
-          <div className="border-t border-white/30 pt-3 text-center text-xs">
-            If found, please return to the nearest issuing authority office
-          </div>
-        </div>
-        
-        {/* Ghana flag colors at bottom */}
+        {/* Flag colors at bottom */}
         <div className="absolute bottom-0 left-0 right-0 h-4 flex">
           <div className="flex-1 bg-red-600"></div>
           <div className="flex-1 bg-yellow-400"></div>
