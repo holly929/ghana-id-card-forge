@@ -74,7 +74,7 @@ export const backupSystem = (): string => {
       data: {
         applicants: localStorage.getItem('applicants') || '[]',
         systemLogo: localStorage.getItem('systemLogo') || null,
-        companyName: localStorage.getItem('companyName') || 'Ghana Immigration Service',
+        companyName: localStorage.getItem('companyName') || 'Identity Management System',
         settings: {
           // Add any other settings that need to be backed up
         }

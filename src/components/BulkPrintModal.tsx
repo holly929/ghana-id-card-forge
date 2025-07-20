@@ -96,7 +96,7 @@ const BulkPrintModal: React.FC<BulkPrintModalProps> = ({
         <div style="height: 100%; display: flex; flex-direction: column; justify-content: space-between; padding: 20px;">
           <div style="text-align: center;">
             ${logo ? `<img src="${logo}" alt="Logo" class="logo-image" style="max-height: 30px; max-width: 80px;" />` : ''}
-            <div style="font-weight: bold; font-size: 10px; margin-top: 10px;">REPUBLIC OF GHANA</div>
+            <div style="font-weight: bold; font-size: 10px; margin-top: 10px;">${localStorage.getItem('countryName') || ''}</div>
             <div style="font-size: 8px;">IMMIGRATION SERVICE</div>
           </div>
           
@@ -173,7 +173,7 @@ const BulkPrintModal: React.FC<BulkPrintModalProps> = ({
               <div style="width: 67%; padding-left: 10px; display: flex; flex-direction: column; justify-content: space-between;">
                 <div>
                   <div style="text-align: center; margin-bottom: 10px;">
-                    <div style="font-weight: bold; font-size: 12px;">REPUBLIC OF GHANA</div>
+                    <div style="font-weight: bold; font-size: 12px;">${localStorage.getItem('countryName') || ''}</div>
                     <div style="font-size: 10px;">NON-CITIZEN IDENTITY CARD</div>
                   </div>
                   <div style="font-size: 10px; flex: 1;">

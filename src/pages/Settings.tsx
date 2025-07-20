@@ -12,8 +12,8 @@ import { dataSyncService } from '@/services/dataSync';
 
 const Settings: React.FC = () => {
   const [logo, setLogo] = useState<string | null>(null);
-  const [companyName, setCompanyName] = useState('Ghana Immigration Service');
-  const [countryName, setCountryName] = useState('REPUBLIC OF GHANA');
+  const [companyName, setCompanyName] = useState('Identity Management System');
+  const [countryName, setCountryName] = useState('');
   const [cardType, setCardType] = useState('NON-CITIZEN IDENTITY CARD');
   const [issuingOfficerSignature, setIssuingOfficerSignature] = useState<string | null>(null);
   const [isBackupDialogOpen, setIsBackupDialogOpen] = useState(false);
@@ -381,7 +381,7 @@ const Settings: React.FC = () => {
                   id="country-name"
                   value={countryName}
                   onChange={(e) => setCountryName(e.target.value)}
-                  placeholder="Enter country name (e.g., REPUBLIC OF GHANA)"
+                  placeholder="Enter country name (optional)"
                 />
               </div>
 

@@ -50,7 +50,7 @@ const IDCardPrintPage: React.FC = () => {
   
   // Add state for customization settings
   const [cardLabels, setCardLabels] = useState({
-    title: 'REPUBLIC OF GHANA',
+    title: '',
     subtitle: 'NON-CITIZEN IDENTITY CARD',
     name: 'Name:',
     nationality: 'Nationality:',
@@ -63,8 +63,8 @@ const IDCardPrintPage: React.FC = () => {
   });
 
   const [footerSettings, setFooterSettings] = useState({
-    mainFooter: 'If found, please return to the nearest Ghana Immigration Service office',
-    backFooter: 'This card remains the property of the Ghana Immigration Service',
+    mainFooter: 'If found, please return to the nearest issuing authority office',
+    backFooter: 'This card remains the property of the issuing authority',
     showMainFooter: true,
     showBackFooter: true
   });

@@ -263,7 +263,7 @@ const IDCards: React.FC = () => {
                 </div>
                 <div style="width: 67%; padding-left: 10px;">
                   <div style="text-align: center; margin-bottom: 10px;">
-                    <div style="font-weight: bold; font-size: 12px;">REPUBLIC OF GHANA</div>
+                    <div style="font-weight: bold; font-size: 12px;">${localStorage.getItem('countryName') || ''}</div>
                     <div style="font-size: 10px;">NON-CITIZEN IDENTITY CARD</div>
                   </div>
                   <div style="font-size: 10px;">

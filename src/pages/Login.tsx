@@ -12,7 +12,7 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [logo, setLogo] = useState<string | null>(null);
-  const [companyName, setCompanyName] = useState('Ghana Immigration Service');
+  const [companyName, setCompanyName] = useState('Identity Management System');
   const { login } = useAuth();
   const navigate = useNavigate();
 
