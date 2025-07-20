@@ -19,8 +19,14 @@ interface IDCardPreviewProps {
 const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
   const [logo, setLogo] = useState<string | null>(null);
   const [issuingOfficerSignature, setIssuingOfficerSignature] = useState<string | null>(null);
-  const [countryName, setCountryName] = useState('REPUBLIC OF GHANA');
+  const [countryName, setCountryName] = useState('');
   const [cardType, setCardType] = useState('NON-CITIZEN IDENTITY CARD');
+  const [showCountryName, setShowCountryName] = useState(false);
+  const [showNationality, setShowNationality] = useState(true);
+  const [showDOB, setShowDOB] = useState(true);
+  const [showPhone, setShowPhone] = useState(true);
+  const [showOccupation, setShowOccupation] = useState(true);
+  const [showArea, setShowArea] = useState(true);
   
   useEffect(() => {
     const savedLogo = localStorage.getItem('systemLogo');
@@ -36,12 +42,29 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
     const savedCountryName = localStorage.getItem('countryName');
     if (savedCountryName) {
       setCountryName(savedCountryName);
+      setShowCountryName(true);
     }
 
     const savedCardType = localStorage.getItem('cardType');
     if (savedCardType) {
       setCardType(savedCardType);
     }
+
+    // Load field visibility settings
+    const showNat = localStorage.getItem('showNationality');
+    if (showNat !== null) setShowNationality(showNat === 'true');
+
+    const showDOBSetting = localStorage.getItem('showDOB');
+    if (showDOBSetting !== null) setShowDOB(showDOBSetting === 'true');
+
+    const showPhoneSetting = localStorage.getItem('showPhone');
+    if (showPhoneSetting !== null) setShowPhone(showPhoneSetting === 'true');
+
+    const showOccupationSetting = localStorage.getItem('showOccupation');
+    if (showOccupationSetting !== null) setShowOccupation(showOccupationSetting === 'true');
+
+    const showAreaSetting = localStorage.getItem('showArea');
+    if (showAreaSetting !== null) setShowArea(showAreaSetting === 'true');
   }, []);
 
   // Calculate expiry date (2 years from now if not provided)
@@ -131,7 +154,9 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
           <div className="w-3/5 pl-4 text-white">
             {/* Header */}
             <div className="text-center mb-4">
-              <div className="font-bold text-lg leading-tight text-yellow-300">{countryName}</div>
+              {showCountryName && countryName && (
+                <div className="font-bold text-lg leading-tight text-yellow-300">{countryName}</div>
+              )}
               <div className="text-sm leading-tight mt-1">{cardType}</div>
             </div>
             
@@ -141,18 +166,24 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
                 <span className="font-bold text-xs w-16 shrink-0 text-yellow-200">Name:</span>
                 <span className="text-xs break-words leading-tight">{applicant.fullName}</span>
               </div>
-              <div className="flex items-start">
-                <span className="font-bold text-xs w-16 shrink-0 text-yellow-200">Nat:</span>
-                <span className="text-xs break-words">{applicant.nationality || 'Not provided'}</span>
-              </div>
-              <div className="flex items-start">
-                <span className="font-bold text-xs w-16 shrink-0 text-yellow-200">DOB:</span>
-                <span className="text-xs">{formatDate(applicant.dateOfBirth)}</span>
-              </div>
-              <div className="flex items-start">
-                <span className="font-bold text-xs w-16 shrink-0 text-yellow-200">Phone:</span>
-                <span className="text-xs break-words">{applicant.phoneNumber || 'Not provided'}</span>
-              </div>
+              {showNationality && (
+                <div className="flex items-start">
+                  <span className="font-bold text-xs w-16 shrink-0 text-yellow-200">Nat:</span>
+                  <span className="text-xs break-words">{applicant.nationality || 'Not provided'}</span>
+                </div>
+              )}
+              {showDOB && (
+                <div className="flex items-start">
+                  <span className="font-bold text-xs w-16 shrink-0 text-yellow-200">DOB:</span>
+                  <span className="text-xs">{formatDate(applicant.dateOfBirth)}</span>
+                </div>
+              )}
+              {showPhone && (
+                <div className="flex items-start">
+                  <span className="font-bold text-xs w-16 shrink-0 text-yellow-200">Phone:</span>
+                  <span className="text-xs break-words">{applicant.phoneNumber || 'Not provided'}</span>
+                </div>
+              )}
               <div className="flex items-start">
                 <span className="font-bold text-xs w-16 shrink-0 text-yellow-200">ID No:</span>
                 <span className="text-xs break-words font-mono">{applicant.id}</span>
@@ -206,20 +237,26 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
         <div className="relative z-10 flex flex-col h-full p-4 text-white">
           {/* Header */}
           <div className="text-center mb-4">
-            <div className="font-bold text-lg text-yellow-300">{countryName}</div>
-            <div className="text-xs mt-2 leading-relaxed">This card remains the property of the Ghana Immigration Service</div>
+            {showCountryName && countryName && (
+              <div className="font-bold text-lg text-yellow-300">{countryName}</div>
+            )}
+            <div className="text-xs mt-2 leading-relaxed">This card remains the property of the issuing authority</div>
           </div>
           
           {/* Information */}
           <div className="space-y-2 flex-1">
-            <div className="flex items-start">
-              <span className="font-bold text-xs w-20 shrink-0 text-yellow-200">Occupation:</span>
-              <span className="text-xs">{applicant.occupation || 'Not specified'}</span>
-            </div>
-            <div className="flex items-start">
-              <span className="font-bold text-xs w-20 shrink-0 text-yellow-200">Area:</span>
-              <span className="text-xs">{applicant.area || 'Not provided'}</span>
-            </div>
+            {showOccupation && (
+              <div className="flex items-start">
+                <span className="font-bold text-xs w-20 shrink-0 text-yellow-200">Occupation:</span>
+                <span className="text-xs">{applicant.occupation || 'Not specified'}</span>
+              </div>
+            )}
+            {showArea && (
+              <div className="flex items-start">
+                <span className="font-bold text-xs w-20 shrink-0 text-yellow-200">Area:</span>
+                <span className="text-xs">{applicant.area || 'Not provided'}</span>
+              </div>
+            )}
             <div className="flex items-start">
               <span className="font-bold text-xs w-20 shrink-0 text-yellow-200">Issue Date:</span>
               <span className="text-xs">{getCurrentDate()}</span>
@@ -228,7 +265,7 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
           
           {/* Footer */}
           <div className="border-t border-white/30 pt-3 text-center text-xs">
-            If found, please return to the nearest Ghana Immigration Service office
+            If found, please return to the nearest issuing authority office
           </div>
         </div>
         
