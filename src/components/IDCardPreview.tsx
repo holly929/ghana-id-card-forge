@@ -20,8 +20,9 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
   const [logo, setLogo] = useState<string | null>(null);
   const [issuingOfficerSignature, setIssuingOfficerSignature] = useState<string | null>(null);
   const [countryName, setCountryName] = useState('');
-  const [cardType, setCardType] = useState('NON-CITIZEN IDENTITY CARD');
+  const [cardType, setCardType] = useState('');
   const [showCountryName, setShowCountryName] = useState(false);
+  const [showCardType, setShowCardType] = useState(false);
   const [showNationality, setShowNationality] = useState(true);
   const [showDOB, setShowDOB] = useState(true);
   const [showPhone, setShowPhone] = useState(true);
@@ -48,6 +49,7 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
     const savedCardType = localStorage.getItem('cardType');
     if (savedCardType) {
       setCardType(savedCardType);
+      setShowCardType(true);
     }
 
     // Load field visibility settings
@@ -157,7 +159,9 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
               {showCountryName && countryName && (
                 <div className="font-bold text-lg leading-tight text-yellow-300">{countryName}</div>
               )}
-              <div className="text-sm leading-tight mt-1">{cardType}</div>
+              {showCardType && cardType && (
+                <div className="text-sm leading-tight mt-1">{cardType}</div>
+              )}
             </div>
             
             {/* Information Grid */}
