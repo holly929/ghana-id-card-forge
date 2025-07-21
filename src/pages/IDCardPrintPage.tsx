@@ -11,8 +11,6 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 
 // Default mock data (used as a fallback)
 const defaultApplicants = [
@@ -45,7 +43,7 @@ const IDCardPrintPage: React.FC = () => {
   const [selectedApplicants, setSelectedApplicants] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [logo, setLogo] = useState<string | null>(null);
-  const [singleSidedPrint, setSingleSidedPrint] = useState(true);
+  
   const [printFormat, setPrintFormat] = useState('standard');
   
   // Add state for customization settings
@@ -305,8 +303,8 @@ const IDCardPrintPage: React.FC = () => {
               
               .card-container {
                 display: flex;
-                flex-direction: ${singleSidedPrint ? 'row' : 'column'};
-                width: ${singleSidedPrint ? 'auto' : '90mm'};
+                flex-direction: row;
+                width: auto;
                 margin-bottom: 10mm;
                 page-break-inside: avoid;
                 gap: 5px;
@@ -490,122 +488,105 @@ const IDCardPrintPage: React.FC = () => {
             
             <div class="page-container">
               ${selectedApplicants.map(applicant => `
-                <div class="card-container">
-                  <!-- Front of ID Card -->
-                  <div class="card-front">
-                    <div class="card-content">
-                      <div class="left-side">
-                        <div class="logo-container">
-                          ${logo ? `<img src="${logo}" alt="Logo" class="logo-image" />` : '<div style="font-size: 8px; color: rgba(255,255,255,0.7);">LOGO</div>'}
-                        </div>
-                        <div class="photo-container">
-                          ${applicant.photo ? `<img src="${applicant.photo}" alt="Photo" class="photo-image" />` : '<div style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 6px; color: rgba(255,255,255,0.7);">PHOTO</div>'}
-                        </div>
-                        <div class="visa-type">
-                          ${((applicant.visaType || applicant.visa_type) || 'NONE').toUpperCase()}
-                        </div>
-                      </div>
-                      <div class="right-side">
-                        <div class="card-title">
-                          <div class="main-title">${cardLabels.title}</div>
-                          <div class="sub-title">${cardLabels.subtitle}</div>
-                        </div>
-                         <div class="card-info" style="flex: 1;">
-                          <div class="info-row">
-                            <span class="label">${cardLabels.name}</span>
-                            <span class="value">${(applicant.fullName || applicant.full_name) || 'Not provided'}</span>
-                          </div>
-                          <div class="info-row">
-                            <span class="label">${cardLabels.nationality}</span>
-                            <span class="value">${applicant.nationality || 'Not provided'}</span>
-                          </div>
-                          <div class="info-row">
-                            <span class="label">${cardLabels.dateOfBirth}</span>
-                            <span class="value">${formatDate(applicant.dateOfBirth || applicant.date_of_birth)}</span>
-                          </div>
-                          <div class="info-row">
-                            <span class="label">Phone:</span>
-                            <span class="value">${(applicant.phoneNumber || applicant.phone_number) || 'Not provided'}</span>
-                          </div>
-                          <div class="info-row">
-                            <span class="label">${cardLabels.idNo}</span>
-                            <span class="value">${applicant.id || 'Not provided'}</span>
-                          </div>
-                          <div class="info-row">
-                            <span class="label">${cardLabels.expiryDate}</span>
-                            <span class="value">${formatDate(getExpiryDate(applicant))}</span>
-                          </div>
-                          ${frontCustomFields.map(field => `
-                            <div class="info-row">
-                              <span class="label">${field.label}:</span>
-                              <span class="value">${field.value}</span>
-                            </div>
-                          `).join('')}
-                        </div>
-                        
-                        <!-- Issuing Officer Signature Section - Moved to Front -->
-                        <div style="display: flex; justify-content: center; margin-top: 5px;">
-                          <div style="text-align: center;">
-                            ${globalSignature ? 
-                              `<div style="height: 15px; width: 40px; margin-bottom: 2px; display: flex; align-items: center; justify-content: center;">
-                                 <img src="${globalSignature}" alt="Officer Signature" style="max-height: 100%; max-width: 100%; object-fit: contain;" />
-                               </div>` : 
-                              '<div style="height: 15px; margin-bottom: 2px; border-bottom: 1px solid white; width: 40px;"></div>'
-                            }
-                            <div style="font-size: 6px; text-align: center; border-top: 1px solid rgba(255,255,255,0.5); padding-top: 1px;">${cardLabels.issuingOfficer}</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="color-band">
-                      <div class="red-band"></div>
-                      <div class="yellow-band"></div>
-                      <div class="green-band"></div>
-                    </div>
-                  </div>
-                  
-                  <!-- Back of ID Card -->
-                  <div class="card-back">
-                    <div class="card-content">
-                      <div class="back-content">
-                        <div class="card-title">
-                          <div class="main-title">${cardLabels.title}</div>
-                          ${footerSettings.showBackFooter ? `<div class="sub-title">${footerSettings.backFooter}</div>` : ''}
-                        </div>
-                        <div class="card-info">
-                          <div class="info-row">
-                            <span class="label">${cardLabels.occupation}</span>
-                            <span class="value">${applicant.occupation || 'Not specified'}</span>
-                          </div>
-                          <div class="info-row">
-                            <span class="label">Area:</span>
-                            <span class="value">${applicant.area || 'Not provided'}</span>
-                          </div>
-                          <div class="info-row">
-                            <span class="label">${cardLabels.issueDate}</span>
-                            <span class="value">${formatDate(new Date().toISOString().split('T')[0])}</span>
-                          </div>
-                          ${backCustomFields.map(field => `
-                            <div class="info-row">
-                              <span class="label">${field.label}:</span>
-                              <span class="value">${field.value}</span>
-                            </div>
-                          `).join('')}
-                        </div>
-                        ${footerSettings.showMainFooter ? `
-                          <div class="back-footer">
-                            ${footerSettings.mainFooter}
-                          </div>
-                        ` : ''}
-                      </div>
-                    </div>
-                    <div class="color-band">
-                      <div class="red-band"></div>
-                      <div class="yellow-band"></div>
-                      <div class="green-band"></div>
-                    </div>
-                  </div>
-                </div>
+                 <div class="card-container">
+                   <!-- Front of ID Card -->
+                   <div class="card-front">
+                     <div class="card-content">
+                       <div class="left-side">
+                         <div class="logo-container">
+                           ${logo ? `<img src="${logo}" alt="Logo" class="logo-image" />` : '<div style="font-size: 8px; color: rgba(255,255,255,0.7);">LOGO</div>'}
+                         </div>
+                         <div class="photo-container">
+                           ${applicant.photo ? `<img src="${applicant.photo}" alt="Photo" class="photo-image" />` : '<div style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 6px; color: rgba(255,255,255,0.7);">PHOTO</div>'}
+                         </div>
+                         <div class="visa-type">
+                           ${((applicant.visaType || applicant.visa_type) || 'NONE').toUpperCase()}
+                         </div>
+                       </div>
+                       <div class="right-side">
+                         <div class="card-title">
+                           <div class="main-title">${cardLabels.title}</div>
+                           <div class="sub-title">${cardLabels.subtitle}</div>
+                         </div>
+                          <div class="card-info" style="flex: 1;">
+                           <div class="info-row">
+                             <span class="label">${cardLabels.name}</span>
+                             <span class="value">${(applicant.fullName || applicant.full_name) || 'Not provided'}</span>
+                           </div>
+                           <div class="info-row">
+                             <span class="label">${cardLabels.nationality}</span>
+                             <span class="value">${applicant.nationality || 'Not provided'}</span>
+                           </div>
+                           <div class="info-row">
+                             <span class="label">${cardLabels.dateOfBirth}</span>
+                             <span class="value">${formatDate(applicant.dateOfBirth || applicant.date_of_birth)}</span>
+                           </div>
+                           <div class="info-row">
+                             <span class="label">Phone:</span>
+                             <span class="value">${(applicant.phoneNumber || applicant.phone_number) || 'Not provided'}</span>
+                           </div>
+                           <div class="info-row">
+                             <span class="label">Area:</span>
+                             <span class="value">${applicant.area || 'Not provided'}</span>
+                           </div>
+                           <div class="info-row">
+                             <span class="label">${cardLabels.occupation}</span>
+                             <span class="value">${applicant.occupation || 'Not specified'}</span>
+                           </div>
+                           <div class="info-row">
+                             <span class="label">${cardLabels.idNo}</span>
+                             <span class="value">${applicant.id || 'Not provided'}</span>
+                           </div>
+                           <div class="info-row">
+                             <span class="label">${cardLabels.issueDate}</span>
+                             <span class="value">${formatDate(new Date().toISOString().split('T')[0])}</span>
+                           </div>
+                           <div class="info-row">
+                             <span class="label">${cardLabels.expiryDate}</span>
+                             <span class="value">${formatDate(getExpiryDate(applicant))}</span>
+                           </div>
+                           ${frontCustomFields.map(field => `
+                             <div class="info-row">
+                               <span class="label">${field.label}:</span>
+                               <span class="value">${field.value}</span>
+                             </div>
+                           `).join('')}
+                           ${backCustomFields.map(field => `
+                             <div class="info-row">
+                               <span class="label">${field.label}:</span>
+                               <span class="value">${field.value}</span>
+                             </div>
+                           `).join('')}
+                         </div>
+                         
+                         <!-- Issuing Officer Signature Section -->
+                         <div style="display: flex; justify-content: center; margin-top: 5px;">
+                           <div style="text-align: center;">
+                             ${globalSignature ? 
+                               `<div style="height: 15px; width: 40px; margin-bottom: 2px; display: flex; align-items: center; justify-content: center;">
+                                  <img src="${globalSignature}" alt="Officer Signature" style="max-height: 100%; max-width: 100%; object-fit: contain;" />
+                                </div>` : 
+                               '<div style="height: 15px; margin-bottom: 2px; border-bottom: 1px solid white; width: 40px;"></div>'
+                             }
+                             <div style="font-size: 6px; text-align: center; border-top: 1px solid rgba(255,255,255,0.5); padding-top: 1px;">${cardLabels.issuingOfficer}</div>
+                           </div>
+                         </div>
+                         
+                         <!-- Footer on front card -->
+                         ${footerSettings.showMainFooter ? `
+                           <div style="border-top: 1px solid rgba(255,255,255,0.3); padding-top: 4px; margin-top: auto; text-align: center; font-size: 6px;">
+                             ${footerSettings.mainFooter}
+                           </div>
+                         ` : ''}
+                       </div>
+                     </div>
+                     <div class="color-band">
+                       <div class="red-band"></div>
+                       <div class="yellow-band"></div>
+                       <div class="green-band"></div>
+                     </div>
+                   </div>
+                 </div>
               `).join('')}
             </div>
             
@@ -695,17 +676,6 @@ const IDCardPrintPage: React.FC = () => {
       </div>
       
       <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
-        <div className="space-y-2">
-          <div className="text-sm font-medium">Print Layout</div>
-          <div className="flex items-center space-x-2">
-            <Switch 
-              id="single-sided" 
-              checked={singleSidedPrint}
-              onCheckedChange={setSingleSidedPrint} 
-            />
-            <Label htmlFor="single-sided">Single-sided layout (save paper)</Label>
-          </div>
-        </div>
         
         <div className="space-y-2">
           <div className="text-sm font-medium">Size</div>
@@ -748,49 +718,20 @@ const IDCardPrintPage: React.FC = () => {
       <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
         <h3 className="text-lg font-medium mb-3">Print Preview</h3>
         <p className="text-sm text-gray-600 mb-4">
-          {singleSidedPrint 
-            ? "Cards will be printed with front and back side-by-side on the same page to save paper."
-            : "Cards will be printed with front and back sides stacked (traditional layout)."
-          }
+          Cards will be printed with all information on one side only (single-sided layout).
         </p>
         
         <div className="bg-white p-4 rounded border border-gray-300">
-          {singleSidedPrint ? (
-            <div className="flex items-center justify-center">
-              <div className="relative h-24 w-80 bg-gradient-to-r from-ghana-green to-ghana-green/70 rounded-md flex">
-                <div className="w-1/2 border-r border-white/20 flex items-center justify-center text-white text-xs">
-                  Front Side
-                </div>
-                <div className="w-1/2 flex items-center justify-center text-white text-xs">
-                  Back Side
-                </div>
-                <div className="absolute bottom-0 left-0 right-0 h-2 flex">
-                  <div className="flex-1 bg-red-600"></div>
-                  <div className="flex-1 bg-yellow-400"></div>
-                  <div className="flex-1 bg-green-600"></div>
-                </div>
+          <div className="flex items-center justify-center">
+            <div className="relative h-24 w-40 bg-gradient-to-r from-green-800 to-green-900 rounded-md flex items-center justify-center text-white text-xs">
+              Single Card Side
+              <div className="absolute bottom-0 left-0 right-0 h-2 flex">
+                <div className="flex-1 bg-red-600"></div>
+                <div className="flex-1 bg-yellow-400"></div>
+                <div className="flex-1 bg-green-600"></div>
               </div>
             </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center gap-2">
-              <div className="relative h-16 w-40 bg-gradient-to-r from-ghana-green to-ghana-green/70 rounded-md flex items-center justify-center text-white text-xs">
-                Front Side
-                <div className="absolute bottom-0 left-0 right-0 h-2 flex">
-                  <div className="flex-1 bg-red-600"></div>
-                  <div className="flex-1 bg-yellow-400"></div>
-                  <div className="flex-1 bg-green-600"></div>
-                </div>
-              </div>
-              <div className="relative h-16 w-40 bg-gradient-to-r from-ghana-green to-ghana-green/70 rounded-md flex items-center justify-center text-white text-xs">
-                Back Side
-                <div className="absolute bottom-0 left-0 right-0 h-2 flex">
-                  <div className="flex-1 bg-red-600"></div>
-                  <div className="flex-1 bg-yellow-400"></div>
-                  <div className="flex-1 bg-green-600"></div>
-                </div>
-              </div>
-            </div>
-          )}
+          </div>
         </div>
       </div>
       
