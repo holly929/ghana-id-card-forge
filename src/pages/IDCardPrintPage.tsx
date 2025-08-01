@@ -497,7 +497,7 @@ const IDCardPrintPage: React.FC = () => {
                            ${logo ? `<img src="${logo}" alt="Logo" class="logo-image" />` : '<div style="font-size: 8px; color: rgba(255,255,255,0.7);">LOGO</div>'}
                          </div>
                          <div class="photo-container">
-                           ${applicant.photo ? `<img src="${applicant.photo}" alt="Photo" class="photo-image" />` : '<div style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 6px; color: rgba(255,255,255,0.7);">PHOTO</div>'}
+                            ${applicant.photo ? `<img src="${applicant.photo}" alt="Photo" class="photo-image" />` : '<div style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 6px; color: rgba(255,255,255,0.7);">PHOTO</div>'}
                          </div>
                          <div class="visa-type">
                            ${((applicant.visaType || applicant.visa_type) || 'NONE').toUpperCase()}
@@ -505,8 +505,8 @@ const IDCardPrintPage: React.FC = () => {
                        </div>
                        <div class="right-side">
                          <div class="card-title">
-                           <div class="main-title">${cardLabels.title}</div>
-                           <div class="sub-title">${cardLabels.subtitle}</div>
+                            <div class="main-title">${cardLabels.title}</div>
+                            <div class="sub-title">${localStorage.getItem('cardType') || cardLabels.subtitle || 'NON-CITIZEN IDENTITY CARD'}</div>
                          </div>
                           <div class="card-info" style="flex: 1;">
                            <div class="info-row">

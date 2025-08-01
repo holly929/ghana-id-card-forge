@@ -79,7 +79,7 @@ const BulkPrintPage: React.FC = () => {
           <div class="right-side">
             <div class="card-title">
               <div class="main-title">${localStorage.getItem('countryName') || cardLabels.title || ''}</div>
-              <div class="sub-title">${cardLabels.subtitle || 'NON-CITIZEN IDENTITY CARD'}</div>
+              <div class="sub-title">${localStorage.getItem('cardType') || cardLabels.subtitle || 'NON-CITIZEN IDENTITY CARD'}</div>
             </div>
             <div class="card-info">
               <div class="info-row">
