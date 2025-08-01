@@ -60,6 +60,7 @@ const BulkPrintPage: React.FC = () => {
     const photo = localStorage.getItem(`applicantPhoto_${applicant.id}`) || applicant.photo;
     const cardLabels = JSON.parse(localStorage.getItem('cardLabels') || '{}');
     const customFields = JSON.parse(localStorage.getItem('customFields') || '[]');
+    const globalSignature = localStorage.getItem('issuingOfficerSignature');
 
     return `
       <div class="card">
@@ -116,6 +117,14 @@ const BulkPrintPage: React.FC = () => {
                 </div>
               `).join('')}
             </div>
+            ${globalSignature ? `
+              <div class="signature-area">
+                <div class="signature-box">
+                  <img src="${globalSignature}" alt="Signature" class="signature-image" />
+                  <div class="signature-label">${cardLabels.issuingOfficer || 'Issuing Officer'}</div>
+                </div>
+              </div>
+            ` : ''}
           </div>
         </div>
         <div class="color-band">
@@ -358,6 +367,30 @@ const BulkPrintPage: React.FC = () => {
             .red-band { background-color: #ce1126; flex: 1; }
             .yellow-band { background-color: #fcd116; flex: 1; }
             .green-band { background-color: #006b3f; flex: 1; }
+            
+            .signature-area {
+              position: absolute;
+              bottom: 20px;
+              right: 8px;
+              width: 60px;
+            }
+            
+            .signature-box {
+              text-align: center;
+            }
+            
+            .signature-image {
+              max-width: 50px;
+              max-height: 15px;
+              object-fit: contain;
+              margin-bottom: 2px;
+            }
+            
+            .signature-label {
+              font-size: 5px;
+              border-top: 1px solid rgba(255,255,255,0.5);
+              padding-top: 1px;
+            }
             
             .page-break {
               page-break-before: always;
