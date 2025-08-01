@@ -46,38 +46,75 @@ const BulkPrintPage: React.FC = () => {
     });
   };
 
+  const getExpiryDate = (applicant: any) => {
+    if (applicant.expiryDate || applicant.expiry_date) {
+      return applicant.expiryDate || applicant.expiry_date;
+    }
+    const date = new Date();
+    date.setFullYear(date.getFullYear() + 2);
+    return date.toISOString().split('T')[0];
+  };
+
   const generateCardHTML = (applicant: any) => {
     const logo = localStorage.getItem('systemLogo');
     const photo = localStorage.getItem(`applicantPhoto_${applicant.id}`) || applicant.photo;
+    const cardLabels = JSON.parse(localStorage.getItem('cardLabels') || '{}');
+    const customFields = JSON.parse(localStorage.getItem('customFields') || '[]');
 
     return `
       <div class="card">
-        <div style="display: flex; height: 100%;">
-          <div style="width: 33%; display: flex; flex-direction: column; align-items: center; justify-content: space-between;">
+        <div class="card-content">
+          <div class="left-side">
             <div class="logo-container">
               ${logo ? `<img src="${logo}" alt="Logo" class="logo-image" />` : ''}
             </div>
             <div class="photo-container">
-              ${photo ? `<img src="${photo}" alt="Applicant" class="photo-image" />` : ''}
+              ${photo ? `<img src="${photo}" alt="Photo" class="photo-image" />` : ''}
             </div>
-            <div style="margin-top: 5px; text-align: center;">
-              <div style="background: #fcd116; color: black; padding: 3px 8px; border-radius: 2px; font-weight: bold; font-size: 10px;">
-                ${(applicant.visaType || 'NONE').toUpperCase()}
-              </div>
+            <div class="visa-type">
+              ${(applicant.visaType || 'NONE').toUpperCase()}
             </div>
           </div>
-          <div style="width: 67%; padding-left: 10px;">
-            <div style="text-align: center; margin-bottom: 10px;">
-              <div style="font-weight: bold; font-size: 12px;">${localStorage.getItem('countryName') || ''}</div>
-              <div style="font-size: 10px;">NON-CITIZEN IDENTITY CARD</div>
+          <div class="right-side">
+            <div class="card-title">
+              <div class="main-title">${localStorage.getItem('countryName') || cardLabels.title || ''}</div>
+              <div class="sub-title">${cardLabels.subtitle || 'NON-CITIZEN IDENTITY CARD'}</div>
             </div>
-            <div style="font-size: 10px;">
-              <div><strong>Name:</strong> ${applicant.fullName || 'Not provided'}</div>
-              <div><strong>Nationality:</strong> ${applicant.nationality || 'Not provided'}</div>
-              <div><strong>Date of Birth:</strong> ${formatDate(applicant.dateOfBirth)}</div>
-              <div><strong>Phone Number:</strong> ${applicant.phoneNumber || 'Not provided'}</div>
-              <div><strong>ID No:</strong> ${applicant.id || 'Not provided'}</div>
-              <div><strong>Expiry Date:</strong> ${formatDate(applicant.expiryDate)}</div>
+            <div class="card-info">
+              <div class="info-row">
+                <span class="label">${cardLabels.name || 'Name'}:</span>
+                <span class="value">${applicant.fullName || 'Not provided'}</span>
+              </div>
+              <div class="info-row">
+                <span class="label">${cardLabels.nationality || 'Nationality'}:</span>
+                <span class="value">${applicant.nationality || 'Not provided'}</span>
+              </div>
+              <div class="info-row">
+                <span class="label">${cardLabels.dateOfBirth || 'Date of Birth'}:</span>
+                <span class="value">${formatDate(applicant.dateOfBirth)}</span>
+              </div>
+              <div class="info-row">
+                <span class="label">${cardLabels.occupation || 'Occupation'}:</span>
+                <span class="value">${applicant.occupation || 'Not provided'}</span>
+              </div>
+              <div class="info-row">
+                <span class="label">${cardLabels.idNo || 'ID No'}:</span>
+                <span class="value">${applicant.id || 'Not provided'}</span>
+              </div>
+              <div class="info-row">
+                <span class="label">${cardLabels.issueDate || 'Date of Issue'}:</span>
+                <span class="value">${formatDate(applicant.dateCreated)}</span>
+              </div>
+              <div class="info-row">
+                <span class="label">${cardLabels.expiryDate || 'Expiry Date'}:</span>
+                <span class="value">${formatDate(getExpiryDate(applicant))}</span>
+              </div>
+              ${customFields.filter((field: any) => field.position === 'front').map((field: any) => `
+                <div class="info-row">
+                  <span class="label">${field.label}:</span>
+                  <span class="value">${field.value}</span>
+                </div>
+              `).join('')}
             </div>
           </div>
         </div>
@@ -105,7 +142,7 @@ const BulkPrintPage: React.FC = () => {
       default: scale = 1; break;
     }
 
-    const cardsPerPage = layout === 'multiple' ? 6 : 1;
+    const cardsPerPage = layout === 'multiple' ? 9 : 1;
     const printWindow = window.open('', '_blank', 'width=800,height=600');
     
     if (!printWindow) {
@@ -153,143 +190,196 @@ const BulkPrintPage: React.FC = () => {
         <head>
           <title>Bulk ID Cards Print - ${selectedApplicants.length} cards</title>
           <style>
-            @page {
-              size: A4;
-              margin: 10mm;
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
+            
+            body {
+              font-family: Arial, sans-serif;
+              background: white;
+              padding: 10px;
             }
             
             @media print {
               body {
                 margin: 0;
-                padding: 0;
-                font-family: Arial, sans-serif;
+                padding: 10px;
               }
               
-              .card-page {
-                display: grid;
-                grid-template-columns: repeat(2, 1fr);
-                gap: 15mm;
-                width: 100%;
-                height: 100vh;
-                align-items: start;
-                justify-items: center;
-                padding: 10mm;
-                box-sizing: border-box;
+              @page {
+                size: auto;
+                margin: 10mm;
               }
-              
-              .card {
-                width: 85.6mm;
-                height: 53.98mm;
-                background: linear-gradient(to right, #006b3f, #006b3f99);
-                color: white;
-                padding: 16px;
-                border-radius: 8px;
-                position: relative;
-                overflow: hidden;
-                box-sizing: border-box;
-                transform: scale(${scale});
-                transform-origin: center;
-                margin: ${scale > 1 ? '10px' : '5px'};
-              }
-              
-              .logo-container {
-                text-align: center;
-                margin-bottom: 10px;
-              }
-              
-              .logo-image {
-                max-height: 40px;
-                max-width: 100px;
-              }
-              
-              .photo-container {
-                width: 80px;
-                height: 100px;
-                border: 2px solid white;
-                overflow: hidden;
-                margin: 5px auto;
-              }
-              
-              .photo-image {
-                width: 100%;
-                height: 100%;
-                object-fit: cover;
-              }
-              
-              .color-band {
-                position: absolute;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                height: 16px;
-                display: flex;
-              }
-              
-              .color-band div {
-                flex: 1;
-              }
-              
-              .red-band {
-                background-color: #ce1126;
-              }
-              
-              .yellow-band {
-                background-color: #fcd116;
-              }
-              
-              .green-band {
-                background-color: #006b3f;
-              }
-              
-              .page-break {
-                page-break-before: always;
-              }
-              
-              /* Single card layout */
-              ${layout === 'single' ? `
-                .card {
-                  display: block;
-                  margin: 20mm auto;
-                }
-              ` : ''}
             }
             
-            /* Screen preview styles */
-            @media screen {
-              body {
-                background: #f5f5f5;
-                padding: 20px;
-              }
-              
+            .card-page {
+              display: flex;
+              flex-wrap: wrap;
+              gap: 10px;
+              justify-content: center;
+              max-width: 100%;
+              margin-bottom: 20px;
+            }
+            
+            .card {
+              width: 85.6mm;
+              height: 53.98mm;
+              background: linear-gradient(135deg, #006b3f 0%, #004d2e 100%);
+              color: white;
+              padding: 8px;
+              border-radius: 6px;
+              position: relative;
+              overflow: hidden;
+              box-sizing: border-box;
+              border: 1px solid #003d26;
+              transform: scale(${scale});
+              transform-origin: top left;
+              page-break-inside: avoid;
+              margin: 5px;
+            }
+            
+            .card-content {
+              display: flex;
+              height: calc(100% - 12px);
+              position: relative;
+              z-index: 2;
+            }
+            
+            .left-side {
+              width: 35%;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: flex-start;
+              padding-top: 5px;
+            }
+            
+            .right-side {
+              width: 65%;
+              padding-left: 8px;
+              font-size: 8px;
+              display: flex;
+              flex-direction: column;
+            }
+            
+            .logo-container {
+              text-align: center;
+              margin-bottom: 8px;
+              height: 25px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            }
+            
+            .logo-image {
+              max-height: 25px;
+              max-width: 60px;
+              object-fit: contain;
+            }
+            
+            .photo-container {
+              width: 55px;
+              height: 70px;
+              border: 2px solid white;
+              overflow: hidden;
+              margin: 5px 0;
+              background: rgba(255,255,255,0.1);
+            }
+            
+            .photo-image {
+              width: 100%;
+              height: 100%;
+              object-fit: cover;
+            }
+            
+            .visa-type {
+              background: #fcd116;
+              color: #000;
+              padding: 2px 4px;
+              border-radius: 2px;
+              font-weight: bold;
+              font-size: 7px;
+              text-align: center;
+              margin-top: 5px;
+              min-width: 50px;
+            }
+            
+            .card-title {
+              text-align: center;
+              margin-bottom: 8px;
+            }
+            
+            .card-title .main-title {
+              font-weight: bold;
+              font-size: 9px;
+              line-height: 1.1;
+            }
+            
+            .card-title .sub-title {
+              font-size: 7px;
+              line-height: 1.1;
+              margin-top: 2px;
+            }
+            
+            .card-info {
+              flex: 1;
+            }
+            
+            .card-info .info-row {
+              margin-bottom: 2px;
+              line-height: 1.2;
+              display: flex;
+              font-size: 7px;
+            }
+            
+            .card-info .label {
+              font-weight: bold;
+              min-width: 35px;
+              margin-right: 2px;
+            }
+            
+            .card-info .value {
+              flex: 1;
+              word-break: break-word;
+            }
+            
+            .color-band {
+              position: absolute;
+              bottom: 0;
+              left: 0;
+              right: 0;
+              height: 12px;
+              display: flex;
+              z-index: 1;
+            }
+            
+            .red-band { background-color: #ce1126; flex: 1; }
+            .yellow-band { background-color: #fcd116; flex: 1; }
+            .green-band { background-color: #006b3f; flex: 1; }
+            
+            .page-break {
+              page-break-before: always;
+            }
+            
+            @media print {
               .card-page {
-                background: white;
-                margin-bottom: 20px;
-                padding: 20px;
-                box-shadow: 0 0 10px rgba(0,0,0,0.1);
                 display: grid;
-                grid-template-columns: repeat(2, 1fr);
-                gap: 20px;
-                justify-items: center;
-              }
-              
-              .card {
-                width: 85.6mm;
-                height: 53.98mm;
-                background: linear-gradient(to right, #006b3f, #006b3f99);
-                color: white;
-                padding: 16px;
-                border-radius: 8px;
-                position: relative;
-                overflow: hidden;
-                box-sizing: border-box;
-                transform: scale(${scale});
-                margin: 10px;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 5mm;
+                width: 100%;
+                margin-bottom: 0;
+                page-break-inside: avoid;
               }
               
               ${layout === 'single' ? `
                 .card-page {
                   grid-template-columns: 1fr;
                   justify-items: center;
+                }
+                .card {
+                  margin: 20mm auto;
                 }
               ` : ''}
             }
@@ -357,7 +447,7 @@ const BulkPrintPage: React.FC = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="multiple">Multiple per page (6 cards)</SelectItem>
+                  <SelectItem value="multiple">Multiple per page (9 cards)</SelectItem>
                   <SelectItem value="single">Single per page</SelectItem>
                 </SelectContent>
               </Select>
