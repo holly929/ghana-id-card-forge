@@ -68,7 +68,7 @@ const IDCardPrintPage: React.FC = () => {
   });
 
   const [customFields, setCustomFields] = useState<CustomField[]>([]);
-  
+
   // Load applicants from localStorage
   useEffect(() => {
     setLoading(true);
@@ -217,7 +217,7 @@ const IDCardPrintPage: React.FC = () => {
     return date.toISOString().split('T')[0];
   };
   
-  // Handle printing all cards - UPDATED to use global signature
+  // Handle printing all cards - UPDATED to use global signature and include country/company name
   const handlePrintAllCards = () => {
     if (selectedApplicants.length === 0) {
       toast.error("No approved applicants to print");
@@ -236,6 +236,12 @@ const IDCardPrintPage: React.FC = () => {
 
       // Get the global issuing officer signature
       const globalSignature = localStorage.getItem('issuingOfficerSignature');
+      const countryName = localStorage.getItem('countryName') || '';
+      const companyName = localStorage.getItem('companyName') || '';
+      const cardType = localStorage.getItem('cardType') || cardLabels.subtitle || 'NON-CITIZEN IDENTITY CARD';
+      
+      console.log('Print - globalSignature:', globalSignature ? 'Found' : 'Not found');
+      console.log('Country name:', countryName, 'Company name:', companyName);
       
       // Get scale based on the print format
       let scale = 1;
@@ -396,13 +402,21 @@ const IDCardPrintPage: React.FC = () => {
                 margin-bottom: 8px;
               }
               
-              .card-title .main-title {
+              .country-name {
                 font-weight: bold;
-                font-size: 9px;
+                font-size: 10px;
                 line-height: 1.1;
+                color: #fcd116;
               }
               
-              .card-title .sub-title {
+              .company-name {
+                font-size: 8px;
+                line-height: 1.1;
+                margin-top: 1px;
+                color: #fcd116;
+              }
+              
+              .card-type {
                 font-size: 7px;
                 line-height: 1.1;
                 margin-top: 2px;
@@ -428,6 +442,45 @@ const IDCardPrintPage: React.FC = () => {
               .card-info .value {
                 flex: 1;
                 word-break: break-word;
+              }
+              
+              .signature-container {
+                display: flex;
+                justify-content: center;
+                margin-top: 5px;
+              }
+              
+              .signature-box {
+                text-align: center;
+              }
+              
+              .signature-image-container {
+                height: 15px;
+                width: 40px;
+                margin-bottom: 2px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              }
+              
+              .signature-image {
+                max-height: 100%;
+                max-width: 100%;
+                object-fit: contain;
+              }
+              
+              .signature-line {
+                height: 15px;
+                margin-bottom: 2px;
+                border-bottom: 1px solid white;
+                width: 40px;
+              }
+              
+              .signature-label {
+                font-size: 6px;
+                text-align: center;
+                border-top: 1px solid rgba(255,255,255,0.5);
+                padding-top: 1px;
               }
               
               .color-band {
@@ -458,24 +511,6 @@ const IDCardPrintPage: React.FC = () => {
                 text-align: center;
                 font-size: 6px;
               }
-              
-              .signature-area {
-                display: flex;
-                justify-content: space-between;
-                margin-top: auto;
-                position: absolute;
-                bottom: 20px;
-                left: 8px;
-                right: 8px;
-              }
-              
-              .signature-box {
-                width: 60px;
-                border-top: 1px solid rgba(255,255,255,0.5);
-                text-align: center;
-                font-size: 6px;
-                padding-top: 2px;
-              }
             </style>
           </head>
           <body>
@@ -505,8 +540,9 @@ const IDCardPrintPage: React.FC = () => {
                        </div>
                        <div class="right-side">
                          <div class="card-title">
-                            <div class="main-title">${cardLabels.title}</div>
-                            <div class="sub-title">${localStorage.getItem('cardType') || cardLabels.subtitle || 'NON-CITIZEN IDENTITY CARD'}</div>
+                            ${countryName ? `<div class="country-name">${countryName}</div>` : ''}
+                            ${companyName ? `<div class="company-name">${companyName}</div>` : ''}
+                            <div class="card-type">${cardType}</div>
                          </div>
                           <div class="card-info" style="flex: 1;">
                            <div class="info-row">
@@ -560,15 +596,15 @@ const IDCardPrintPage: React.FC = () => {
                          </div>
                          
                          <!-- Issuing Officer Signature Section -->
-                         <div style="display: flex; justify-content: center; margin-top: 5px;">
-                           <div style="text-align: center;">
+                         <div class="signature-container">
+                           <div class="signature-box">
                              ${globalSignature ? 
-                               `<div style="height: 15px; width: 40px; margin-bottom: 2px; display: flex; align-items: center; justify-content: center;">
-                                  <img src="${globalSignature}" alt="Officer Signature" style="max-height: 100%; max-width: 100%; object-fit: contain;" />
+                               `<div class="signature-image-container">
+                                  <img src="${globalSignature}" alt="Officer Signature" class="signature-image" />
                                 </div>` : 
-                               '<div style="height: 15px; margin-bottom: 2px; border-bottom: 1px solid white; width: 40px;"></div>'
+                               '<div class="signature-line"></div>'
                              }
-                             <div style="font-size: 6px; text-align: center; border-top: 1px solid rgba(255,255,255,0.5); padding-top: 1px;">${cardLabels.issuingOfficer}</div>
+                             <div class="signature-label">${cardLabels.issuingOfficer}</div>
                            </div>
                          </div>
                          

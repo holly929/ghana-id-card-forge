@@ -20,8 +20,10 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
   const [logo, setLogo] = useState<string | null>(null);
   const [issuingOfficerSignature, setIssuingOfficerSignature] = useState<string | null>(null);
   const [countryName, setCountryName] = useState('');
+  const [companyName, setCompanyName] = useState('');
   const [cardType, setCardType] = useState('');
   const [showCountryName, setShowCountryName] = useState(false);
+  const [showCompanyName, setShowCompanyName] = useState(false);
   const [showCardType, setShowCardType] = useState(false);
   const [showNationality, setShowNationality] = useState(true);
   const [showDOB, setShowDOB] = useState(true);
@@ -44,6 +46,12 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
     if (savedCountryName) {
       setCountryName(savedCountryName);
       setShowCountryName(true);
+    }
+
+    const savedCompanyName = localStorage.getItem('companyName');
+    if (savedCompanyName) {
+      setCompanyName(savedCompanyName);
+      setShowCompanyName(true);
     }
 
     const savedCardType = localStorage.getItem('cardType');
@@ -176,6 +184,9 @@ const IDCardPreview: React.FC<IDCardPreviewProps> = ({ applicant }) => {
             <div className="text-center mb-4">
               {showCountryName && countryName && (
                 <div className="font-bold text-xl leading-tight text-yellow-300">{countryName}</div>
+              )}
+              {showCompanyName && companyName && (
+                <div className="text-sm leading-tight mt-1 text-yellow-300">{companyName}</div>
               )}
               {showCardType && cardType && (
                 <div className="text-sm leading-tight mt-1">{cardType}</div>
