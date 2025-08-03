@@ -151,11 +151,18 @@ const IDCards: React.FC = () => {
     console.log('Printing ID card for applicant:', applicant.id);
     const logo = localStorage.getItem('systemLogo');
     const photo = localStorage.getItem(`applicantPhoto_${applicant.id}`) || applicant.photo;
+    const globalSignature = localStorage.getItem('issuingOfficerSignature');
+    const countryName = localStorage.getItem('countryName') || '';
+    const companyName = localStorage.getItem('companyName') || '';
+    const cardType = localStorage.getItem('cardType') || 'NON-CITIZEN IDENTITY CARD';
+    const cardLabels = JSON.parse(localStorage.getItem('cardLabels') || '{}');
     const fullName = getApplicantProperty(applicant, 'fullName', 'full_name');
     const phoneNumber = getApplicantProperty(applicant, 'phoneNumber', 'phone_number');
     const dateOfBirth = getApplicantProperty(applicant, 'dateOfBirth', 'date_of_birth');
     const expiryDate = getApplicantProperty(applicant, 'expiryDate', 'expiry_date');
     const visaType = getApplicantProperty(applicant, 'visaType', 'visa_type');
+    
+    console.log('Individual print - globalSignature retrieved:', globalSignature ? 'Found signature' : 'No signature found');
 
     let scale = 1;
     switch (printFormat) {
@@ -261,20 +268,37 @@ const IDCards: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                <div style="width: 67%; padding-left: 10px;">
-                  <div style="text-align: center; margin-bottom: 10px;">
-                    <div style="font-weight: bold; font-size: 12px;">${localStorage.getItem('countryName') || ''}</div>
-                    <div style="font-size: 10px;">NON-CITIZEN IDENTITY CARD</div>
-                  </div>
-                  <div style="font-size: 10px;">
-                    <div><strong>Name:</strong> ${fullName || 'Not provided'}</div>
-                    <div><strong>Nationality:</strong> ${applicant.nationality || 'Not provided'}</div>
-                    <div><strong>Date of Birth:</strong> ${formatDate(dateOfBirth)}</div>
-                    <div><strong>Phone Number:</strong> ${phoneNumber || 'Not provided'}</div>
-                    <div><strong>ID No:</strong> ${applicant.id || 'Not provided'}</div>
-                    <div><strong>Expiry Date:</strong> ${formatDate(expiryDate)}</div>
-                  </div>
-                </div>
+                 <div style="width: 67%; padding-left: 10px; display: flex; flex-direction: column; justify-content: space-between;">
+                   <div>
+                     <div style="text-align: center; margin-bottom: 10px;">
+                       ${countryName ? `<div style="font-weight: bold; font-size: 12px; color: #fcd116;">${countryName}</div>` : ''}
+                       ${companyName ? `<div style="font-size: 10px; color: #fcd116;">${companyName}</div>` : ''}
+                       <div style="font-size: 10px;">${cardType}</div>
+                     </div>
+                     <div style="font-size: 10px;">
+                       <div><strong>${cardLabels.name || 'Name'}:</strong> ${fullName || 'Not provided'}</div>
+                       <div><strong>${cardLabels.nationality || 'Nationality'}:</strong> ${applicant.nationality || 'Not provided'}</div>
+                       <div><strong>${cardLabels.dateOfBirth || 'Date of Birth'}:</strong> ${formatDate(dateOfBirth)}</div>
+                       <div><strong>${cardLabels.occupation || 'Occupation'}:</strong> ${applicant.occupation || 'Not provided'}</div>
+                       <div><strong>${cardLabels.idNo || 'ID No'}:</strong> ${applicant.id || 'Not provided'}</div>
+                       <div><strong>${cardLabels.issueDate || 'Date of Issue'}:</strong> ${formatDate(applicant.dateCreated)}</div>
+                       <div><strong>${cardLabels.expiryDate || 'Expiry Date'}:</strong> ${formatDate(expiryDate)}</div>
+                     </div>
+                   </div>
+                   
+                   <!-- Issuing Officer Signature Section -->
+                   <div style="display: flex; justify-content: center; margin-top: 10px;">
+                     <div style="text-align: center;">
+                       ${globalSignature ? 
+                         `<div style="height: 20px; width: 50px; margin-bottom: 2px; display: flex; align-items: center; justify-content: center;">
+                            <img src="${globalSignature}" alt="Officer Signature" style="max-height: 100%; max-width: 100%; object-fit: contain;" />
+                          </div>` : 
+                         '<div style="height: 20px; margin-bottom: 2px; border-bottom: 1px solid white; width: 50px;"></div>'
+                       }
+                       <div style="font-size: 8px; text-align: center; border-top: 1px solid rgba(255,255,255,0.5); padding-top: 1px;">${cardLabels.issuingOfficer || 'Issuing Officer'}</div>
+                     </div>
+                   </div>
+                 </div>
               </div>
               <div class="color-band">
                 <div class="red-band"></div>
@@ -381,6 +405,15 @@ const IDCards: React.FC = () => {
                   <SelectItem value="large">Large</SelectItem>
                 </SelectContent>
               </Select>
+              
+              <Button 
+                onClick={() => navigate('/id-cards/view-all')} 
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <Eye className="h-4 w-4" />
+                View All Cards
+              </Button>
               
               <Button onClick={handleBulkPrint} className="flex items-center gap-2">
                 <Files className="h-4 w-4" />

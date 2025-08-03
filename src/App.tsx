@@ -17,6 +17,7 @@ import IDCards from "./pages/IDCards";
 import IDCardPreviewPage from "./pages/IDCardPreviewPage";
 import IDCardPrintPage from "./pages/IDCardPrintPage";
 import BulkPrintPage from "./pages/BulkPrintPage";
+import ViewAllIDCards from "./pages/ViewAllIDCards";
 import Users from "./pages/Users";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
@@ -80,6 +81,14 @@ function App() {
                 <ProtectedRoute>
                   <DashboardLayout>
                     <IDCards />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/id-cards/view-all" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <ViewAllIDCards />
                   </DashboardLayout>
                 </ProtectedRoute>
               } />
