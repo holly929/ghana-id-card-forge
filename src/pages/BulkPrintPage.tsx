@@ -64,8 +64,16 @@ const BulkPrintPage: React.FC = () => {
     const companyName = localStorage.getItem('companyName') || '';
     const cardType = localStorage.getItem('cardType') || cardLabels.subtitle || 'NON-CITIZEN IDENTITY CARD';
     
-    console.log('Bulk print - globalSignature retrieved:', globalSignature ? 'Found signature' : 'No signature found');
-    console.log('Country name:', countryName, 'Company name:', companyName);
+    // Debug logging to identify the issue
+    console.log('=== BULK PRINT DEBUG ===');
+    console.log('All localStorage keys:', Object.keys(localStorage));
+    console.log('globalSignature exists:', globalSignature ? 'YES' : 'NO');
+    console.log('globalSignature length:', globalSignature ? globalSignature.length : 0);
+    console.log('cardType value:', `"${cardType}"`);
+    console.log('countryName value:', `"${countryName}"`);
+    console.log('companyName value:', `"${companyName}"`);
+    console.log('cardLabels object:', cardLabels);
+    console.log('========================');
 
     return `
       <div class="card">
@@ -339,30 +347,31 @@ const BulkPrintPage: React.FC = () => {
             }
             
             .signature-image-wrapper {
-              height: 20px;
-              width: 50px;
+              height: 25px;
+              width: 60px;
               margin: 0 auto 3px;
               display: flex;
               align-items: center;
               justify-content: center;
-              background: rgba(255,255,255,0.1);
-              border: 1px solid rgba(255,255,255,0.3);
-              border-radius: 2px;
+              background: rgba(255,255,255,0.15);
+              border: 1px solid rgba(255,255,255,0.4);
+              border-radius: 3px;
             }
             
             .signature-line {
-              height: 20px;
-              width: 50px;
+              height: 25px;
+              width: 60px;
               margin: 0 auto 3px;
               border-bottom: 1px solid white;
             }
             
             .signature-label {
-              font-size: 6px;
+              font-size: 7px;
               text-align: center;
               border-top: 1px solid rgba(255,255,255,0.5);
               padding-top: 2px;
               font-weight: bold;
+              color: white;
             }
             
             .card-title {
@@ -385,9 +394,11 @@ const BulkPrintPage: React.FC = () => {
             }
             
             .card-type {
-              font-size: 7px;
-              line-height: 1.1;
+              font-size: 9px;
+              line-height: 1.2;
               margin-top: 2px;
+              font-weight: bold;
+              color: white;
             }
             
             .card-info {
