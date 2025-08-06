@@ -73,7 +73,7 @@ const ViewAllIDCards: React.FC = () => {
   }, [navigate]);
 
   const formatDate = (dateString: string) => {
-    if (!dateString) return 'Not provided';
+    if (!dateString) return 'N/A';
     const date = new Date(dateString);
     return date.toLocaleDateString('en-GB', {
       day: '2-digit',
@@ -128,27 +128,27 @@ const ViewAllIDCards: React.FC = () => {
             <div class="card-info">
               <div class="info-row">
                 <span class="label">${cardLabels.name || 'Name'}:</span>
-                <span class="value">${fullName || 'Not provided'}</span>
+                <span class="value">${fullName || 'N/A'}</span>
               </div>
               <div class="info-row">
                 <span class="label">${cardLabels.nationality || 'Nationality'}:</span>
-                <span class="value">${applicant.nationality || 'Not provided'}</span>
+                <span class="value">${applicant.nationality || 'N/A'}</span>
               </div>
               <div class="info-row">
                 <span class="label">${cardLabels.dateOfBirth || 'Date of Birth'}:</span>
-                <span class="value">${formatDate(dateOfBirth)}</span>
+                <span class="value">${dateOfBirth ? formatDate(dateOfBirth) : 'N/A'}</span>
               </div>
               <div class="info-row">
                 <span class="label">${cardLabels.occupation || 'Occupation'}:</span>
-                <span class="value">${applicant.occupation || 'Not provided'}</span>
+                <span class="value">${applicant.occupation || 'N/A'}</span>
               </div>
               <div class="info-row">
                 <span class="label">${cardLabels.idNo || 'ID No'}:</span>
-                <span class="value">${applicant.id || 'Not provided'}</span>
+                <span class="value">${applicant.id || 'N/A'}</span>
               </div>
               <div class="info-row">
                 <span class="label">${cardLabels.issueDate || 'Date of Issue'}:</span>
-                <span class="value">${formatDate(applicant.dateCreated)}</span>
+                <span class="value">${applicant.dateCreated ? formatDate(applicant.dateCreated) : 'N/A'}</span>
               </div>
               <div class="info-row">
                 <span class="label">${cardLabels.expiryDate || 'Expiry Date'}:</span>
@@ -209,11 +209,443 @@ const ViewAllIDCards: React.FC = () => {
 
     const selectedApplicantData = applicants.filter(app => selectedApplicants.includes(app.id));
     
-    // Store selected applicants in localStorage for bulk print page
-    localStorage.setItem('selectedApplicantsForPrint', JSON.stringify(selectedApplicantData));
+    // Print directly without navigating to bulk print page
+    printSelectedCards(selectedApplicantData);
+  };
+
+  const printSelectedCards = (selectedCards: any[]) => {
+    let scale = 1;
+    switch (printFormat) {
+      case 'small': scale = 0.7; break;
+      case 'large': scale = 1.5; break;
+      default: scale = 1; break;
+    }
+
+    const cardsPerPage = layout === 'multiple' ? 9 : 1;
+    const printWindow = window.open('', '_blank', 'width=800,height=600');
     
-    // Navigate to bulk print page
-    navigate('/bulk-print');
+    if (!printWindow) {
+      toast.error("Pop-up blocked. Please allow pop-ups to print.");
+      return;
+    }
+
+    // Generate all cards with proper page breaks
+    let allCardsHTML = '';
+    let currentPageCards = '';
+    let cardsOnCurrentPage = 0;
+
+    selectedCards.forEach((applicant, index) => {
+      const cardHTML = generatePrintCardHTML(applicant);
+      
+      if (layout === 'single') {
+        if (index > 0) {
+          allCardsHTML += '<div class="page-break"></div>';
+        }
+        allCardsHTML += cardHTML;
+      } else {
+        currentPageCards += cardHTML;
+        cardsOnCurrentPage++;
+        
+        if (cardsOnCurrentPage === cardsPerPage || index === selectedCards.length - 1) {
+          if (allCardsHTML !== '') {
+            allCardsHTML += '<div class="page-break"></div>';
+          }
+          allCardsHTML += `<div class="card-page">${currentPageCards}</div>`;
+          currentPageCards = '';
+          cardsOnCurrentPage = 0;
+        }
+      }
+    });
+
+    const printHTML = `
+      <html>
+        <head>
+          <title>ID Cards Print - ${selectedCards.length} cards</title>
+          <style>
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
+            
+            body {
+              font-family: Arial, sans-serif;
+              background: white;
+              padding: 10px;
+            }
+            
+            @media print {
+              body {
+                margin: 0;
+                padding: 10px;
+              }
+              
+              @page {
+                size: auto;
+                margin: 10mm;
+              }
+            }
+            
+            .card-page {
+              display: flex;
+              flex-wrap: wrap;
+              gap: 10px;
+              justify-content: center;
+              max-width: 100%;
+              margin-bottom: 20px;
+            }
+            
+            .card {
+              width: 85.6mm;
+              height: 53.98mm;
+              background: linear-gradient(135deg, #006b3f 0%, #004d2e 100%);
+              color: white;
+              padding: 8px;
+              border-radius: 6px;
+              position: relative;
+              overflow: hidden;
+              box-sizing: border-box;
+              border: 1px solid #003d26;
+              transform: scale(${scale});
+              transform-origin: top left;
+              page-break-inside: avoid;
+              margin: 5px;
+            }
+            
+            .card-content {
+              display: flex;
+              height: calc(100% - 12px);
+              position: relative;
+              z-index: 2;
+            }
+            
+            .left-side {
+              width: 33%;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: flex-start;
+              padding-top: 5px;
+              gap: 5px;
+            }
+            
+            .right-side {
+              width: 67%;
+              padding-left: 8px;
+              font-size: 8px;
+              display: flex;
+              flex-direction: column;
+            }
+            
+            .logo-container {
+              text-align: center;
+              margin-bottom: 8px;
+              height: 25px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            }
+            
+            .logo-image {
+              max-height: 25px;
+              max-width: 60px;
+              object-fit: contain;
+            }
+            
+            .photo-container {
+              width: 55px;
+              height: 70px;
+              border: 2px solid white;
+              overflow: hidden;
+              margin: 5px 0;
+              background: rgba(255,255,255,0.1);
+            }
+            
+            .photo-image {
+              width: 100%;
+              height: 100%;
+              object-fit: cover;
+            }
+            
+            .visa-type {
+              background: #fcd116;
+              color: #000;
+              padding: 2px 4px;
+              border-radius: 2px;
+              font-weight: bold;
+              font-size: 7px;
+              text-align: center;
+              min-width: 50px;
+            }
+            
+            .signature-section {
+              text-align: center;
+              margin-top: 8px;
+            }
+            
+            .signature-image-wrapper {
+              height: 25px;
+              width: 60px;
+              margin: 0 auto 3px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              background: rgba(255,255,255,0.15);
+              border: 1px solid rgba(255,255,255,0.4);
+              border-radius: 3px;
+            }
+            
+            .signature-line {
+              height: 25px;
+              width: 60px;
+              margin: 0 auto 3px;
+              border-bottom: 1px solid white;
+            }
+            
+            .signature-label {
+              font-size: 7px;
+              text-align: center;
+              border-top: 1px solid rgba(255,255,255,0.5);
+              padding-top: 2px;
+              font-weight: bold;
+              color: white;
+            }
+            
+            .card-title {
+              text-align: center;
+              margin-bottom: 8px;
+            }
+            
+            .country-name {
+              font-weight: bold;
+              font-size: 10px;
+              line-height: 1.1;
+              color: #fcd116;
+            }
+            
+            .company-name {
+              font-size: 8px;
+              line-height: 1.1;
+              margin-top: 1px;
+              color: #fcd116;
+            }
+            
+            .card-type {
+              font-size: 9px;
+              line-height: 1.2;
+              margin-top: 2px;
+              font-weight: bold;
+              color: white;
+            }
+            
+            .card-info {
+              flex: 1;
+              margin-bottom: 5px;
+            }
+            
+            .info-columns {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 5px;
+              height: 100%;
+            }
+            
+            .info-column {
+              display: flex;
+              flex-direction: column;
+              gap: 1px;
+            }
+            
+            .card-info .info-row {
+              margin-bottom: 1px;
+              line-height: 1.1;
+              display: flex;
+              flex-direction: column;
+              font-size: 6px;
+            }
+            
+            .card-info .label {
+              font-weight: bold;
+              color: #fcd116;
+              font-size: 5px;
+            }
+            
+            .card-info .value {
+              word-break: break-word;
+              margin-top: 1px;
+            }
+            
+            .footer-text {
+              border-top: 1px solid rgba(255,255,255,0.3);
+              padding-top: 2px;
+              text-align: center;
+              font-size: 5px;
+              line-height: 1.2;
+              margin-top: auto;
+            }
+            
+            .signature-image {
+              max-height: 100%;
+              max-width: 100%;
+              object-fit: contain;
+            }
+            
+            .color-band {
+              position: absolute;
+              bottom: 0;
+              left: 0;
+              right: 0;
+              height: 12px;
+              display: flex;
+              z-index: 1;
+            }
+            
+            .red-band { background-color: #ce1126; flex: 1; }
+            .yellow-band { background-color: #fcd116; flex: 1; }
+            .green-band { background-color: #006b3f; flex: 1; }
+            
+            .page-break {
+              page-break-before: always;
+            }
+            
+            @media print {
+              .card-page {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 5mm;
+                width: 100%;
+                margin-bottom: 0;
+                page-break-inside: avoid;
+              }
+              
+              ${layout === 'single' ? `
+                .card-page {
+                  grid-template-columns: 1fr;
+                  justify-items: center;
+                }
+                .card {
+                  margin: 20mm auto;
+                }
+              ` : ''}
+            }
+          </style>
+        </head>
+        <body>
+          ${allCardsHTML}
+          <script>
+            window.onload = function() {
+              setTimeout(() => {
+                window.print();
+                window.close();
+              }, 500);
+            };
+          </script>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(printHTML);
+    printWindow.document.close();
+  };
+
+  const generatePrintCardHTML = (applicant: ApplicantData) => {
+    const logo = localStorage.getItem('systemLogo');
+    const photo = localStorage.getItem(`applicantPhoto_${applicant.id}`) || applicant.photo;
+    const globalSignature = localStorage.getItem('issuingOfficerSignature');
+    const countryName = localStorage.getItem('countryName') || '';
+    const companyName = localStorage.getItem('companyName') || '';
+    const cardType = localStorage.getItem('cardType') || 'NON-CITIZEN IDENTITY CARD';
+    const cardLabels = JSON.parse(localStorage.getItem('cardLabels') || '{}');
+    const customFields = JSON.parse(localStorage.getItem('customFields') || '[]');
+    const fullName = getApplicantProperty(applicant, 'fullName', 'full_name');
+    const dateOfBirth = getApplicantProperty(applicant, 'dateOfBirth', 'date_of_birth');
+    const visaType = getApplicantProperty(applicant, 'visaType', 'visa_type');
+
+    return `
+      <div class="card">
+        <div class="card-content">
+          <div class="left-side">
+            <div class="logo-container">
+              ${logo ? `<img src="${logo}" alt="Logo" class="logo-image" />` : ''}
+            </div>
+            <div class="photo-container">
+              ${photo ? `<img src="${photo}" alt="Photo" class="photo-image" />` : ''}
+            </div>
+            <div class="visa-type">
+              ${(visaType || 'NONE').toUpperCase()}
+            </div>
+            <div class="signature-section">
+              ${globalSignature ? 
+                `<div class="signature-image-wrapper">
+                   <img src="${globalSignature}" alt="Officer Signature" class="signature-image" />
+                 </div>` : 
+                '<div class="signature-line"></div>'
+              }
+              <div class="signature-label">${cardLabels.issuingOfficer || 'Issuing Officer'}</div>
+            </div>
+          </div>
+          <div class="right-side">
+            <div class="card-title">
+              ${countryName ? `<div class="country-name">${countryName}</div>` : ''}
+              ${companyName ? `<div class="company-name">${companyName}</div>` : ''}
+              <div class="card-type">${cardType}</div>
+            </div>
+            <div class="card-info">
+              <div class="info-columns">
+                <div class="info-column">
+                  <div class="info-row">
+                    <span class="label">${cardLabels.name || 'Name'}:</span>
+                    <span class="value">${fullName || 'N/A'}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="label">${cardLabels.nationality || 'Nationality'}:</span>
+                    <span class="value">${applicant.nationality || 'N/A'}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="label">${cardLabels.dateOfBirth || 'Date of Birth'}:</span>
+                    <span class="value">${dateOfBirth ? formatDate(dateOfBirth) : 'N/A'}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="label">${cardLabels.occupation || 'Occupation'}:</span>
+                    <span class="value">${applicant.occupation || 'N/A'}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="label">${cardLabels.issueDate || 'Date of Issue'}:</span>
+                    <span class="value">${applicant.dateCreated ? formatDate(applicant.dateCreated) : 'N/A'}</span>
+                  </div>
+                </div>
+                <div class="info-column">
+                  <div class="info-row">
+                    <span class="label">${cardLabels.idNo || 'ID No'}:</span>
+                    <span class="value">${applicant.id || 'N/A'}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="label">${cardLabels.expiryDate || 'Expiry Date'}:</span>
+                    <span class="value">${formatDate(getExpiryDate(applicant))}</span>
+                  </div>
+                  ${customFields.filter((field: any) => field.position === 'front').map((field: any) => `
+                    <div class="info-row">
+                      <span class="label">${field.label}:</span>
+                      <span class="value">${field.value || 'N/A'}</span>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            </div>
+            
+            <div class="footer-text">
+              <div>This card remains the property of the issuing authority</div>
+              <div>If found, please return to the nearest issuing authority office</div>
+            </div>
+          </div>
+        </div>
+        <div class="color-band">
+          <div class="red-band"></div>
+          <div class="yellow-band"></div>
+          <div class="green-band"></div>
+        </div>
+      </div>
+    `;
   };
 
   const handlePreviewApplicant = (applicant: ApplicantData) => {
