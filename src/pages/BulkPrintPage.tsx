@@ -80,6 +80,15 @@ const BulkPrintPage: React.FC = () => {
             <div class="visa-type">
               ${(applicant.visaType || 'NONE').toUpperCase()}
             </div>
+            <div class="signature-section">
+              ${globalSignature ? 
+                `<div class="signature-image-wrapper">
+                   <img src="${globalSignature}" alt="Officer Signature" class="signature-image" />
+                 </div>` : 
+                '<div class="signature-line"></div>'
+              }
+              <div class="signature-label">${cardLabels.issuingOfficer || 'Issuing Officer'}</div>
+            </div>
           </div>
           <div class="right-side">
             <div class="card-title">
@@ -88,53 +97,51 @@ const BulkPrintPage: React.FC = () => {
               <div class="card-type">${cardType}</div>
             </div>
             <div class="card-info">
-              <div class="info-row">
-                <span class="label">${cardLabels.name || 'Name'}:</span>
-                <span class="value">${applicant.fullName || 'Not provided'}</span>
-              </div>
-              <div class="info-row">
-                <span class="label">${cardLabels.nationality || 'Nationality'}:</span>
-                <span class="value">${applicant.nationality || 'Not provided'}</span>
-              </div>
-              <div class="info-row">
-                <span class="label">${cardLabels.dateOfBirth || 'Date of Birth'}:</span>
-                <span class="value">${formatDate(applicant.dateOfBirth)}</span>
-              </div>
-              <div class="info-row">
-                <span class="label">${cardLabels.occupation || 'Occupation'}:</span>
-                <span class="value">${applicant.occupation || 'Not provided'}</span>
-              </div>
-              <div class="info-row">
-                <span class="label">${cardLabels.idNo || 'ID No'}:</span>
-                <span class="value">${applicant.id || 'Not provided'}</span>
-              </div>
-              <div class="info-row">
-                <span class="label">${cardLabels.issueDate || 'Date of Issue'}:</span>
-                <span class="value">${formatDate(applicant.dateCreated)}</span>
-              </div>
-              <div class="info-row">
-                <span class="label">${cardLabels.expiryDate || 'Expiry Date'}:</span>
-                <span class="value">${formatDate(getExpiryDate(applicant))}</span>
-              </div>
-              ${customFields.filter((field: any) => field.position === 'front').map((field: any) => `
-                <div class="info-row">
-                  <span class="label">${field.label}:</span>
-                  <span class="value">${field.value}</span>
+              <div class="info-columns">
+                <div class="info-column">
+                  <div class="info-row">
+                    <span class="label">${cardLabels.name || 'Name'}:</span>
+                    <span class="value">${applicant.fullName || 'Not provided'}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="label">${cardLabels.nationality || 'Nationality'}:</span>
+                    <span class="value">${applicant.nationality || 'Not provided'}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="label">${cardLabels.dateOfBirth || 'Date of Birth'}:</span>
+                    <span class="value">${formatDate(applicant.dateOfBirth)}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="label">${cardLabels.occupation || 'Occupation'}:</span>
+                    <span class="value">${applicant.occupation || 'Not provided'}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="label">${cardLabels.issueDate || 'Date of Issue'}:</span>
+                    <span class="value">${formatDate(applicant.dateCreated)}</span>
+                  </div>
                 </div>
-              `).join('')}
+                <div class="info-column">
+                  <div class="info-row">
+                    <span class="label">${cardLabels.idNo || 'ID No'}:</span>
+                    <span class="value">${applicant.id || 'Not provided'}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="label">${cardLabels.expiryDate || 'Expiry Date'}:</span>
+                    <span class="value">${formatDate(getExpiryDate(applicant))}</span>
+                  </div>
+                  ${customFields.filter((field: any) => field.position === 'front').map((field: any) => `
+                    <div class="info-row">
+                      <span class="label">${field.label}:</span>
+                      <span class="value">${field.value}</span>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
             </div>
             
-            <!-- Issuing Officer Signature Section -->
-            <div class="signature-container">
-              <div class="signature-box">
-                ${globalSignature ? 
-                  `<div class="signature-image-container">
-                     <img src="${globalSignature}" alt="Officer Signature" class="signature-image" />
-                   </div>` : 
-                  '<div class="signature-line"></div>'
-                }
-                <div class="signature-label">${cardLabels.issuingOfficer || 'Issuing Officer'}</div>
-              </div>
+            <div class="footer-text">
+              <div>This card remains the property of the issuing authority</div>
+              <div>If found, please return to the nearest issuing authority office</div>
             </div>
           </div>
         </div>
@@ -268,16 +275,17 @@ const BulkPrintPage: React.FC = () => {
             }
             
             .left-side {
-              width: 35%;
+              width: 33%;
               display: flex;
               flex-direction: column;
               align-items: center;
               justify-content: flex-start;
               padding-top: 5px;
+              gap: 5px;
             }
             
             .right-side {
-              width: 65%;
+              width: 67%;
               padding-left: 8px;
               font-size: 8px;
               display: flex;
@@ -322,8 +330,39 @@ const BulkPrintPage: React.FC = () => {
               font-weight: bold;
               font-size: 7px;
               text-align: center;
-              margin-top: 5px;
               min-width: 50px;
+            }
+            
+            .signature-section {
+              text-align: center;
+              margin-top: 8px;
+            }
+            
+            .signature-image-wrapper {
+              height: 20px;
+              width: 50px;
+              margin: 0 auto 3px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              background: rgba(255,255,255,0.1);
+              border: 1px solid rgba(255,255,255,0.3);
+              border-radius: 2px;
+            }
+            
+            .signature-line {
+              height: 20px;
+              width: 50px;
+              margin: 0 auto 3px;
+              border-bottom: 1px solid white;
+            }
+            
+            .signature-label {
+              font-size: 6px;
+              text-align: center;
+              border-top: 1px solid rgba(255,255,255,0.5);
+              padding-top: 2px;
+              font-weight: bold;
             }
             
             .card-title {
@@ -353,63 +392,54 @@ const BulkPrintPage: React.FC = () => {
             
             .card-info {
               flex: 1;
+              margin-bottom: 5px;
+            }
+            
+            .info-columns {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 5px;
+              height: 100%;
+            }
+            
+            .info-column {
+              display: flex;
+              flex-direction: column;
+              gap: 1px;
             }
             
             .card-info .info-row {
-              margin-bottom: 2px;
-              line-height: 1.2;
+              margin-bottom: 1px;
+              line-height: 1.1;
               display: flex;
-              font-size: 7px;
+              flex-direction: column;
+              font-size: 6px;
             }
             
             .card-info .label {
               font-weight: bold;
-              min-width: 35px;
-              margin-right: 2px;
+              color: #fcd116;
+              font-size: 5px;
             }
             
             .card-info .value {
-              flex: 1;
               word-break: break-word;
+              margin-top: 1px;
             }
             
-            .signature-container {
-              display: flex;
-              justify-content: center;
-              margin-top: 5px;
-            }
-            
-            .signature-box {
+            .footer-text {
+              border-top: 1px solid rgba(255,255,255,0.3);
+              padding-top: 2px;
               text-align: center;
-            }
-            
-            .signature-image-container {
-              height: 15px;
-              width: 40px;
-              margin-bottom: 2px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
+              font-size: 5px;
+              line-height: 1.2;
+              margin-top: auto;
             }
             
             .signature-image {
               max-height: 100%;
               max-width: 100%;
               object-fit: contain;
-            }
-            
-            .signature-line {
-              height: 15px;
-              margin-bottom: 2px;
-              border-bottom: 1px solid white;
-              width: 40px;
-            }
-            
-            .signature-label {
-              font-size: 6px;
-              text-align: center;
-              border-top: 1px solid rgba(255,255,255,0.5);
-              padding-top: 1px;
             }
             
             .color-band {
