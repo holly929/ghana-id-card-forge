@@ -6,10 +6,10 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-// Generate a short unique ID for applicants in format GIS-XXXXX
+// Generate a short unique ID for applicants in format GIS-XXX
 export const generateUniqueId = () => {
-  // Generate a 5-digit number (10000-99999)
-  const randomNumber = Math.floor(Math.random() * 90000) + 10000;
+  // Generate a 3-digit number (100-999)
+  const randomNumber = Math.floor(Math.random() * 900) + 100;
   return `GIS-${randomNumber}`;
 };
 
