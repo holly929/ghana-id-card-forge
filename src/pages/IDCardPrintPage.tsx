@@ -573,10 +573,10 @@ const IDCardPrintPage: React.FC = () => {
                              <span class="label">${cardLabels.idNo}</span>
                              <span class="value">${applicant.id || 'Not provided'}</span>
                            </div>
-                           <div class="info-row">
-                             <span class="label">${cardLabels.issueDate}</span>
-                             <span class="value">${formatDate(new Date().toISOString().split('T')[0])}</span>
-                           </div>
+                            <div class="info-row">
+                              <span class="label">${cardLabels.issueDate}</span>
+                              <span class="value">${formatDate(applicant.dateCreated || applicant.date_created || applicant.created_at || new Date().toISOString())}</span>
+                            </div>
                            <div class="info-row">
                              <span class="label">${cardLabels.expiryDate}</span>
                              <span class="value">${formatDate(getExpiryDate(applicant))}</span>

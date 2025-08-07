@@ -180,9 +180,10 @@ const BulkPrintModal: React.FC<BulkPrintModalProps> = ({
                     <div><strong>Name:</strong> ${fullName || 'Not provided'}</div>
                     <div><strong>Nationality:</strong> ${applicant.nationality || 'Not provided'}</div>
                     <div><strong>Date of Birth:</strong> ${formatDate(dateOfBirth)}</div>
-                    <div><strong>Phone Number:</strong> ${phoneNumber || 'Not provided'}</div>
-                    <div><strong>ID No:</strong> ${applicant.id || 'Not provided'}</div>
-                    <div><strong>Expiry Date:</strong> ${formatDate(expiryDate)}</div>
+                     <div><strong>Phone Number:</strong> ${phoneNumber || 'Not provided'}</div>
+                     <div><strong>Date of Issue:</strong> ${formatDate(applicant.dateCreated || applicant.date_created || applicant.created_at)}</div>
+                     <div><strong>ID No:</strong> ${applicant.id || 'Not provided'}</div>
+                     <div><strong>Expiry Date:</strong> ${formatDate(expiryDate)}</div>
                   </div>
                   
                   <!-- Front Signature Section -->

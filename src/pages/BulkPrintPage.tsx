@@ -125,7 +125,7 @@ const BulkPrintPage: React.FC = () => {
                   </div>
                   <div class="info-row">
                     <span class="label">${cardLabels.issueDate || 'Date of Issue'}:</span>
-                    <span class="value">${formatDate(applicant.dateCreated)}</span>
+                    <span class="value">${formatDate(applicant.dateCreated || applicant.date_created || applicant.created_at)}</span>
                   </div>
                 </div>
                 <div class="info-column">

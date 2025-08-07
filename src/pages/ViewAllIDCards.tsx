@@ -148,7 +148,7 @@ const ViewAllIDCards: React.FC = () => {
               </div>
               <div class="info-row">
                 <span class="label">${cardLabels.issueDate || 'Date of Issue'}:</span>
-                <span class="value">${applicant.dateCreated ? formatDate(applicant.dateCreated) : 'N/A'}</span>
+                <span class="value">${formatDate(applicant.dateCreated || applicant.date_created || applicant.created_at || new Date().toISOString())}</span>
               </div>
               <div class="info-row">
                 <span class="label">${cardLabels.expiryDate || 'Expiry Date'}:</span>
@@ -611,7 +611,7 @@ const ViewAllIDCards: React.FC = () => {
                   </div>
                   <div class="info-row">
                     <span class="label">${cardLabels.issueDate || 'Date of Issue'}:</span>
-                    <span class="value">${applicant.dateCreated ? formatDate(applicant.dateCreated) : 'N/A'}</span>
+                    <span class="value">${formatDate(applicant.dateCreated || applicant.date_created || applicant.created_at || new Date().toISOString())}</span>
                   </div>
                 </div>
                 <div class="info-column">
