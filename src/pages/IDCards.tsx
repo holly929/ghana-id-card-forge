@@ -1,4 +1,5 @@
 
+// Fixed: Removed bulk print functionality
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
