@@ -208,7 +208,7 @@ const IDCardPreviewPage: React.FC = () => {
           disabled={allApplicants.length === 0}
         >
           <Users className="h-4 w-4" />
-          Bulk Print ({allApplicants.length} available)
+           ({allApplicants.length} available)
         </Button>
       </div>
       
