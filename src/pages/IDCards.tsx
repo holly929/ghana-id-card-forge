@@ -39,7 +39,6 @@ import {
   Eye,
   Printer,
   FileImage,
-  Files,
   Download,
   Trash2
 } from 'lucide-react';
@@ -53,7 +52,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
-import BulkPrintModal from '@/components/BulkPrintModal';
+
 
 // Type definition for applicant data that handles both camelCase and snake_case
 interface ApplicantData {
@@ -94,7 +93,7 @@ const IDCards: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [applicantToDelete, setApplicantToDelete] = useState<ApplicantData | null>(null);
-  const [bulkPrintModalOpen, setBulkPrintModalOpen] = useState(false);
+  
   const navigate = useNavigate();
 
   // Load applicants from localStorage
@@ -342,13 +341,6 @@ const IDCards: React.FC = () => {
     }
   };
 
-  const handleBulkPrint = () => {
-    if (approvedApplicants.length === 0) {
-      toast.error("No approved applicants to print");
-      return;
-    }
-    setBulkPrintModalOpen(true);
-  };
 
   if (loading) {
     return (
@@ -413,11 +405,6 @@ const IDCards: React.FC = () => {
               >
                 <Eye className="h-4 w-4" />
                 View All Cards
-              </Button>
-              
-              <Button onClick={handleBulkPrint} className="flex items-center gap-2">
-                <Files className="h-4 w-4" />
-                Bulk Print ({approvedApplicants.length})
               </Button>
             </div>
           </div>
@@ -577,12 +564,6 @@ const IDCards: React.FC = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      <BulkPrintModal 
-        open={bulkPrintModalOpen}
-        onClose={() => setBulkPrintModalOpen(false)}
-        applicants={approvedApplicants}
-      />
     </div>
   );
 };
