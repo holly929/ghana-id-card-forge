@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 const BulkPrintPage: React.FC = () => {
   const [selectedApplicants, setSelectedApplicants] = useState<any[]>([]);
   const [printFormat, setPrintFormat] = useState('standard');
+  const [fontSize, setFontSize] = useState('medium');
   const [layout, setLayout] = useState<'multiple' | 'single'>('multiple');
   const navigate = useNavigate();
 
@@ -171,10 +172,19 @@ const BulkPrintPage: React.FC = () => {
     console.log(`Starting bulk print for ${selectedApplicants.length} applicants`);
 
     let scale = 1;
+    let fontScale = 1;
+    
     switch (printFormat) {
       case 'small': scale = 0.7; break;
       case 'large': scale = 1.5; break;
       default: scale = 1; break;
+    }
+
+    switch (fontSize) {
+      case 'small': fontScale = 0.8; break;
+      case 'large': fontScale = 1.3; break;
+      case 'extra-large': fontScale = 1.6; break;
+      default: fontScale = 1; break;
     }
 
     const cardsPerPage = layout === 'multiple' ? 9 : 1;
@@ -295,7 +305,8 @@ const BulkPrintPage: React.FC = () => {
             .right-side {
               width: 67%;
               padding-left: 8px;
-              font-size: 8px;
+              font-size: ${Math.round(10 * fontScale)}px;
+              font-weight: 600;
               display: flex;
               flex-direction: column;
             }
@@ -381,20 +392,20 @@ const BulkPrintPage: React.FC = () => {
             
             .country-name {
               font-weight: bold;
-              font-size: 10px;
+              font-size: ${Math.round(12 * fontScale)}px;
               line-height: 1.1;
               color: #fcd116;
             }
             
             .company-name {
-              font-size: 8px;
+              font-size: ${Math.round(10 * fontScale)}px;
               line-height: 1.1;
               margin-top: 1px;
               color: #fcd116;
             }
             
             .card-type {
-              font-size: 9px;
+              font-size: ${Math.round(11 * fontScale)}px;
               line-height: 1.2;
               margin-top: 2px;
               font-weight: bold;
@@ -424,18 +435,20 @@ const BulkPrintPage: React.FC = () => {
               line-height: 1.1;
               display: flex;
               flex-direction: column;
-              font-size: 6px;
+              font-size: ${Math.round(8 * fontScale)}px;
+              font-weight: 600;
             }
             
             .card-info .label {
               font-weight: bold;
               color: #fcd116;
-              font-size: 5px;
+              font-size: ${Math.round(7 * fontScale)}px;
             }
             
             .card-info .value {
               word-break: break-word;
               margin-top: 1px;
+              font-weight: 600;
             }
             
             .footer-text {
@@ -545,6 +558,20 @@ const BulkPrintPage: React.FC = () => {
                   <SelectItem value="small">Small</SelectItem>
                   <SelectItem value="standard">Standard</SelectItem>
                   <SelectItem value="large">Large</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex-1">
+              <label className="block text-sm font-medium mb-2">Font Size</label>
+              <Select value={fontSize} onValueChange={setFontSize}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="small">Small</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="large">Large</SelectItem>
+                  <SelectItem value="extra-large">Extra Large</SelectItem>
                 </SelectContent>
               </Select>
             </div>

@@ -34,6 +34,7 @@ const BulkPrintModal: React.FC<BulkPrintModalProps> = ({
   const [selectedApplicants, setSelectedApplicants] = useState<string[]>([]);
   const [printFormat, setPrintFormat] = useState<string>('standard');
   const [printBothSides, setPrintBothSides] = useState<boolean>(false);
+  const [fontSize, setFontSize] = useState<string>('medium');
   
   // Toggle selecting all applicants
   const toggleSelectAll = () => {
@@ -133,11 +134,19 @@ const BulkPrintModal: React.FC<BulkPrintModalProps> = ({
     try {
       const logo = localStorage.getItem('systemLogo');
       let scale = 1;
+      let fontScale = 1;
       
       switch(printFormat) {
         case 'small': scale = 0.8; break;
         case 'large': scale = 1.2; break;
         default: scale = 1; break;
+      }
+
+      switch(fontSize) {
+        case 'small': fontScale = 0.8; break;
+        case 'large': fontScale = 1.3; break;
+        case 'extra-large': fontScale = 1.6; break;
+        default: fontScale = 1; break;
       }
 
       const printWindow = window.open('', '_blank', 'width=1200,height=800');
@@ -171,20 +180,20 @@ const BulkPrintModal: React.FC<BulkPrintModalProps> = ({
                 </div>
               </div>
               <div style="width: 67%; padding-left: 10px; display: flex; flex-direction: column; justify-content: space-between;">
-                <div>
-                  <div style="text-align: center; margin-bottom: 10px;">
-                    <div style="font-weight: bold; font-size: 12px;">${localStorage.getItem('countryName') || ''}</div>
-                    <div style="font-size: 10px;">NON-CITIZEN IDENTITY CARD</div>
-                  </div>
-                  <div style="font-size: 10px; flex: 1;">
-                    <div><strong>Name:</strong> ${fullName || 'Not provided'}</div>
-                    <div><strong>Nationality:</strong> ${applicant.nationality || 'Not provided'}</div>
-                    <div><strong>Date of Birth:</strong> ${formatDate(dateOfBirth)}</div>
-                     <div><strong>Phone Number:</strong> ${phoneNumber || 'Not provided'}</div>
-                     <div><strong>Date of Issue:</strong> ${formatDate(applicant.dateCreated || applicant.date_created || applicant.created_at)}</div>
-                     <div><strong>ID No:</strong> ${applicant.id || 'Not provided'}</div>
-                     <div><strong>Expiry Date:</strong> ${formatDate(expiryDate)}</div>
-                  </div>
+                   <div>
+                     <div style="text-align: center; margin-bottom: 10px;">
+                       <div style="font-weight: bold; font-size: ${Math.round(14 * fontScale)}px;">${localStorage.getItem('countryName') || ''}</div>
+                       <div style="font-size: ${Math.round(12 * fontScale)}px; font-weight: 600;">NON-CITIZEN IDENTITY CARD</div>
+                     </div>
+                   <div style="font-size: ${Math.round(12 * fontScale)}px; flex: 1; font-weight: 600;">
+                     <div><strong>Name:</strong> ${fullName || 'Not provided'}</div>
+                     <div><strong>Nationality:</strong> ${applicant.nationality || 'Not provided'}</div>
+                     <div><strong>Date of Birth:</strong> ${formatDate(dateOfBirth)}</div>
+                      <div><strong>Phone Number:</strong> ${phoneNumber || 'Not provided'}</div>
+                      <div><strong>Date of Issue:</strong> ${formatDate(applicant.dateCreated || applicant.date_created || applicant.created_at)}</div>
+                      <div><strong>ID No:</strong> ${applicant.id || 'Not provided'}</div>
+                      <div><strong>Expiry Date:</strong> ${formatDate(expiryDate)}</div>
+                   </div>
                   
                   <!-- Front Signature Section -->
                   <div style="display: flex; justify-content: center; margin-top: 8px; font-size: 8px; width: 100%;">
@@ -439,7 +448,7 @@ const BulkPrintModal: React.FC<BulkPrintModalProps> = ({
         </DialogHeader>
         
         <div className="py-4 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <Label htmlFor="print-format" className="mb-2 block">Card Size</Label>
               <Select 
@@ -453,6 +462,24 @@ const BulkPrintModal: React.FC<BulkPrintModalProps> = ({
                   <SelectItem value="small">Small</SelectItem>
                   <SelectItem value="standard">Standard</SelectItem>
                   <SelectItem value="large">Large</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="font-size" className="mb-2 block">Font Size</Label>
+              <Select 
+                value={fontSize} 
+                onValueChange={setFontSize}
+              >
+                <SelectTrigger id="font-size">
+                  <SelectValue placeholder="Select font size" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="small">Small</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="large">Large</SelectItem>
+                  <SelectItem value="extra-large">Extra Large</SelectItem>
                 </SelectContent>
               </Select>
             </div>
