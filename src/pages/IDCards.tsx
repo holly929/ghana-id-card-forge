@@ -94,6 +94,7 @@ const IDCards: React.FC = () => {
   const [applicants, setApplicants] = useState<ApplicantData[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteAllDialogOpen, setDeleteAllDialogOpen] = useState(false);
   const [applicantToDelete, setApplicantToDelete] = useState<ApplicantData | null>(null);
   
   const navigate = useNavigate();
@@ -351,6 +352,37 @@ const IDCards: React.FC = () => {
     }
   };
 
+  const handleDeleteAll = () => {
+    setDeleteAllDialogOpen(true);
+  };
+
+  const confirmDeleteAll = async () => {
+    try {
+      // Delete all applicants using DataSyncService
+      const deletePromises = applicants.map(applicant => 
+        dataSyncService.deleteApplicant(applicant.id)
+      );
+      
+      await Promise.all(deletePromises);
+      
+      // Clear UI state
+      setApplicants([]);
+      
+      // Clear all photos from localStorage
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('applicantPhoto_')) {
+          localStorage.removeItem(key);
+        }
+      });
+      
+      toast.success(`Deleted all ${applicants.length} applicant records`);
+      setDeleteAllDialogOpen(false);
+    } catch (error) {
+      console.error('Failed to delete all applicants:', error);
+      toast.error('Failed to delete all applicants. Please try again.');
+    }
+  };
+
 
   if (loading) {
     return (
@@ -416,6 +448,17 @@ const IDCards: React.FC = () => {
                 <Eye className="h-4 w-4" />
                 View All Cards
               </Button>
+              
+              {applicants.length > 0 && (
+                <Button 
+                  onClick={handleDeleteAll}
+                  variant="destructive"
+                  className="flex items-center gap-2"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete All
+                </Button>
+              )}
             </div>
           </div>
 
@@ -571,6 +614,26 @@ const IDCards: React.FC = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={deleteAllDialogOpen} onOpenChange={setDeleteAllDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete All Applicants?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete all {applicants.length} applicant records and their associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDeleteAllDialogOpen(false)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDeleteAll}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete All
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
