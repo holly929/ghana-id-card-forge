@@ -13,6 +13,7 @@ import { format } from 'date-fns';
 import { cn, generateUniqueId } from '@/lib/utils';
 import { toast } from 'sonner';
 import CameraCapture from '@/components/CameraCapture';
+import { dataSyncService } from '@/services/dataSync';
 
 interface ApplicantData {
   id: string;
@@ -89,7 +90,7 @@ const ApplicantForm: React.FC = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!fullName || !nationality || !area || !dateOfBirth || !visaType || !occupation || !phoneNumber) {
@@ -97,38 +98,31 @@ const ApplicantForm: React.FC = () => {
       return;
     }
 
-    const newApplicant: ApplicantData = {
+    const newApplicant = {
       id: generateUniqueId(),
-      fullName,
+      full_name: fullName,
       nationality,
       area,
-      dateOfBirth,
-      visaType,
+      date_of_birth: dateOfBirth,
+      visa_type: visaType,
       status: 'pending',
-      dateCreated: new Date().toISOString().split('T')[0],
+      date_created: new Date().toISOString().split('T')[0],
       occupation,
-      idCardApproved: false,
-      expiryDate,
-      phoneNumber,
+      id_card_approved: false,
+      expiry_date: expiryDate,
+      phone_number: phoneNumber,
       photo,
-      issuingOfficerSignature,
     };
 
-    // Get existing applicants from localStorage
-    const storedApplicants = localStorage.getItem('applicants');
-    const existingApplicants = storedApplicants ? JSON.parse(storedApplicants) : [];
-
-    // Add the new applicant to the existing list
-    const updatedApplicants = [...existingApplicants, newApplicant];
-
-    // Save the updated list back to localStorage
-    localStorage.setItem('applicants', JSON.stringify(updatedApplicants));
-
-    // Optionally, show a success message
-    toast.success('Applicant added successfully!');
-
-    // Redirect to the ID Cards page
-    navigate('/id-cards');
+    try {
+      // Use DataSyncService for proper data persistence and syncing
+      await dataSyncService.saveApplicant(newApplicant);
+      toast.success('Applicant registered successfully!');
+      navigate('/id-cards');
+    } catch (error) {
+      console.error('Failed to save applicant:', error);
+      toast.error('Failed to register applicant. Please try again.');
+    }
   };
 
   const handlePhotoCapture = (photoDataUrl: string) => {

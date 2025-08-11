@@ -46,6 +46,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from "sonner";
+import { dataSyncService } from '@/services/dataSync';
 import { 
   Select, 
   SelectContent, 
@@ -97,24 +98,23 @@ const IDCards: React.FC = () => {
   
   const navigate = useNavigate();
 
-  // Load applicants from localStorage
+  // Load applicants using DataSyncService
   useEffect(() => {
-    console.log('Loading applicants from localStorage...');
-    const storedApplicants = localStorage.getItem('applicants');
-    if (storedApplicants) {
+    const loadApplicants = async () => {
       try {
-        const parsedApplicants = JSON.parse(storedApplicants);
-        console.log('Loaded applicants:', parsedApplicants);
-        console.log('Total applicants found:', parsedApplicants.length);
-        setApplicants(parsedApplicants);
+        const loadedApplicants = await dataSyncService.getApplicants();
+        console.log('Loaded applicants:', loadedApplicants);
+        console.log('Total applicants found:', loadedApplicants.length);
+        setApplicants(loadedApplicants);
       } catch (error) {
-        console.error('Error parsing applicants:', error);
+        console.error('Error loading applicants:', error);
         toast.error('Failed to load applicants data');
+      } finally {
+        setLoading(false);
       }
-    } else {
-      console.log('No applicants found in localStorage');
-    }
-    setLoading(false);
+    };
+
+    loadApplicants();
   }, []);
 
   const filteredApplicants = applicants.filter(applicant => {
@@ -326,19 +326,28 @@ const IDCards: React.FC = () => {
     setDeleteDialogOpen(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (applicantToDelete) {
-      const updatedApplicants = applicants.filter(app => app.id !== applicantToDelete.id);
-      setApplicants(updatedApplicants);
-      localStorage.setItem('applicants', JSON.stringify(updatedApplicants));
-      
-      // Also remove the photo
-      localStorage.removeItem(`applicantPhoto_${applicantToDelete.id}`);
-      
-      const fullName = getApplicantProperty(applicantToDelete, 'fullName', 'full_name');
-      toast.success(`Deleted ${fullName}'s record`);
-      setDeleteDialogOpen(false);
-      setApplicantToDelete(null);
+      try {
+        // Use DataSyncService for proper deletion and syncing
+        await dataSyncService.deleteApplicant(applicantToDelete.id);
+        
+        // Update UI state by removing the deleted applicant
+        const updatedApplicants = applicants.filter(app => app.id !== applicantToDelete.id);
+        setApplicants(updatedApplicants);
+        
+        // Also remove the photo from localStorage
+        localStorage.removeItem(`applicantPhoto_${applicantToDelete.id}`);
+        
+        const fullName = getApplicantProperty(applicantToDelete, 'fullName', 'full_name');
+        toast.success(`Deleted ${fullName}'s record`);
+      } catch (error) {
+        console.error('Failed to delete applicant:', error);
+        toast.error('Failed to delete applicant. Please try again.');
+      } finally {
+        setDeleteDialogOpen(false);
+        setApplicantToDelete(null);
+      }
     }
   };
 

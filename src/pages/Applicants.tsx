@@ -38,6 +38,7 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { dataSyncService } from '@/services/dataSync';
 
 // Type definition for applicant data that handles both camelCase and snake_case
 interface ApplicantData {
@@ -118,29 +119,24 @@ const Applicants: React.FC = () => {
   const [applicants, setApplicants] = useState<ApplicantData[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // Load applicants from localStorage on component mount
+  // Load applicants using DataSyncService
   useEffect(() => {
-    console.log('Loading applicants from localStorage...');
-    const storedApplicants = localStorage.getItem('applicants');
-    if (storedApplicants) {
+    const loadApplicants = async () => {
       try {
-        const parsed = JSON.parse(storedApplicants);
-        console.log('Loaded applicants:', parsed);
-        console.log('Total applicants:', parsed.length);
-        setApplicants(parsed);
+        console.log('Loading applicants using DataSyncService...');
+        const loadedApplicants = await dataSyncService.getApplicants();
+        console.log('Loaded applicants:', loadedApplicants);
+        console.log('Total applicants:', loadedApplicants.length);
+        setApplicants(loadedApplicants);
       } catch (error) {
-        console.error('Error parsing applicants data:', error);
+        console.error('Error loading applicants:', error);
         toast.error('Failed to load applicant data');
-        // Fallback to default data
-        setApplicants(defaultApplicants);
-        localStorage.setItem('applicants', JSON.stringify(defaultApplicants));
+      } finally {
+        setLoading(false);
       }
-    } else {
-      console.log('No applicants in localStorage, using defaults');
-      setApplicants(defaultApplicants);
-      localStorage.setItem('applicants', JSON.stringify(defaultApplicants));
-    }
-    setLoading(false);
+    };
+
+    loadApplicants();
   }, []);
   
   // Filter applicants based on search term with safe null checking
@@ -160,41 +156,75 @@ const Applicants: React.FC = () => {
   });
   
   // Handle applicant deletion
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this applicant?')) {
-      const updatedApplicants = applicants.filter(applicant => applicant.id !== id);
-      setApplicants(updatedApplicants);
-      localStorage.setItem('applicants', JSON.stringify(updatedApplicants));
-      
-      // Also remove any associated photo
-      localStorage.removeItem(`applicantPhoto_${id}`);
-      
-      toast.success('Applicant deleted successfully');
-      console.log('Deleted applicant:', id);
+      try {
+        await dataSyncService.deleteApplicant(id);
+        
+        // Update UI state by removing deleted applicant
+        const updatedApplicants = applicants.filter(applicant => applicant.id !== id);
+        setApplicants(updatedApplicants);
+        
+        // Also remove any associated photo
+        localStorage.removeItem(`applicantPhoto_${id}`);
+        
+        toast.success('Applicant deleted successfully');
+        console.log('Deleted applicant:', id);
+      } catch (error) {
+        console.error('Failed to delete applicant:', error);
+        toast.error('Failed to delete applicant. Please try again.');
+      }
     }
   };
 
   // Handle approval/rejection
-  const handleApproval = (id: string, approve: boolean) => {
+  const handleApproval = async (id: string, approve: boolean) => {
     console.log(`${approve ? 'Approving' : 'Rejecting'} applicant:`, id);
-    const updatedApplicants = applicants.map(applicant => {
-      if (applicant.id === id) {
-        const updated = {
-          ...applicant,
-          status: approve ? 'approved' : 'rejected',
-          idCardApproved: approve,
-          id_card_approved: approve
+    
+    try {
+      const updatedApplicants = applicants.map(applicant => {
+        if (applicant.id === id) {
+          const updated = {
+            ...applicant,
+            status: approve ? 'approved' : 'rejected',
+            idCardApproved: approve,
+            id_card_approved: approve
+          };
+          console.log('Updated applicant:', updated);
+          return updated;
+        }
+        return applicant;
+      });
+      
+      // Find the updated applicant to save
+      const applicantToUpdate = updatedApplicants.find(applicant => applicant.id === id);
+      if (applicantToUpdate) {
+        // Convert to the format expected by DataSyncService
+        const dataForSync = {
+          id: applicantToUpdate.id,
+          full_name: getApplicantProperty(applicantToUpdate, 'fullName', 'full_name') || '',
+          nationality: applicantToUpdate.nationality || '',
+          area: applicantToUpdate.area,
+          phone_number: getApplicantProperty(applicantToUpdate, 'phoneNumber', 'phone_number') || '',
+          passport_number: (applicantToUpdate as any).passport_number,
+          date_of_birth: getApplicantProperty(applicantToUpdate, 'dateOfBirth', 'date_of_birth') || '',
+          expiry_date: getApplicantProperty(applicantToUpdate, 'expiryDate', 'expiry_date'),
+          visa_type: getApplicantProperty(applicantToUpdate, 'visaType', 'visa_type'),
+          occupation: applicantToUpdate.occupation,
+          status: applicantToUpdate.status || 'pending',
+          photo: applicantToUpdate.photo,
+          date_created: getApplicantProperty(applicantToUpdate, 'dateCreated', 'date_created') || new Date().toISOString().split('T')[0],
+          id_card_approved: applicantToUpdate.id_card_approved || applicantToUpdate.idCardApproved || false
         };
-        console.log('Updated applicant:', updated);
-        return updated;
+        
+        await dataSyncService.saveApplicant(dataForSync);
+        setApplicants(updatedApplicants);
+        toast.success(`Applicant ${approve ? 'approved' : 'rejected'} successfully`);
       }
-      return applicant;
-    });
-    
-    setApplicants(updatedApplicants);
-    localStorage.setItem('applicants', JSON.stringify(updatedApplicants));
-    
-    toast.success(`Applicant ${approve ? 'approved' : 'rejected'} successfully`);
+    } catch (error) {
+      console.error('Failed to update applicant:', error);
+      toast.error('Failed to update applicant status. Please try again.');
+    }
   };
   
   const getStatusBadge = (status: string) => {
